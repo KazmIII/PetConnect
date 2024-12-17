@@ -15,39 +15,47 @@ const CreateMemoryBook = () => {
 
   const handleCreateMemoryBook = async (event) => {
     event.preventDefault();
-
+  
     if (!memoryBookName.trim()) {
       setDialogMessage('Memory book name is required!');
       setOpenDialog(true);
       return;
     }
-
-    const formData = { 
-      name: memoryBookName,
-      petId: petId // Include the petId from URL in the request payload
-    };
-
+  
     try {
+      // Check if a memory book with the same name already exists
+      const checkResponse = await axios.post('http://localhost:5000/api/memory-books/checkName', { name: memoryBookName });
+  
+      if (checkResponse.data.exists) {
+        setDialogMessage('A memory book with this name already exists!');
+        setOpenDialog(true);
+        return;
+      }
+  
+      // If no existing memory book, proceed to create
+      const formData = { 
+        name: memoryBookName,
+        petId: petId // Include the petId from URL in the request payload
+      };
+  
       const response = await axios.post(`http://localhost:5000/api/memory-books/create/${petId}`, formData);
-
+  
       if (response.status === 201) {
         toast.success('Memory book created successfully!');
         // Redirect to the memory books list page
         navigate(`/memory-books/${petId}`);
       } else {
-        // Show error in dialog if response status is not 201
         setDialogMessage(response.data.error || 'Failed to create memory book');
         setOpenDialog(true);
       }
     } catch (error) {
       const errorMessage =
         error.response?.data?.error || 'Error creating memory book. Please try again.';
-      // Show error in dialog if exception occurs
       setDialogMessage(errorMessage);
       setOpenDialog(true);
     }
   };
-
+  
   const handleCloseDialog = () => {
     setOpenDialog(false); // Close the dialog when the user clicks "OK"
   };
@@ -87,7 +95,7 @@ const CreateMemoryBook = () => {
 
         {/* Error Dialog Box */}
         <Dialog open={openDialog} onClose={handleCloseDialog}>
-          <DialogTitle className="text-black">Error</DialogTitle>
+          <DialogTitle className="text-red-700 font-bold">Already Exists!</DialogTitle>
           <DialogContent>
             <Typography variant="body1" className="text-black">{dialogMessage}</Typography>
           </DialogContent>

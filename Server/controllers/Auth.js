@@ -5,6 +5,8 @@ import {ClinicModel} from '../models/Clinic.js';
 import { VetModel } from "../models/Vet.js";
 import { GroomerModel } from "../models/Groomer.js";
 import { SitterModel } from "../models/Sitter.js";
+import MemoryBook from '../models/MemoryBook.js';
+import Memory from '../models/Memory.js'; 
 
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -556,6 +558,17 @@ export const DeletePetProfile = async (req, res) => {
         success: false
       });
     }
+
+     // Step 1: Find and delete all memory books associated with the pet
+    const memoryBooks = await MemoryBook.find({ petId: petId });
+    if (memoryBooks.length > 0) {
+      // Step 2: Delete all memories associated with those memory books
+      await Memory.deleteMany({ bookId: { $in: memoryBooks.map(book => book._id) } });
+
+      // Step 3: Delete all the memory books
+      await MemoryBook.deleteMany({ petId: petId });
+    }
+
 
     // Delete the pet profile
     await PetModel.findByIdAndDelete(petId);

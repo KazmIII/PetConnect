@@ -1,5 +1,6 @@
 import express from 'express';
-import MemoryBook from '../models/MemoryBook.js'; // Ensure the extension is included for ES modules
+import MemoryBook from '../models/MemoryBook.js'; 
+import Memory from '../models/Memory.js'; // Ensure the extension is included for ES modules
 
 const router = express.Router();
 
@@ -40,21 +41,34 @@ router.get('/:petId', async (req, res) => {
 });
 
 
-// Delete a memory book
+// Delete a memory book along with its associated memories
 router.delete('/:id', async (req, res) => {
   try {
     const memoryBookId = req.params.id;
+
+    // Step 1: Delete all memories associated with the memory book
+    const deletedMemories = await Memory.deleteMany({ bookId: memoryBookId });
+
+    if (deletedMemories.deletedCount === 0) {
+      console.log('No memories found for this memory book');
+    } else {
+      console.log(`${deletedMemories.deletedCount} memories deleted`);
+    }
+
+    // Step 2: Delete the memory book itself
     const deletedMemoryBook = await MemoryBook.findByIdAndDelete(memoryBookId);
 
     if (!deletedMemoryBook) {
       return res.status(404).json({ error: 'Memory book not found' });
     }
 
-    res.status(200).json({ message: 'Memory book deleted successfully' });
+    res.status(200).json({ message: 'Memory book and associated memories deleted successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete memory book' });
+    console.error(error);
+    res.status(500).json({ error: 'Failed to delete memory book and memories' });
   }
 });
+
 
 // Rename a memory book
 router.put('/:id', async (req, res) => {

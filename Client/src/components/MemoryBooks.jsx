@@ -76,13 +76,16 @@ const MemoryBooks = () => {
 
   const handleRenameSubmit = async () => {
     try {
-      // Check if the new name already exists
-      const nameExists = memoryBooks.some((book) => book.name.toLowerCase() === newBookName.toLowerCase());
+      // Check if the new name already exists and is not the same as the current name of the selected book
+      const nameExists = memoryBooks.some((book) => 
+        book.name.toLowerCase() === newBookName.toLowerCase() && book._id !== selectedBook._id
+      );
+  
       if (nameExists) {
         toast.error('A memory book with this name already exists');
         return;
       }
-
+  
       // Rename the memory book
       await axios.put(`http://localhost:5000/api/memory-books/${selectedBook._id}`, { name: newBookName });
       setMemoryBooks(memoryBooks.map((book) =>
@@ -94,7 +97,7 @@ const MemoryBooks = () => {
       toast.error('Failed to rename memory book');
     }
   };
-
+  
   const cancelRename = () => {
     setOpenRenameDialog(false);
     setNewBookName('');
@@ -220,6 +223,14 @@ const MemoryBooks = () => {
               </div>
             ))
           )}
+        </div>
+        <div className="flex justify-end mt-6">
+          <button
+            className="px-6 py-2 font-semibold bg-gradient-to-r from-orange-400 to-orange-700 text-white rounded-lg hover:from-orange-500 hover:to-orange-800 transition duration-200 shadow-md"
+            onClick={() => navigate(`/myPets`)}
+          >
+            Back to Pet Profiles
+          </button>
         </div>
       </div>
       <Menu
@@ -350,10 +361,12 @@ const MemoryBooks = () => {
               >
                 Rename
               </button>
+              
             </div>
           </div>
         </div>
       )}
+      
   
       <ToastContainer />
     </div>
