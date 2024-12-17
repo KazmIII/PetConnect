@@ -26,7 +26,7 @@ const AdminSidePanel = ({ activeSection, handleSectionChange, isSidePanelOpen, s
       <button
         onClick={() => handleNavigation("dashboard")}
         className={`p-2 text-left rounded hover:bg-gray-500 hover:text-orange-300 transition ${
-          activeSection === "dashboard" ? "bg-gray-700" : ""
+          activeSection === "dashboard" ? "bg-gray-500" : ""
         }`}
       >
         Dashboard
@@ -34,7 +34,7 @@ const AdminSidePanel = ({ activeSection, handleSectionChange, isSidePanelOpen, s
       <button
         onClick={() => handleNavigation("requests/clinic")}
         className={`p-2 text-left rounded hover:bg-gray-500 hover:text-orange-300 transition ${
-          activeSection === "requests/clinic" ? "bg-gray-700" : ""
+          activeSection === "requests/clinic" ? "bg-gray-500" : ""
         }`}
       >
         Pending Clinic Requests
@@ -42,7 +42,7 @@ const AdminSidePanel = ({ activeSection, handleSectionChange, isSidePanelOpen, s
       <button
         onClick={() => handleNavigation("requests/sitter")}
         className={`p-2 text-left rounded hover:bg-gray-500 hover:text-orange-300 transition ${
-          activeSection === "requests/sitter" ? "bg-gray-700" : ""
+          activeSection === "requests/sitter" ? "bg-gray-500" : ""
         }`}
       >
         Pending Sitter Requests
@@ -50,15 +50,23 @@ const AdminSidePanel = ({ activeSection, handleSectionChange, isSidePanelOpen, s
       <button
         onClick={() => handleNavigation("users")}
         className={`p-2 text-left rounded hover:bg-gray-500 hover:text-orange-300 transition ${
-          activeSection === "users" ? "bg-gray-700" : ""
+          activeSection === "users" ? "bg-gray-500" : ""
         }`}
       >
-        Registered Users
+        All Users
+      </button>
+      <button
+        onClick={() => handleNavigation("service-providers")}
+        className={`p-2 text-left rounded hover:bg-gray-500 hover:text-orange-300 transition ${
+          activeSection === "service-providers" ? "bg-gray-500" : ""
+        }`}
+      >
+        All Service Providers
       </button>
       <button
         onClick={() => handleNavigation("settings")}
         className={`p-2 text-left rounded hover:bg-gray-500 hover:text-orange-300 transition ${
-          activeSection === "settings" ? "bg-gray-700" : ""
+          activeSection === "settings" ? "bg-gray-500" : ""
         }`}
       >
         Settings

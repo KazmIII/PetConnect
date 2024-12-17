@@ -8,30 +8,31 @@ const PendingSitterRequests = () => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchSitters = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/auth/admin/pending-sitters");
+  const fetchSitters = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/auth/admin/pending-sitters");
 
-        if (response.data.success) {
-          setSitter(response.data.sitters);
-        } else {
-          console.warn("No pending requests found:", response.data.message);
-        }
-      } catch (error) {
-        console.error("Error fetching vets and groomers:", error);
-      } finally {
-        setIsLoading(false);
+      if (response.data.success) {
+        setSitter(response.data.sitters);
+      } else {
+        console.warn("No pending requests found:", response.data.message);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching vets and groomers:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+
+  useEffect(() => {
     fetchSitters();
   }, []);
 
   const handleStatusUpdate = async (sitterId, status) => {
     try {
       const response = await axios.post("http://localhost:5000/auth/admin/update-sitter-status", {
-        providerId: sitterId,
+        sitterId,
         status,
       });
 
@@ -77,7 +78,7 @@ const PendingSitterRequests = () => {
                     <tr
                       key={sitter._id}
                       className="hover:bg-gray-50 cursor-pointer"
-                      // onClick={() => handleSitterClick(sitter._id)}
+                      onClick={() => handleSitterClick(sitter._id)}
                     >
                       <td className="border border-gray-200 px-4 py-2 text-center">{sitter.name}</td>
                       <td className="border border-gray-200 px-4 py-2 text-center">{sitter.city}</td>

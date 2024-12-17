@@ -6,7 +6,7 @@ import { Profile, Register, CreatePetProfile, Logout, VerifyEmail, Login, Forgot
     GetUserPets, RegisterClinic, ResendResetOtp, ResendVerificationCode, UpdatePetProfile, DeletePetProfile,
     AdminLogin, VerifyAdmin, GetPendingClinics,  UpdateClinicVerificationStatus, GetClinicDetails, GetRegisteredUsers,
     GetClinicsByCity, RegisterProvider, GetVetsAndGroomersByClinic, GetProviderDetails, UpdateProviderVerificationStatus,
-    GetRegisteredStaffByClinic, GetPendingSitters, GetSitterDetails } from '../controllers/Auth.js';
+    GetRegisteredStaffByClinic, GetPendingSitters, GetSitterDetails, UpdateSitterVerificationStatus } from '../controllers/Auth.js';
 
 const AuthRoutes = express.Router();
 
@@ -45,6 +45,7 @@ AuthRoutes.get('/admin/verify', VerifyAdmin);
 AuthRoutes.get('/admin/pending-clinics', GetPendingClinics);
 AuthRoutes.get('/admin/pending-sitters', GetPendingSitters);
 AuthRoutes.post('/admin/update-clinic-status', UpdateClinicVerificationStatus);
+AuthRoutes.post('/admin/update-sitter-status', UpdateSitterVerificationStatus);
 AuthRoutes.get("/admin/clinic-details/:clinicName", GetClinicDetails);
 AuthRoutes.get("/admin/sitter-details/:sitterId", GetSitterDetails);
 AuthRoutes.get("/admin/users", GetRegisteredUsers);

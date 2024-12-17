@@ -24,7 +24,7 @@ const ClinicSidePanel = ({ activeSection, handleSectionChange, isSidePanelOpen, 
       <button
         onClick={() => handleNavigation("dashboard")}
         className={`p-2 text-left rounded hover:bg-gray-500 hover:text-orange-300 transition ${
-          activeSection === "dashboard" ? "bg-gray-700" : ""
+          activeSection === "dashboard" ? "bg-gray-500" : ""
         }`}
       >
         Dashboard
@@ -32,7 +32,7 @@ const ClinicSidePanel = ({ activeSection, handleSectionChange, isSidePanelOpen, 
       <button
         onClick={() => handleNavigation("requests")}
         className={`p-2 text-left rounded hover:bg-gray-500 hover:text-orange-300 transition ${
-          activeSection === "requests" ? "bg-gray-700" : ""
+          activeSection === "requests" ? "bg-gray-500" : ""
         }`}
       >
         Pending Requests
@@ -40,7 +40,7 @@ const ClinicSidePanel = ({ activeSection, handleSectionChange, isSidePanelOpen, 
       <button
         onClick={() => handleNavigation("staff")}
         className={`p-2 text-left rounded hover:bg-gray-500 hover:text-orange-300 transition ${
-          activeSection === "staff" ? "bg-gray-700" : ""
+          activeSection === "staff" ? "bg-gray-500" : ""
         }`}
       >
         Registered Staff
@@ -48,7 +48,7 @@ const ClinicSidePanel = ({ activeSection, handleSectionChange, isSidePanelOpen, 
       <button
         onClick={() => handleNavigation("settings")}
         className={`p-2 text-left rounded hover:bg-gray-500 hover:text-orange-300 transition ${
-          activeSection === "settings" ? "bg-gray-700" : ""
+          activeSection === "settings" ? "bg-gray-500" : ""
         }`}
       >
         Settings

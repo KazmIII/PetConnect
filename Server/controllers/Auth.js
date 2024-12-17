@@ -236,7 +236,6 @@ export const GetProviderDetails = async (req, res) => {
   }
 };
 
-
 export const GetSitterDetails = async (req, res) => {
   console.log("In sitter detail route");
   try {
@@ -256,7 +255,6 @@ export const GetSitterDetails = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 
 export const AdminLogin = async (req, res) => {
   console.log("in admin login route");
@@ -822,7 +820,6 @@ export const GetRegisteredStaffByClinic = async (req, res) => {
   }
 };
 
-
 // Update Clinic Verfication Status
 export const UpdateClinicVerificationStatus = async (req, res) => {
   try {
@@ -879,6 +876,33 @@ export const UpdateProviderVerificationStatus = async (req, res) => {
   }
 };
 
+// Update Sitter Verfication Status
+export const UpdateSitterVerificationStatus = async (req, res) => {
+  try {
+    const { sitterId, status } = req.body; 
+
+    // Validate inputs
+    if (!sitterId || !['verified', 'rejected'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid data provided.' });
+    }
+
+    const sitter = await SitterModel.findById(sitterId);
+    if (!sitter) {
+      return res.status(404).json({ success: false, message: `Sitter not found.` });
+    }
+
+    sitter.verificationStatus = status;
+    await sitter.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Sitter ${status === 'verified' ? 'approved' : 'rejected'} successfully.`,
+    });
+  } catch (error) {
+    console.error('Error updating verification status:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
 
 // Verify Email Function
 export const VerifyEmail = async (req, res) => {
