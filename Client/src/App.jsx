@@ -1,0 +1,180 @@
+// App.js
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation} from 'react-router-dom';
+import { NavbarProvider, useNavbar } from "./components/NavbarContext";
+import Home from "./components/Home";
+import MyPets from "./components/MyPets";
+import Navbar from "./components/Navbar";
+import Login from './components/Login';
+import UserRegister from './components/UserRegister';
+import ProviderRegister from './components/ProviderRegister';
+import ForgotPassword from './components/ForgotPassword';
+import ResetPassword from './components/ResetPassword';
+import VerifyOTP from './components/VerifyOTP';
+import ClinicRegister from './components/ClinicRegister';
+import MemoryBooks from './components/MemoryBooks';
+import CreateMemoryBookForm from './components/CreateMemoryBookForm';
+import AddMemory from './components/AddMemory';
+import MemoryList from './components/MemoryList';
+import MemoryDetail from './components/MemoryDetail';
+import EmotionPrediction from './components/EmotionPrediction';
+import { ToastContainer } from 'react-toastify';
+import AdminLogin from './components/AdminLogin';
+import AdminDashboard from './components/AdminDashboard';
+import ProtectedRoute1 from './components/ProtectedRoute';
+import InfoModal from './components/InfoModal';
+import Footer from './components/Footer';
+import ClinicDashboard from './components/ClinicDashboard';
+
+const Modal = () => {
+  const { activeComponent, userRole, checkLoginStatus, handleHideComponents, otpType, otpCode, userEmail, role, handleShowComponent } = useNavbar();
+  const [showModal, setShowModal] = useState(false);
+
+  return (
+    activeComponent && (
+      <div className="fixed inset-0 bg-black bg-opacity-20 z-50 flex items-center justify-center">
+        <div className="bg-white rounded-lg shadow-lg w-full max-w-xs sm:max-w-sm md:max-w-sm lg:max-w-md px-4 sm:px-6 pt-4 sm:pt-6 relative">
+          {/* Dynamically Render Active Component */}
+          {activeComponent === 'login' && (
+            <Login
+              notVerified = {(email) => handleShowComponent('verifyOTP', 'email', email)}
+              onRegisterClick={() => handleShowComponent('userRegister')}
+              onUserRegisterClick={() => handleShowComponent('userRegister')}
+              onForgotPasswordClick={() => handleShowComponent('forgotPassword')}
+              onLoginSuccessful={() => {
+                checkLoginStatus();  // Check login status after successful login
+                handleHideComponents();
+              }}
+              onClose={handleHideComponents}
+            />
+          )}
+          {activeComponent === 'userRegister' && (
+            <UserRegister
+              onRegisterSuccess={(email) =>
+                handleShowComponent('verifyOTP', 'email', email, '', 'pet_owner')
+              }
+              onClose={handleHideComponents}
+            />
+          )}
+          {activeComponent === 'clinicRegister' && (
+            <ClinicRegister
+              onRegisterSuccess={(email) =>
+                handleShowComponent('verifyOTP', 'email', email, '', 'clinic')
+              }
+              onClose={handleHideComponents}
+            />
+          )}
+          {activeComponent === 'providerRegister' && (
+            <ProviderRegister 
+              onRegisterSuccess={(email, role) =>
+                handleShowComponent('verifyOTP', 'email', email, '', role)
+              }
+              onClose={handleHideComponents} />
+          )}
+          {activeComponent === 'verifyOTP' && (
+            <VerifyOTP
+              type={otpType}
+              email={userEmail}
+              role={role}
+              onOTPSuccess={(otp) => {
+                if (otpType === 'reset') {
+                  handleShowComponent('resetPassword', '', '', otp, role);
+                } else if (otpType === 'email') {
+                  if (role === 'clinic' || role === 'Veterinarian' || role === 'Pet Groomer' || role === 'Pet Sitter') {
+                    handleHideComponents();
+                    setShowModal(true); // Show modal for clinics or providers
+                  } else {
+                    handleShowComponent('login'); // Redirect to login for other roles
+                  }
+                }
+              }}
+              onClose={handleHideComponents}
+            />
+          )}
+
+          {activeComponent === 'forgotPassword' && (
+            <ForgotPassword
+              notVerified={(email) => handleShowComponent('verifyOTP', 'email', email)}
+              onMailSuccess={(email, role) => handleShowComponent('verifyOTP', 'reset', email, '', role)}
+              onClose={handleHideComponents}
+            />
+          )}
+          {activeComponent === 'resetPassword' && (
+            <ResetPassword
+              otp={otpCode}
+              onResetSuccessful={() => handleShowComponent('login')}
+              onClose={handleHideComponents}
+            />
+          )}
+          {showModal && (
+            <InfoModal
+              title="Verification Successful"
+              message="Thank you for verifying your email. Your account will be reviewed, and you will be notified once it's approved."
+              onClose={() => setShowModal(false)}
+            />
+          )}
+        </div>
+      </div>
+    )
+  );
+};
+
+// Protected Route Component
+const ProtectedRoute = ({ children, requiredRole }) => {
+  const { isLoggedIn, userRole  } = useNavbar();
+  if (isLoggedIn === null || userRole === null) {
+    return null;
+  }
+
+  if (isLoggedIn && (!requiredRole || userRole === requiredRole)) {
+    return children;
+  }
+  return <Navigate to="/" />;
+};
+
+const AppContent = () => {
+  const location = useLocation();
+
+  const isAdminRoute = location.pathname.startsWith("/admin");
+  const isClinicRoute = location.pathname.startsWith("/clinic");
+
+  return (
+    <>
+      {/* Conditionally render Navbar */}
+      {!isAdminRoute && !isClinicRoute && <Navbar />}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/myPets" element={<ProtectedRoute requiredRole="pet_owner"> <MyPets /> </ProtectedRoute>} />
+
+        <Route path="/clinic/*" element={<ProtectedRoute requiredRole="clinic"><ClinicDashboard /></ProtectedRoute>} />
+
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/*" element={<ProtectedRoute1 component={AdminDashboard} />} />
+
+        <Route path="/memory-books/:petId" element={<ProtectedRoute requiredRole="pet_owner"><MemoryBooks /> </ProtectedRoute>} />
+        <Route path="/memory-books/create/:petId" element={<ProtectedRoute requiredRole="pet_owner"><CreateMemoryBookForm /> </ProtectedRoute>} />
+        <Route path="/memory-books/:petId/:bookId/memory-list" element={<ProtectedRoute requiredRole="pet_owner"><MemoryList /> </ProtectedRoute>} />
+        <Route path="/memory-books/:petId/:bookId/memories" element={<ProtectedRoute requiredRole="pet_owner"><AddMemory /> </ProtectedRoute>} />
+        <Route path="/memory-books/:petId/:bookId/memories/:memoryId" element={<ProtectedRoute requiredRole="pet_owner"><MemoryDetail /> </ProtectedRoute>} />
+
+        <Route path="/predict-emotion" element={<EmotionPrediction />} />
+      </Routes>
+      {/* Render modal globally */}
+      <Modal />
+      <ToastContainer />
+      {!isAdminRoute && !isClinicRoute && <Footer />}
+    </>
+  );
+};
+
+export const App = () => {
+  return (
+    <NavbarProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </NavbarProvider>
+  );
+};
+
+export default App;
