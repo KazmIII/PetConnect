@@ -60,12 +60,12 @@ export const ClinicDetails = () => {
         ) : (
           <>
             <h2 className="text-xl md:text-3xl font-bold text-orange-800 mb-6">
-              Clinic: {clinicDetails.clinicName}
+              Clinic Name: {clinicDetails.clinicName}
             </h2>
 
             {/* Clinic Information */}
             <div className="mb-8 pb-8 border-b border-gray-300">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">Clinic Information</h3>
+              <h3 className="text-xl font-semibold text-teal-800 mb-4">Clinic Information</h3>
               <p className="text-gray-700 mb-3">
                 <strong>Email:</strong> {clinicDetails.email}
               </p>
@@ -93,7 +93,7 @@ export const ClinicDetails = () => {
             </div>
 
             {/* Uploaded Documents */}
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Uploaded Documents</h3>
+            <h3 className="text-xl font-semibold text-teal-800 mb-4">Uploaded Documents</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8  hide-scrollbar">
               {[
                 { key: "clinicRegistrationFile", label: "Clinic Registration" },
