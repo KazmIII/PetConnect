@@ -8,6 +8,7 @@ import { ClinicDetails } from "./ClinicDetails";
 import SitterDetails from "./SitterDetails";
 import AdminNavbar from "./AdminNavbar";
 import AdminSidePanel from "./AdminSidePanel";
+import RegisteredStaff from './RegisteredStaff';
 
 const AdminDashboard = () => {
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(true);
@@ -80,10 +81,11 @@ const AdminDashboard = () => {
             <Route path="/requests/clinic" element={<PendingClinicRequests />} />
             <Route path="/requests/clinic/:clinicName" element={<ClinicDetails />} />
             <Route path="/requests/sitter" element={<PendingSitterRequests />} />
-            <Route path="/requests/sitter/:sitterId" element={<SitterDetails />} />
+            <Route path="/service-providers/sitter/:sitterId" element={<SitterDetails />} />
+<Route path="/requests/sitter/:sitterId" element={<SitterDetails />} />
+
             <Route path="/users" element={<RegisteredUsers />} />
-            {/* <Route path="/reports" element={<Reports />} />
-            <Route path="/settings" element={<Settings />} /> */}
+            <Route path="/service-providers" element={<RegisteredStaff />} />
           </Routes>
         </div>
       </div>

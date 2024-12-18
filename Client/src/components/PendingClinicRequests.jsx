@@ -63,7 +63,7 @@ export const PendingClinicRequests = () => {
           <tbody>
             {isLoading ? (
               <tr>
-                <td className="flex justify-center text-center p-4">
+                <td colSpan="4">
                   <Spinner /> 
                 </td>
               </tr>

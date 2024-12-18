@@ -2,11 +2,20 @@ import express from 'express';
 import cookieJwtAuth from '../middleware/GenerateToken.js';
 import { uploadSingle, UploadMultiple } from '../middleware/MulterConfig.js';
 import verifyEmailDomain from '../middleware/VerifyEmailDomain.js';
-import { Profile, Register, CreatePetProfile, Logout, VerifyEmail, Login, ForgotPassword, ResetPassword,
-    GetUserPets, RegisterClinic, ResendResetOtp, ResendVerificationCode, UpdatePetProfile, DeletePetProfile,
-    AdminLogin, VerifyAdmin, GetPendingClinics,  UpdateClinicVerificationStatus, GetClinicDetails, GetRegisteredUsers,
-    GetClinicsByCity, RegisterProvider, GetVetsAndGroomersByClinic, GetProviderDetails, UpdateProviderVerificationStatus,
-    GetRegisteredStaffByClinic, GetPendingSitters, GetSitterDetails, UpdateSitterVerificationStatus } from '../controllers/Auth.js';
+
+import {AdminLogin, VerifyAdmin, GetPendingClinics,  UpdateClinicVerificationStatus, GetClinicDetails, GetRegisteredUsers,
+  GetPendingSitters, GetSitterDetails, UpdateSitterVerificationStatus, GetRegisteredVets, GetRegisteredGroomers, GetRegisteredSitters
+} from '../controllers/AdminRoutes.js';
+
+import { Profile, Register, Logout, VerifyEmail, Login, ForgotPassword, ResetPassword,
+  RegisterClinic, ResendResetOtp, ResendVerificationCode, RegisterProvider
+} from '../controllers/AccountRoutes.js';
+
+import { CreatePetProfile, GetUserPets, UpdatePetProfile, DeletePetProfile
+} from '../controllers/UserRoutes.js';
+
+import { GetClinicsByCity, GetVetsAndGroomersByClinic, GetProviderDetails, UpdateProviderVerificationStatus, GetRegisteredStaffByClinic
+} from '../controllers/ClinicRoutes.js'
 
 const AuthRoutes = express.Router();
 
@@ -17,12 +26,13 @@ AuthRoutes.post('/forgot-password', ForgotPassword);
 AuthRoutes.post('/reset-password', ResetPassword);
 AuthRoutes.post('/resendVerificationCode', ResendVerificationCode);
 AuthRoutes.post('/resendResetOtp', ResendResetOtp);
+AuthRoutes.post('/logout', Logout);
+AuthRoutes.get('/profile', cookieJwtAuth, Profile);
+
 AuthRoutes.post('/create-pet', uploadSingle, CreatePetProfile);
 AuthRoutes.get('/get-user-pets', GetUserPets);
 AuthRoutes.put("/update-pet/:petId", uploadSingle, UpdatePetProfile);
 AuthRoutes.delete('/pets/:petId', DeletePetProfile);
-AuthRoutes.post('/logout', Logout);
-AuthRoutes.get('/profile', cookieJwtAuth, Profile);
 
 AuthRoutes.get('/clinics/:city', GetClinicsByCity);
 AuthRoutes.get('/clinic/vets-groomers', GetVetsAndGroomersByClinic);
@@ -49,6 +59,9 @@ AuthRoutes.post('/admin/update-sitter-status', UpdateSitterVerificationStatus);
 AuthRoutes.get("/admin/clinic-details/:clinicName", GetClinicDetails);
 AuthRoutes.get("/admin/sitter-details/:sitterId", GetSitterDetails);
 AuthRoutes.get("/admin/users", GetRegisteredUsers);
+AuthRoutes.get("/admin/get-vets", GetRegisteredVets);
+AuthRoutes.get("/admin/get-groomers", GetRegisteredGroomers);
+AuthRoutes.get("/admin/get-sitters", GetRegisteredSitters);
 
 
 const clinicUploadFields = [
