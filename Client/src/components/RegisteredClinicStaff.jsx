@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { Phone, User, Mail, MapPin } from "lucide-react";
 import Spinner from "./Spinner";
 
@@ -7,6 +8,7 @@ const RegisteredClinicStaff = () => {
   const [vets, setVets] = useState([]);
   const [groomers, setGroomers] = useState([]);
   const [isLoading, setIsLoading] = useState(true); // New state for loading
+  const navigate = useNavigate();
 
   // Fetch vets and groomers data for a specific clinic
   useEffect(() => {
@@ -29,6 +31,14 @@ const RegisteredClinicStaff = () => {
 
     fetchClinicStaff();
   }, []);
+
+  const handleGroomerClick = (userId) => {
+    navigate(`/clinic/staff/groomer/${userId}`);
+  };
+
+  const handleVetClick = (userId) => {
+    navigate(`/clinic/staff/vet/${userId}`);
+  };
 
   return (
     <div className="overflow-auto p-4 max-w-4xl mx-auto">
@@ -58,7 +68,7 @@ const RegisteredClinicStaff = () => {
                 </thead>
                 <tbody>
                   {vets.map((vet) => (
-                    <tr key={vet._id} className="hover:bg-gray-50">
+                    <tr key={vet._id} onClick={() => handleVetClick(vet._id)} className="hover:bg-gray-50 cursor-pointer">
                       <td className="border border-gray-200 px-4 py-2">
                         <div className="flex items-center">
                           <User className="mr-2 text-teal-600" />
@@ -117,7 +127,7 @@ const RegisteredClinicStaff = () => {
                 </thead>
                 <tbody>
                   {groomers.map((groomer) => (
-                    <tr key={groomer._id} className="hover:bg-gray-50">
+                    <tr key={groomer._id} onClick={() => handleGroomerClick(groomer._id)} className="hover:bg-gray-50 cursor-pointer">
                       <td className="border border-gray-200 px-4 py-2">
                         <div className="flex items-center">
                           <User className="mr-2 text-teal-600" />

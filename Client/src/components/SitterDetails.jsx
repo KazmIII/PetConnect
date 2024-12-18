@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
 import axios from "axios";
 import Spinner from "./Spinner";
 
 const SitterDetails = () => {
   const { sitterId } = useParams(); 
-  console.log("Sitter ID:", sitterId);
   const [sitterDetails, setSitterDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fileURL, setFileURL] = useState(null); 
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const fetchSitterDetails = async () => {
@@ -57,16 +59,21 @@ const SitterDetails = () => {
       if (fileURL) URL.revokeObjectURL(fileURL);
     };
   }, [sitterDetails]);
+
+  const handleBack = () => {
+    // Navigate back dynamically based on state or fallback to browser history
+    if (location.state?.from) {
+      navigate(location.state.from); // Navigate to the specific previous route
+    } else {
+      navigate(-1); // Fallback to browser history if no state is available
+    }
+  };
   
-  
-
-  if (loading) return <div className="text-center text-gray-500">Loading...</div>;
-
-  if (!sitterDetails)
-    return <div className="text-center text-red-500">Provider not found</div>;
-
   return (
     <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg shadow-gray-400 p-8">
+      <button className='flex flex-row items-center mb-2 font-semibold hover:underline'onClick={handleBack}> 
+        <ChevronLeft className="w-5 h-5"/> Back
+      </button>
       {loading ? (
           <Spinner className="flex p-4 m-20 justify-center items-center" />
         ) : (

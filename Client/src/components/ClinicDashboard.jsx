@@ -1,24 +1,40 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import PendingProvidersRequests from "./PendingProvidersRequest";
 import ClinicNavbar from "./ClinicNavbar";
 import ClinicSidePanel from "./ClinicSidePanel";
-import ProviderDetails from './ProvidersDetails';
+import ProviderDetails from "./ProvidersDetails";
 import RegisteredClinicStaff from "./RegisteredClinicStaff";
 
 const ClinicDashboard = () => {
+  const location = useLocation();
+  const storedActiveSection = localStorage.getItem("activeSection");
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(true);
-  const [activeSection, setActiveSection] = useState("dashboard");
+  const [activeSection, setActiveSection] = useState(storedActiveSection);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef(null);
   const profileButtonRef = useRef(null);
 
-  const navigate = useNavigate();
-
   const toggleSidePanel = () => setIsSidePanelOpen((prev) => !prev);
   const toggleProfileDropdown = () => setIsProfileDropdownOpen((prev) => !prev);
 
-  const handleSectionChange = (section) => setActiveSection(section);
+  const handleSectionChange = (section) => {
+    setActiveSection(section);
+    localStorage.setItem("activeSection", section); // Store the active section in localStorage
+  };
+
+  // Synchronize `activeSection` with the URL
+  useEffect(() => {
+    const path = location.pathname;
+    if (path.startsWith("/clinic/requests")) {
+      setActiveSection("requests");
+    } else if (path.startsWith("/clinic/staff")) {
+      setActiveSection("staff");
+    } else {
+      setActiveSection("dashboard");
+    }
+    localStorage.setItem("activeSection", activeSection); // Update localStorage
+  }, [location.pathname]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -53,7 +69,7 @@ const ClinicDashboard = () => {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
-  
+
   return (
     <>
       <ClinicNavbar
@@ -64,20 +80,25 @@ const ClinicDashboard = () => {
         profileDropdownRef={profileDropdownRef}
         profileButtonRef={profileButtonRef}
       />
-      
+
       <div className="flex h-screen">
-        <ClinicSidePanel 
-          activeSection={activeSection} 
-          handleSectionChange={handleSectionChange} 
+        <ClinicSidePanel
+          activeSection={activeSection}
+          handleSectionChange={handleSectionChange}
           isSidePanelOpen={isSidePanelOpen}
           setIsSidePanelOpen={setIsSidePanelOpen}
         />
 
-        <div className={`transition-all duration-300 ${isSidePanelOpen ? "w-3/4" : "w-full"} bg-gray-100 overflow-auto hide-scrollbar`}>
+        <div
+          className={`transition-all duration-300 ${
+            isSidePanelOpen ? "w-3/4" : "w-full"
+          } bg-gray-100 overflow-auto hide-scrollbar`}
+        >
           <Routes>
             {/* <Route path="/dashboard" element={<Dashboard />} /> */}
             <Route path="/requests" element={<PendingProvidersRequests />} />
             <Route path="/requests/:role/:provider_id" element={<ProviderDetails />} />
+            <Route path="/staff/:role/:provider_id" element={<ProviderDetails />} />
             <Route path="/staff" element={<RegisteredClinicStaff />} />
           </Routes>
         </div>

@@ -46,6 +46,10 @@ const GroomerSchema = new mongoose.Schema({
         enum: ['pending', 'verified', 'rejected'],
         default: 'pending', 
     },
+    restricted: { 
+        type: Boolean, 
+        default: false, 
+    },
     resetPasswordToken:String,
     resetPasswordTokenExpiresAt:Date,
     verificationToken:String,

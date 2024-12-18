@@ -230,3 +230,40 @@ export const GetRegisteredSitters = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 }; 
+
+export const RestrictUser = async (req, res) => {
+  const { id } = req.params;
+  const { userType } = req.body;
+
+  try {
+    let model;
+    switch (userType) { 
+      case "vets":
+        model = VetModel;
+        break;
+      case "groomers":
+        model = GroomerModel;
+        break;
+      case "sitters":
+        model = SitterModel;
+        break;
+      case "user":
+        model = UserModel;
+    }
+
+    const user = await model.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.restricted = !user.restricted;
+    await user.save();
+
+    res.status(200).json({
+      message: `User restriction status updated successfully.`,
+    });
+  } catch (error) {
+    console.error("Error toggling restriction:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};

@@ -64,7 +64,12 @@ const Navbar = () => {
   const handleDashboardClick = () => {
     setIsProfileDropdownOpen(false);
     navigate('./clinic');
-  }
+  };
+
+  const handleProfileClick = () => {
+    setIsProfileDropdownOpen(false);
+    navigate('./profile');
+  };
   
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -247,7 +252,7 @@ const Navbar = () => {
                 <ul className="space-y-4">
                   <li className="flex items-center hover:text-orange-500">
                     <User className="w-5 h-5 mr-3 text-orange-500" />
-                    <button>Account Details</button>
+                    <button>Profile</button>
                   </li>
                   <li className="flex items-center hover:text-orange-500">
                     <PawPrint className="w-5 h-5 mr-3 text-orange-500" />
@@ -279,7 +284,7 @@ const Navbar = () => {
                 <ul className="space-y-4">
                   <li className="flex items-center hover:text-orange-500">
                     <User className="w-5 h-5 mr-3 text-orange-500" />
-                    <button>Account Details</button>
+                    <button onClick={handleProfileClick}>Profile</button>
                   </li>
                   <li className="flex items-center hover:text-orange-500">
                     <LayoutDashboard className="w-5 h-5 mr-3 text-orange-500" />

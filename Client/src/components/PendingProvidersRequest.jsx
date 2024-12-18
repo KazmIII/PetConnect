@@ -14,10 +14,12 @@ const PendingProvidersRequests = () => {
       const response = await axios.get("http://localhost:5000/auth/clinic/vets-groomers", {
         withCredentials: true,
       });
+      
 
       if (response.data.success) {
         setVets(response.data.vets);
         setGroomers(response.data.groomers);
+        console.log("response success", response.data.vets);
       } else {
         console.warn("No pending requests found:", response.data.message);
       }

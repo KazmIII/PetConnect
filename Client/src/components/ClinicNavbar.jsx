@@ -39,7 +39,7 @@ const ClinicNavbar = ({ toggleSidePanel, isSidePanelOpen, isProfileDropdownOpen,
               </li>
               <li className="flex items-center hover:text-orange-500">
                 <User className="w-5 h-5 mr-3 text-orange-500" />
-                <button>Account Details</button>
+                <button>Profile</button>
               </li>
               <li className="flex items-center hover:text-orange-500">
                 <CircleHelp className="w-5 h-5 mr-3 text-orange-500" />

@@ -25,6 +25,7 @@ import ProtectedRoute1 from './components/ProtectedRoute';
 import InfoModal from './components/InfoModal';
 import Footer from './components/Footer';
 import ClinicDashboard from './components/ClinicDashboard';
+import ClinicProfile from './components/ClinicProfile';
 import PetEmotion from './components/PetEmotion';
 
 const Modal = () => {
@@ -82,7 +83,6 @@ const Modal = () => {
                   handleShowComponent('resetPassword', '', '', otp, role);
                 } else if (otpType === 'email') {
                   if (role === 'clinic' || role === 'Veterinarian' || role === 'Pet Groomer' || role === 'Pet Sitter') {
-                    handleHideComponents();
                     setShowModal(true); // Show modal for clinics or providers
                   } else {
                     handleShowComponent('login'); // Redirect to login for other roles
@@ -109,9 +109,12 @@ const Modal = () => {
           )}
           {showModal && (
             <InfoModal
-              title="Verification Successful"
+              title="Registeration Successful"
               message="Thank you for verifying your email. Your account will be reviewed, and you will be notified once it's approved."
-              onClose={() => setShowModal(false)}
+              onClose={() => {
+                setShowModal(false);
+                handleHideComponents();
+              }}
             />
           )}
         </div>
@@ -148,6 +151,7 @@ const AppContent = () => {
         <Route path="/myPets" element={<ProtectedRoute requiredRole="pet_owner"> <MyPets /> </ProtectedRoute>} />
 
         <Route path="/clinic/*" element={<ProtectedRoute requiredRole="clinic"><ClinicDashboard /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute requiredRole="clinic"><ClinicProfile /></ProtectedRoute>} />
 
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/*" element={<ProtectedRoute1 component={AdminDashboard} />} />

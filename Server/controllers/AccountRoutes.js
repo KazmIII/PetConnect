@@ -551,7 +551,11 @@ export const Login = async (req, res) => {
 
     // Check if email is verified for all users
     if (!user.emailVerified) {
-      return res.status(403).json({ success: false, message: "Email not verified. Please verify your email." });
+      return res.status(403).json({ success: false, message: "email_not_verified" });
+    }
+
+    if (user.restricted) {
+      return res.status(403).json({ success: false, message: "account_restricted" });
     }
 
     // Check verificationStatus for 'clinic' and other providers

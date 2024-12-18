@@ -1,6 +1,5 @@
-// AdminDashboard.js
 import React, { useState, useEffect, useRef } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import RegisteredUsers from './RegisteredUsers';
 import { PendingClinicRequests } from "./PendingClinicRequests";
 import PendingSitterRequests from "./PendingSitterRequests";
@@ -9,18 +8,42 @@ import SitterDetails from "./SitterDetails";
 import AdminNavbar from "./AdminNavbar";
 import AdminSidePanel from "./AdminSidePanel";
 import RegisteredStaff from './RegisteredStaff';
+import ProviderDetails from "./ProvidersDetails";
 
 const AdminDashboard = () => {
+  // Retrieve the active section from localStorage, or default to 'dashboard'
+  const storedActiveSection = localStorage.getItem("activeSection");
+
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(true);
-  const [activeSection, setActiveSection] = useState("dashboard");
+  const [activeSection, setActiveSection] = useState(storedActiveSection);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef(null);
   const profileButtonRef = useRef(null);
+  const location = useLocation();
 
   const toggleSidePanel = () => setIsSidePanelOpen((prev) => !prev);
   const toggleProfileDropdown = () => setIsProfileDropdownOpen((prev) => !prev);
 
-  const handleSectionChange = (section) => setActiveSection(section);
+  const handleSectionChange = (section) => {
+    setActiveSection(section);
+    localStorage.setItem("activeSection", section); // Store the active section in localStorage
+  };
+
+  useEffect(() => {
+    const path = location.pathname;
+    if (path.startsWith("/admin/requests/clinic")) {
+      setActiveSection("requests/clinic");
+    } else if (path.startsWith("/admin/requests/sitter")) {
+      setActiveSection("requests/sitter");
+    } else if (path.startsWith("/admin/users")) {
+      setActiveSection("users");
+    } else if (path.startsWith("/admin/service-providers")) {
+      setActiveSection("service-providers");
+    } else {
+      setActiveSection("dashboard");
+    }
+    localStorage.setItem("activeSection", activeSection); // Update localStorage
+  }, [location.pathname]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -77,13 +100,12 @@ const AdminDashboard = () => {
 
         <div className={`transition-all duration-300 ${isSidePanelOpen ? "w-3/4" : "w-full"} bg-gray-100 overflow-auto hide-scrollbar`}>
           <Routes>
-            {/* <Route path="/dashboard" element={<Dashboard />} /> */}
             <Route path="/requests/clinic" element={<PendingClinicRequests />} />
             <Route path="/requests/clinic/:clinicName" element={<ClinicDetails />} />
             <Route path="/requests/sitter" element={<PendingSitterRequests />} />
             <Route path="/service-providers/sitter/:sitterId" element={<SitterDetails />} />
-<Route path="/requests/sitter/:sitterId" element={<SitterDetails />} />
-
+            <Route path="/service-providers/:role/:provider_id" element={<ProviderDetails />} />
+            <Route path="/requests/sitter/:sitterId" element={<SitterDetails />} />
             <Route path="/users" element={<RegisteredUsers />} />
             <Route path="/service-providers" element={<RegisteredStaff />} />
           </Routes>
