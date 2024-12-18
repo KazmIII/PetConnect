@@ -327,12 +327,6 @@ const MyPets = () => {
                     {`${selectedPet.name.charAt(0).toUpperCase()}${selectedPet.name.slice(1)}'s Memory Books`}
                   </button>
                   <button
-                    onClick={() => handleEmotionTrendsButtonClick(selectedPet.name)}
-                    className="px-6 py-2 font-semibold bg-gradient-to-r from-orange-400 to-orange-700 text-white rounded-lg hover:from-orange-500 hover:to-orange-800 transition duration-200 shadow-md"
-                  >
-                    {`${selectedPet.name.charAt(0).toUpperCase()}${selectedPet.name.slice(1)}'s Emotional Trends`}
-                  </button>
-                  <button
                     onClick={() => handleEmotionTrendsButtonClick(selectedPet._id)}
                     className="px-6 py-2 font-semibold bg-gradient-to-r from-orange-400 to-orange-700 text-white rounded-lg hover:from-orange-500 hover:to-orange-800 transition duration-200 shadow-md"
                   >
