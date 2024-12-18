@@ -37,6 +37,13 @@ const petSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'MemoryBook',
     }],
+    emotions: [
+        {
+          emotion: { type: String, required: true },
+          confidence: { type: Array, required: true },
+          timestamp: { type: Date, default: Date.now },
+        },
+      ],
 }, { timestamps: true });
 
 export const PetModel=mongoose.model('Pet',petSchema);

@@ -25,6 +25,7 @@ import ProtectedRoute1 from './components/ProtectedRoute';
 import InfoModal from './components/InfoModal';
 import Footer from './components/Footer';
 import ClinicDashboard from './components/ClinicDashboard';
+import PetEmotion from './components/PetEmotion';
 
 const Modal = () => {
   const { activeComponent, userRole, checkLoginStatus, handleHideComponents, otpType, otpCode, userEmail, role, handleShowComponent } = useNavbar();
@@ -156,7 +157,7 @@ const AppContent = () => {
         <Route path="/memory-books/:petId/:bookId/memory-list" element={<ProtectedRoute requiredRole="pet_owner"><MemoryList /> </ProtectedRoute>} />
         <Route path="/memory-books/:petId/:bookId/memories" element={<ProtectedRoute requiredRole="pet_owner"><AddMemory /> </ProtectedRoute>} />
         <Route path="/memory-books/:petId/:bookId/memories/:memoryId" element={<ProtectedRoute requiredRole="pet_owner"><MemoryDetail /> </ProtectedRoute>} />
-
+        <Route path="/pet/:petName/emotions" element={<ProtectedRoute requiredRole="pet_owner"><PetEmotion /> </ProtectedRoute>} />
         <Route path="/predict-emotion" element={<EmotionPrediction />} />
       </Routes>
       {/* Render modal globally */}

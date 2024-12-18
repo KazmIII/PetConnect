@@ -133,6 +133,10 @@ const MyPets = () => {
     navigate(`/memory-books/${petId}`); // Send the petId as part of the URL
   };
 
+  const handleEmotionTrendsButtonClick = (petName) => {
+    navigate(`/pet/${petName}/emotions`); // Send the petId as part of the URL
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -315,12 +319,18 @@ const MyPets = () => {
             <div className="bg-white p-6 md:p-8 rounded-lg max-w-3xl mx-auto relative">
               <div className="flex flex-col">
                 {/* Memory Book Button */}
-                <div className="absolute top-2 md:top-4 right-2 md:right-4 z-10">
+                <div className="absolute top-2 md:top-4 space-y-3 md:space-y-0 space-x-4 right-4 z-10">
                   <button
                     onClick={() => handleMemoryButtonClick(selectedPet._id)}
                     className="px-6 py-2 font-semibold bg-gradient-to-r from-orange-400 to-orange-700 text-white rounded-lg hover:from-orange-500 hover:to-orange-800 transition duration-200 shadow-md"
                   >
-                    {`${selectedPet.name} Memory Books`}
+                    {`${selectedPet.name.charAt(0).toUpperCase()}${selectedPet.name.slice(1)}'s Memory Books`}
+                  </button>
+                  <button
+                    onClick={() => handleEmotionTrendsButtonClick(selectedPet.name)}
+                    className="px-6 py-2 font-semibold bg-gradient-to-r from-orange-400 to-orange-700 text-white rounded-lg hover:from-orange-500 hover:to-orange-800 transition duration-200 shadow-md"
+                  >
+                    {`${selectedPet.name.charAt(0).toUpperCase()}${selectedPet.name.slice(1)}'s Emotional Trends`}
                   </button>
                 </div>
                 

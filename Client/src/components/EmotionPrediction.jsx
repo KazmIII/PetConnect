@@ -1,6 +1,6 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
-import { Button, Typography, Paper } from "@mui/material";
+import { Button, Typography, Paper, MenuItem, Select, FormControl, InputLabel } from "@mui/material";
 import image1 from "../assets/image1.jpg";
 
 const EmotionPrediction = () => {
@@ -10,6 +10,8 @@ const EmotionPrediction = () => {
   const [predictionResult, setPredictionResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [petMessage, setPetMessage] = useState("");
+  const [pets, setPets] = useState([]);
+  const [selectedPet, setSelectedPet] = useState("");
 
   const allowedFileTypes = ["image/jpeg", "image/png", "image/jpg"];
 
@@ -23,6 +25,25 @@ const EmotionPrediction = () => {
 
   // Create ref for file input
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const fetchPets = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/auth/get-user-pets", {
+          withCredentials: true, // Ensure the cookie is sent
+        });
+        if (response.data.success) {
+          setPets(response.data.pets);
+        } else {
+          setErrorMessage(response.data.message);
+        }
+      } catch (error) {
+        setErrorMessage("Failed to fetch pets. Please try again.");
+      }
+    };
+
+    fetchPets(); // Call the function
+  }, []);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -48,12 +69,14 @@ const EmotionPrediction = () => {
 
     const formData = new FormData();
     formData.append("file", selectedFile);
+    formData.append("petId", selectedPet);
 
     try {
       setIsLoading(true);
       setPredictionResult(null);
       setPetMessage("");
 
+      // Step 1: Send file for prediction
       const response = await axios.post("http://127.0.0.1:8000/predict/", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -61,15 +84,21 @@ const EmotionPrediction = () => {
       });
 
       if (response.data.message) {
-        // Non-Pet Response
         setPetMessage(response.data.message);
       } else {
-        // Emotion Prediction Response
         setPredictionResult(response.data);
+
+        // Step 2: Send the predicted emotion to the backend for storage
+        await axios.post("http://localhost:5000/pets/store-prediction", {
+          petId: selectedPet,
+          emotion: response.data.emotion,
+          confidence: response.data.probabilities[0], // Assuming it's the probabilities array
+        });
+
+        setErrorMessage(""); // Clear any error
       }
     } catch (error) {
       if (error.response) {
-        // Check for specific status codes and display corresponding messages
         if (error.response.status === 500) {
           setErrorMessage("Prediction failed.");
         }
@@ -90,14 +119,39 @@ const EmotionPrediction = () => {
     >
       <Paper
         elevation={10}
-        className="p-8 bg-gradient-to-br text-white rounded-xl shadow-lg max-w-lg w-full"
+        className="p-8 bg-gradient-to-br bg-white rounded-lg border border-x-2 border-y-2 shadow-md max-w-lg w-full"
       >
-        <Typography variant="h3" className="text-center font-extrabold text-4xl mb-6 text-gradient">
+        <Typography
+          component="h1"
+          variant="h3"
+          className="!text-center !text-3xl !font-bold !text-orange-700 !mb-6"
+        >
           Pet Emotion Predictor
         </Typography>
+
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Pet Selection Dropdown */}
+          <FormControl fullWidth variant="outlined" className="mb-4">
+            <InputLabel id="pet-select-label" className="text-gray-600">
+              Select Pet
+            </InputLabel>
+            <Select
+              labelId="pet-select-label"
+              value={selectedPet}
+              onChange={(e) => setSelectedPet(e.target.value)}
+              label="Select Pet" // Important: Bind the label here to keep it in place
+              className="bg-white text-black border border-gray-300 rounded-lg focus:!outline-none focus:!ring-2 focus:!ring-teal-500"
+            >
+              {pets.map((pet) => (
+                <MenuItem key={pet._id} value={pet._id}>
+                  {pet.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
           <div>
-            <label htmlFor="file" className="block text-lg font-medium text-black">
+            <label htmlFor="file" className="block text-lg font-medium text-gray-600">
               Upload an Image
             </label>
             <input
@@ -116,10 +170,13 @@ const EmotionPrediction = () => {
               <button
                 onClick={() => {
                   setImagePreview(null); // Clear the image preview
-                  setSelectedFile(null); // Clear the selected file state
+                  setSelectedFile(null);
+                  setPredictionResult(null); // Clear the prediction result
+                  setErrorMessage(""); // Clear any error message
+                  setPetMessage(""); // Clear the selected file state
                   fileInputRef.current.value = ""; // Clear the file input value
                 }}
-                className="absolute -top-3 right-28 text-white bg-gray-900 rounded-full p-2 z-10 hover:bg-gray-700 focus:outline-none shadow-lg transition-all"
+                className="absolute -top-3 right-28 text-white bg-gray-600 rounded-full p-2 z-10 hover:bg-gray-900 focus:outline-none shadow-lg transition-all"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -151,7 +208,7 @@ const EmotionPrediction = () => {
             color="primary"
             fullWidth
             disabled={isLoading}
-            className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white font-extrabold py-2 px-4 rounded-lg focus:outline-none shadow-md"
+            className="bg-gradient-to-r from-teal-600 to-teal-800 hover:from-teal-500 hover:to-teal-700 text-white font-semibold rounded-lg hover:bg-gray-900 transition duration-200"
           >
             {isLoading ? (
               <span className="text-white">Processing...</span> // Ensures "Processing..." text is white
