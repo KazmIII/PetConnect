@@ -129,7 +129,10 @@ export default function ProviderRegister({onRegisterSuccess, onClose}) {
       }
     }  catch (error) {
       if (error.response) {
-        console.error('Error Response:', error.response.data); // Log the response from the server
+        // Extracting the message from the response object
+        const errorMsg = error.response.data.message || 'An unknown error occurred';
+        setErrorMessage(errorMsg); // Only set the string, not the entire object
+        console.error('Error Response:', error.response.data);
       }
     } finally {
       setLoading(false); // Set loading state to false after request is complete

@@ -41,17 +41,21 @@ const handleSubmit = async (e) => {
     if (error.response) {
       setErrorMessage(error.response.data.message || 'Invalid email or password');
       console.error('Login failed:', error.response.data);
-
+  
       // Check if the error is a 403 (email not verified)
       if (error.response.status === 403) {
-        notVerified(formData.email);
+        if (error.response.data.message === 'email_not_verified') {
+          notVerified(formData.email); // Trigger the email verification flow
+        } else if (error.response.data.message === 'account_restricted') {
+          setErrorMessage('Your account has been restricted. Please contact support.'); // Show account restricted message
+        }
       }
     } else {
       // Other errors (network, timeout, etc.)
       setErrorMessage('Something went wrong, try again later.');
       console.error('Error:', error.message);
     }
-  }
+  }  
 };
 
 

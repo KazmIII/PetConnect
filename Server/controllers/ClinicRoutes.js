@@ -10,7 +10,45 @@ import Memory from '../models/Memory.js';
 
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import sharp from 'sharp'; // For image processing
+
+export const GetClinicInfo = async (req, res) => {
+  try {
+    const token = req.cookies.clinicToken;
+    console.log("in get clinic info route the token is:", token);
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "No token provided, unauthorized",
+      });
+    }
+
+    // Decode the token to extract the clinic ID
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const clinicId = decoded.id; // Assuming clinicId is part of the token payload
+
+    if (!clinicId) {
+      return res.status(400).json({success: false, message: "Clinic ID is required",});
+    }
+
+    // Fetch the clinic information from the Clinic model
+    const clinic = await ClinicModel.findById(clinicId);
+
+    if (!clinic) {
+      return res.status(404).json({success: false, message: "Clinic not found",});
+    }
+
+    // Return the clinic data
+    return res.status(200).json({ success: true, clinic,});
+  } catch (error) {
+    console.error("Error fetching clinic info:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 
 export const GetClinicsByCity = async (req, res) => {
   console.log("in get clinic by city route");
@@ -67,8 +105,8 @@ export const GetRegisteredStaffByClinic = async (req, res) => {
     }
 
     // Fetch all registered vets and groomers for the specific clinic with "verified" status
-    const vets = await VetModel.find({ clinic: clinicId, verificationStatus: "verified" });
-    const groomers = await GroomerModel.find({ clinic: clinicId, verificationStatus: "verified" });
+    const vets = await VetModel.find({ clinicId, verificationStatus: "verified" });
+    const groomers = await GroomerModel.find({ clinicId, verificationStatus: "verified" });
 
     // If no verified vets or groomers found, return an empty response
     if (vets.length === 0 && groomers.length === 0) {
@@ -127,8 +165,6 @@ export const UpdateProviderVerificationStatus = async (req, res) => {
 export const GetVetsAndGroomersByClinic = async (req, res) => {
   try {
     const token = req.cookies.clinicToken;
-
-
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -148,8 +184,8 @@ export const GetVetsAndGroomersByClinic = async (req, res) => {
     }
 
     // Fetch all vets and groomers associated with the clinic and whose verificationStatus is 'pending'
-    const vets = await VetModel.find({ clinic: clinicId, verificationStatus: 'pending' });
-    const groomers = await GroomerModel.find({ clinic: clinicId, verificationStatus: 'pending' });
+    const vets = await VetModel.find({ clinicId, verificationStatus: 'pending' });
+    const groomers = await GroomerModel.find({ clinicId, verificationStatus: 'pending' });
 
     // Check if there are no pending vets or groomers and return an empty response instead of an error
     if (vets.length === 0 && groomers.length === 0) {

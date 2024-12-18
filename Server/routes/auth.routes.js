@@ -4,7 +4,8 @@ import { uploadSingle, UploadMultiple } from '../middleware/MulterConfig.js';
 import verifyEmailDomain from '../middleware/VerifyEmailDomain.js';
 
 import {AdminLogin, VerifyAdmin, GetPendingClinics,  UpdateClinicVerificationStatus, GetClinicDetails, GetRegisteredUsers,
-  GetPendingSitters, GetSitterDetails, UpdateSitterVerificationStatus, GetRegisteredVets, GetRegisteredGroomers, GetRegisteredSitters
+  GetPendingSitters, GetSitterDetails, UpdateSitterVerificationStatus, GetRegisteredVets, GetRegisteredGroomers, GetRegisteredSitters,
+  RestrictUser
 } from '../controllers/AdminRoutes.js';
 
 import { Profile, Register, Logout, VerifyEmail, Login, ForgotPassword, ResetPassword,
@@ -14,7 +15,8 @@ import { Profile, Register, Logout, VerifyEmail, Login, ForgotPassword, ResetPas
 import { CreatePetProfile, GetUserPets, UpdatePetProfile, DeletePetProfile
 } from '../controllers/UserRoutes.js';
 
-import { GetClinicsByCity, GetVetsAndGroomersByClinic, GetProviderDetails, UpdateProviderVerificationStatus, GetRegisteredStaffByClinic
+import { GetClinicsByCity, GetVetsAndGroomersByClinic, GetProviderDetails, UpdateProviderVerificationStatus, GetRegisteredStaffByClinic,
+  GetClinicInfo
 } from '../controllers/ClinicRoutes.js'
 
 const AuthRoutes = express.Router();
@@ -28,6 +30,8 @@ AuthRoutes.post('/resendVerificationCode', ResendVerificationCode);
 AuthRoutes.post('/resendResetOtp', ResendResetOtp);
 AuthRoutes.post('/logout', Logout);
 AuthRoutes.get('/profile', cookieJwtAuth, Profile);
+
+AuthRoutes.get('/clinic/profile', GetClinicInfo);
 
 AuthRoutes.post('/create-pet', uploadSingle, CreatePetProfile);
 AuthRoutes.get('/get-user-pets', GetUserPets);
@@ -62,6 +66,7 @@ AuthRoutes.get("/admin/users", GetRegisteredUsers);
 AuthRoutes.get("/admin/get-vets", GetRegisteredVets);
 AuthRoutes.get("/admin/get-groomers", GetRegisteredGroomers);
 AuthRoutes.get("/admin/get-sitters", GetRegisteredSitters);
+AuthRoutes.post("/admin/restrict-user/:id", RestrictUser);
 
 
 const clinicUploadFields = [

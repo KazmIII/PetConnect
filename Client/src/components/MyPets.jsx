@@ -315,17 +315,23 @@ const MyPets = () => {
             <div className="bg-white p-6 md:p-8 rounded-lg max-w-3xl mx-auto relative">
               <div className="flex flex-col">
                 {/* Memory Book Button */}
-                <div className="absolute top-2 md:top-4 right-2 md:right-4 z-10">
+                <div className="absolute top-2 md:top-4 space-y-3 md:space-y-0 space-x-4 right-4 z-10">
                   <button
                     onClick={() => handleMemoryButtonClick(selectedPet._id)}
                     className="px-6 py-2 font-semibold bg-gradient-to-r from-orange-400 to-orange-700 text-white rounded-lg hover:from-orange-500 hover:to-orange-800 transition duration-200 shadow-md"
                   >
                     {`${selectedPet.name} Memory Books`}
                   </button>
+                  <button
+                    onClick={() => handleEmotionTrendsButtonClick(selectedPet._id)}
+                    className="px-6 py-2 font-semibold bg-gradient-to-r from-orange-400 to-orange-700 text-white rounded-lg hover:from-orange-500 hover:to-orange-800 transition duration-200 shadow-md"
+                  >
+                    {`${selectedPet.name}'s Emotional Trends`}
+                  </button>
                 </div>
                 
                 {/* Main Content */}
-                <div className="flex flex-row justify-between items-center space-y-6 sm:space-y-0 space-x-4 sm:space-x-6 mt-10"> {/* Add mt-20 to create space */}
+                <div className="flex flex-row justify-between items-center space-y-6 sm:space-y-0 space-x-4 sm:space-x-6 md:mt-10 mt-24"> {/* Add mt-20 to create space */}
                   {/* Pet Photo */}
                   <div className="relative mr-4 sm:mr-8">
                     <div className="w-28 h-28 md:w-36 md:h-36 rounded-full border overflow-hidden flex items-center justify-center bg-gray-100">
@@ -691,8 +697,8 @@ const MyPets = () => {
       </div>
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full relative">
-            <h3 className="text-2xl font-semibold text-red-600 mb-4 text-center mt-2">
+          <div className="bg-white rounded-lg shadow-xl px-2 py-3 md:p-6 max-w-sm md:max-w-md w-full">
+            <h3 className="text-xl md:text-2xl font-semibold text-red-600 mb-4 text-center">
               Confirm Deletion
             </h3>
             <p className="text-gray-700 text-center mb-6">

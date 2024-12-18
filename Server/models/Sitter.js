@@ -47,6 +47,10 @@ const SitterSchema = new mongoose.Schema({
         type:Boolean,
         default:false
     },
+    restricted: { 
+        type: Boolean, 
+        default: false, 
+    },
     resetPasswordToken:String,
     resetPasswordTokenExpiresAt:Date,
     verificationToken:String,

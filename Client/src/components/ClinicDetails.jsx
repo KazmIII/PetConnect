@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
 import axios from "axios";
 import Spinner from "./Spinner";
 
@@ -8,6 +9,7 @@ export const ClinicDetails = () => {
   const [clinicDetails, setClinicDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fileURLs, setFileURLs] = useState({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchClinicDetails = async () => {
@@ -53,8 +55,20 @@ export const ClinicDetails = () => {
     };
   }, [clinicDetails]);
 
+  const handleBack = () => {
+    // Navigate back dynamically based on state or fallback to browser history
+    if (location.state?.from) {
+      navigate(location.state.from); // Navigate to the specific previous route
+    } else {
+      navigate(-1); // Fallback to browser history if no state is available
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg shadow-gray-400 mt-5 p-8">
+      <button className='flex flex-row items-center mb-2 font-semibold hover:underline'onClick={handleBack}> 
+        <ChevronLeft className="w-5 h-5"/> Back
+      </button>
        {loading ? (
           <Spinner className="flex p-4 m-20 justify-center items-center" />
         ) : (

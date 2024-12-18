@@ -7,6 +7,9 @@ import Spinner from "./Spinner";
 const RegisteredStaff = () => {
   const [users, setUsers] = useState({ vets: [], groomers: [], sitters: [] });
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showRestrictConfirm, setShowRestrictConfirm] = useState(false);
+  const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,14 +36,44 @@ const RegisteredStaff = () => {
     fetchUsers();
   }, []);
 
-  const handleUserClick = (userId, title) => {
-    if(title === 'Sitters'){
-    navigate(`/admin/service-providers/sitter/${userId}`);
+  const handleRestrict = async () => {
+    try {
+      const response = await axios.post(
+        `http://localhost:5000/auth/admin/restrict/${selectedUser._id}`,
+        { userType: selectedUser.type }
+      );
+  
+      setMessage(response.data.message);
+  
+      setUsers((prevUsers) => ({
+        ...prevUsers,
+        [selectedUser.type]: prevUsers[selectedUser.type].map((user) =>
+          user._id === selectedUser._id ? { ...user, restricted: !user.restricted } : user
+        ),
+      }));
+  
+      setShowRestrictConfirm(false);
+    } catch (error) {
+      console.error("Error restricting user:", error);
+    }
+  };
+  
+  const handleRestrictClick = (user, userType) => {
+    setSelectedUser({ ...user, type: userType });
+    setShowRestrictConfirm(true);
+  };
+
+  const handleUserClick = (userId, userType) => {
+    if(userType === "sitters"){
+      navigate(`/admin/service-providers/sitter/${userId}`);
+    } else if(userType === "groomers"){
+      navigate(`/admin/service-providers/groomer/${userId}`);
+    } else{
+      navigate(`/admin/service-providers/vet/${userId}`);
     }
   };
 
-  // Function to render Table Section
-  const renderTableSection = (title, userList) => (
+  const renderTableSection = (title, userList, userType) => (
     <div className="mb-6">
       <h2 className="hidden md:block text-lg font-semibold text-orange-800">{title}</h2>
       <div className="hidden md:block">
@@ -63,8 +96,7 @@ const RegisteredStaff = () => {
               </tr>
             ) : (
               userList.map((user) => (
-                <tr key={user._id} className="hover:bg-gray-50 cursor-pointer"
-                onClick={() => handleUserClick(user._id, title)}>
+                <tr key={user._id} onClick={() => handleUserClick(user._id, userType)} className="hover:bg-gray-50 cursor-pointer">
                   <td className="border px-4 py-2">
                     <div className="inline-flex items-center">
                       <User className="mr-2 text-teal-600" /> {user.name}
@@ -85,14 +117,22 @@ const RegisteredStaff = () => {
                       <MapPin className="mr-2 text-red-600" /> {user.city}
                     </div>
                   </td>
-                  <td className="border px-4 py-2">
-                    <button className="text-teal-600 hover:underline">View</button>
+                  <td className="border border-gray-200 px-4 py-2">
+                    <button
+                      onClick={() => handleRestrictClick(user, userType)}
+                      className={`text-sm font-medium px-3 py-1 rounded ${
+                        user.restricted
+                         ? "bg-teal-600 text-white hover:bg-teal-700"
+                          : "bg-red-500 text-white hover:bg-red-600"
+                      }`}
+                    >
+                      {user.restricted ? "Unrestrict" : "Restrict"}
+                    </button>
                   </td>
                 </tr>
               ))
             )}
           </tbody>
-
         </table>
         {userList.length === 0 && !isLoading && (
           <p className="text-center text-gray-500 m-4">No {title} available.</p>
@@ -101,8 +141,7 @@ const RegisteredStaff = () => {
     </div>
   );
 
-  // Function to render Mobile View Section
-  const renderMobileSection = (title, userList) => (
+  const renderMobileSection = (title, userList, userType) => (
     <div>
       <h2 className="text-lg font-semibold text-orange-800 mt-4 mb-2">{title}</h2>
       {userList.map((user) => (
@@ -123,7 +162,16 @@ const RegisteredStaff = () => {
             <div className="font-bold text-teal-800">City:</div>
             <div>{user.city}</div>
           </div>
-          <button className="text-teal-600 hover:underline mt-2">View</button>
+          <button
+            onClick={() => handleRestrictClick(user, userType)}
+            className={`mt-2 text-sm font-medium px-3 py-1 rounded ${
+              user.restricted
+                ? "bg-teal-600 text-white hover:bg-teal-700"
+                : "bg-red-500 text-white hover:bg-red-600"
+            }`}
+          >
+            {user.restricted ? "Unrestrict" : "Restrict"}
+          </button>
         </div>
       ))}
     </div>
@@ -136,16 +184,49 @@ const RegisteredStaff = () => {
       </h1>
 
       {/* Table Sections */}
-      {renderTableSection("Vets", users.vets)}
-      {renderTableSection("Groomers", users.groomers)}
-      {renderTableSection("Sitters", users.sitters)}
+      {renderTableSection("Vets", users.vets, "vets")}
+      {renderTableSection("Groomers", users.groomers, "groomers")}
+      {renderTableSection("Sitters", users.sitters, "sitters")}
 
       {/* Mobile Sections */}
-      <div className="md:hidden">
-        {users.vets.length > 0 && renderMobileSection("Vets", users.vets)}
-        {users.groomers.length > 0 && renderMobileSection("Groomers", users.groomers)}
-        {users.sitters.length > 0 && renderMobileSection("Sitters", users.sitters)}
+      <div className="block md:hidden">
+        {renderMobileSection("Vets", users.vets, "vets")}
+        {renderMobileSection("Groomers", users.groomers, "groomers")}
+        {renderMobileSection("Sitters", users.sitters, "sitters")}
       </div>
+
+      {/* Restrict Confirmation Modal - Show on all screen sizes */}
+      {showRestrictConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg shadow-xl px-2 py-3 md:p-6 max-w-sm md:max-w-md w-full">
+            <h3 className="text-xl md:text-2xl font-semibold text-red-600 mb-4 text-center">Confirm Restriction</h3>
+            <p className="text-gray-700 text-center mb-6">
+              Are you sure you want to{" "}
+              <span className="font-semibold text-red-500">
+                {selectedUser.restricted ? "unrestrict" : "restrict"}
+              </span>{" "}
+              the account of {selectedUser.name}? This will{" "}
+              {selectedUser.restricted
+                ? "restore access to all services."
+                : "prevent the user from accessing services of your system."}
+            </p>
+            <div className="flex justify-around items-center">
+            <button
+                onClick={() => setShowRestrictConfirm(false)}
+                className="px-6 py-3 bg-gray-300 text-gray-700 font-medium rounded-lg shadow-md hover:bg-gray-400 transition duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRestrict}
+                className="px-6 py-3 bg-red-600 text-white font-medium rounded-lg shadow-md hover:bg-red-700 transition duration-200"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
