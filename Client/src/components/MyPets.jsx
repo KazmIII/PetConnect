@@ -332,12 +332,7 @@ const MyPets = () => {
                   >
                     {`${selectedPet.name.charAt(0).toUpperCase()}${selectedPet.name.slice(1)}'s Emotional Trends`}
                   </button>
-                  <button
-                    onClick={() => handleEmotionTrendsButtonClick(selectedPet._id)}
-                    className="px-6 py-2 font-semibold bg-gradient-to-r from-orange-400 to-orange-700 text-white rounded-lg hover:from-orange-500 hover:to-orange-800 transition duration-200 shadow-md"
-                  >
-                    {`${selectedPet.name}'s Emotional Trends`}
-                  </button>
+                  
                 </div>
                 
                 {/* Main Content */}

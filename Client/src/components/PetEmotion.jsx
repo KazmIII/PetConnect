@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import backgroundImage from "../assets/BgMemoryhd.jpg";
 
 const PetEmotions = () => {
   const { petName } = useParams(); // Get petName from the URL parameters
@@ -43,13 +44,21 @@ const PetEmotions = () => {
   }
 
   return (
+    <div className="min-h-screen bg-fixed"
+        style={{
+          backgroundImage: `url(${backgroundImage})`, // Adjust the path to your image
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}>
     <div className="p-6 max-w-4xl mx-auto">
-      <h2 className="text-3xl font-bold text-center mb-6  text-orange-700">
+      
+      <h2 className="text-3xl font-bold text-center mb-6 mt-14 text-orange-700">
       {`${petName.charAt(0).toUpperCase()}${petName.slice(1)}'s Emotional Trends`}
       </h2>
       {emotions.length > 0 ? (
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden border border-gray-300">
+          <table className="min-w-full overflow-hidden bg-gray-300 rounded-lg border  shadow-md">
             <thead className="bg-gray-200 text-gray-600 text-sm uppercase">
               <tr>
                 <th className="py-3 px-6 text-center border-r border-gray-300">
@@ -87,10 +96,11 @@ const PetEmotions = () => {
           </table>
         </div>
       ) : (
-        <p className="text-center text-gray-500">
+        <p className="mt-20 text-center text-gray-500">
           No emotions recorded for this pet.
         </p>
       )}
+    </div>
     </div>
   );
 };
