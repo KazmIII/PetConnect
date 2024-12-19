@@ -12,14 +12,22 @@ import { Profile, Register, Logout, VerifyEmail, Login, ForgotPassword, ResetPas
   RegisterClinic, ResendResetOtp, ResendVerificationCode, RegisterProvider
 } from '../controllers/AccountRoutes.js';
 
-import { CreatePetProfile, GetUserPets, UpdatePetProfile, DeletePetProfile
+import { CreatePetProfile, GetUserPets, UpdatePetProfile, DeletePetProfile, GetUserInfo, UpdateUserInfo, GetSitterInfo, UpdateSitterInfo
 } from '../controllers/UserRoutes.js';
 
 import { GetClinicsByCity, GetVetsAndGroomersByClinic, GetProviderDetails, UpdateProviderVerificationStatus, GetRegisteredStaffByClinic,
-  GetClinicInfo
-} from '../controllers/ClinicRoutes.js'
+  GetClinicInfo, UpdateClinicProfile
+} from '../controllers/ClinicRoutes.js';
+
+import {AddService, GetServicesByProvider, GetServiceDetails, DeleteService, UpdateService} from '../controllers/ProviderRoutes.js';
 
 const AuthRoutes = express.Router();
+
+AuthRoutes.post('/add-service', AddService);
+AuthRoutes.get('/get-services', GetServicesByProvider);
+AuthRoutes.get('/service/:serviceId', GetServiceDetails);
+AuthRoutes.delete("/delete-service/:serviceId", DeleteService);
+AuthRoutes.put("/edit-service/:serviceId", UpdateService);
 
 AuthRoutes.post('/register', verifyEmailDomain, Register);
 AuthRoutes.post('/verifyEmail', VerifyEmail);
@@ -31,7 +39,14 @@ AuthRoutes.post('/resendResetOtp', ResendResetOtp);
 AuthRoutes.post('/logout', Logout);
 AuthRoutes.get('/profile', cookieJwtAuth, Profile);
 
+AuthRoutes.get('/user/profile', GetUserInfo);
+AuthRoutes.put('/user/update-profile', verifyEmailDomain, UpdateUserInfo);
+AuthRoutes.get('/sitter/profile', GetSitterInfo);
+AuthRoutes.put('/sitter/update-profile', verifyEmailDomain, UpdateSitterInfo);
+
+
 AuthRoutes.get('/clinic/profile', GetClinicInfo);
+AuthRoutes.put('/clinic/update-profile', verifyEmailDomain, UpdateClinicProfile);
 
 AuthRoutes.post('/create-pet', uploadSingle, CreatePetProfile);
 AuthRoutes.get('/get-user-pets', GetUserPets);

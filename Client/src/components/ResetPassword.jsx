@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Eye, EyeOff } from "lucide-react";
 
-const ResetPassword = ({ otp, onResetSuccessful, onClose }) => {
+const ResetPassword = ({ otp, onResetSuccessful, onClose, role}) => {
   const [formData, setFormData] = useState({ password: '', confirmPassword: '' });
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -34,7 +34,7 @@ const ResetPassword = ({ otp, onResetSuccessful, onClose }) => {
     try {
 
       const response = await axios.post('http://localhost:5000/auth/reset-password',
-        { token: otp, newPassword: formData.password }
+        { token: otp, newPassword: formData.password, role }
       );
       if (response.data.success) {
         onResetSuccessful();

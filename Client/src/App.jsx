@@ -19,6 +19,7 @@ import MemoryList from './components/MemoryList';
 import MemoryDetail from './components/MemoryDetail';
 import EmotionPrediction from './components/EmotionPrediction';
 import { ToastContainer } from 'react-toastify';
+import SitterProfile from './components/SitterProfile';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
 import ProtectedRoute1 from './components/ProtectedRoute';
@@ -27,9 +28,13 @@ import Footer from './components/Footer';
 import ClinicDashboard from './components/ClinicDashboard';
 import ClinicProfile from './components/ClinicProfile';
 import PetEmotion from './components/PetEmotion';
+import UserProfile from './components/UserProfile';
+import AddService from './components/AddService';
+import Services from './components/Services';
+import EditService from './components/EditService';
 
 const Modal = () => {
-  const { activeComponent, userRole, checkLoginStatus, handleHideComponents, otpType, otpCode, userEmail, role, handleShowComponent } = useNavbar();
+  const { activeComponent, update, checkLoginStatus, handleHideComponents, otpType, otpCode, userEmail, role, handleShowComponent } = useNavbar();
   const [showModal, setShowModal] = useState(false);
 
   return (
@@ -78,11 +83,15 @@ const Modal = () => {
               type={otpType}
               email={userEmail}
               role={role}
+              update={update}
               onOTPSuccess={(otp) => {
                 if (otpType === 'reset') {
                   handleShowComponent('resetPassword', '', '', otp, role);
                 } else if (otpType === 'email') {
-                  if (role === 'clinic' || role === 'Veterinarian' || role === 'Pet Groomer' || role === 'Pet Sitter') {
+                  if(update){
+                    handleHideComponents();
+                  }
+                  else if (role === 'clinic' || role === 'Veterinarian' || role === 'Pet Groomer' || role === 'Pet Sitter') {
                     setShowModal(true); // Show modal for clinics or providers
                   } else {
                     handleShowComponent('login'); // Redirect to login for other roles
@@ -103,6 +112,7 @@ const Modal = () => {
           {activeComponent === 'resetPassword' && (
             <ResetPassword
               otp={otpCode}
+              role={role}
               onResetSuccessful={() => handleShowComponent('login')}
               onClose={handleHideComponents}
             />
@@ -137,6 +147,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 };
 
 const AppContent = () => {
+  const { userRole  } = useNavbar();
   const location = useLocation();
 
   const isAdminRoute = location.pathname.startsWith("/admin");
@@ -149,9 +160,18 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/myPets" element={<ProtectedRoute requiredRole="pet_owner"> <MyPets /> </ProtectedRoute>} />
+        <Route path="/profile/user" element={<ProtectedRoute requiredRole="pet_owner"> <UserProfile /> </ProtectedRoute>} />
+        <Route path="/profile/vet" element={<ProtectedRoute requiredRole="vet"> <UserProfile /> </ProtectedRoute>} />
+
+        <Route path="/profile/groomer" element={<ProtectedRoute requiredRole="groomer"> <UserProfile /> </ProtectedRoute>} />
+        <Route path="/add-service" element={<ProtectedRoute requiredRole={userRole}> <AddService /> </ProtectedRoute>} />
+        <Route path="/services" element={<ProtectedRoute requiredRole={userRole}> <Services /> </ProtectedRoute>} />
+        <Route path="/edit-service/:serviceId" element={<ProtectedRoute requiredRole={userRole}> <EditService /> </ProtectedRoute>} />
+
+        <Route path="/profile/sitter" element={<ProtectedRoute requiredRole="sitter"> <SitterProfile /> </ProtectedRoute>} />
 
         <Route path="/clinic/*" element={<ProtectedRoute requiredRole="clinic"><ClinicDashboard /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute requiredRole="clinic"><ClinicProfile /></ProtectedRoute>} />
+        <Route path="/profile/clinic" element={<ProtectedRoute requiredRole="clinic"><ClinicProfile /></ProtectedRoute>} />
 
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/*" element={<ProtectedRoute1 component={AdminDashboard} />} />

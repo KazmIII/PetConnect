@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const GroomerSchema = new mongoose.Schema({
     clinicId: { 
         type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Clinic',  // Reference to Clinic model
+        ref: 'Clinic', 
     },
     name: { 
         type: String, 
@@ -50,6 +50,12 @@ const GroomerSchema = new mongoose.Schema({
         type: Boolean, 
         default: false, 
     },
+    services: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'GroomerService', 
+        }
+    ],
     resetPasswordToken:String,
     resetPasswordTokenExpiresAt:Date,
     verificationToken:String,

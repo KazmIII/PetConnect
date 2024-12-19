@@ -38,8 +38,9 @@ const EmotionPrediction = () => {
           setErrorMessage(response.data.message);
         }
       } catch (error) {
-        setErrorMessage("Failed to fetch pets. Please try again.");
+        console.error("Failed to predict emotion", error);
       }
+
     };
 
     fetchPets(); // Call the function
@@ -48,17 +49,21 @@ const EmotionPrediction = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setPredictionResult(null); // Clear the prediction result immediately
+      setPetMessage(""); // Clear any previous pet message
+      setErrorMessage(""); // Clear any previous error message
+
       if (!allowedFileTypes.includes(file.type)) {
         setErrorMessage("Only JPG, JPEG, and PNG files are allowed.");
         setSelectedFile(null);
         setImagePreview(null); // Clear the preview if the file is invalid
       } else {
-        setErrorMessage("");
         setSelectedFile(file);
         setImagePreview(URL.createObjectURL(file)); // Generate image preview
       }
     }
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -69,7 +74,11 @@ const EmotionPrediction = () => {
 
     const formData = new FormData();
     formData.append("file", selectedFile);
-    formData.append("petId", selectedPet);
+
+    // Include the pet ID in the formData only if a pet is selected
+    if (selectedPet) {
+      formData.append("petId", selectedPet);
+    }
 
     try {
       setIsLoading(true);
@@ -88,12 +97,14 @@ const EmotionPrediction = () => {
       } else {
         setPredictionResult(response.data);
 
-        // Step 2: Send the predicted emotion to the backend for storage
-        await axios.post("http://localhost:5000/pets/store-prediction", {
-          petId: selectedPet,
-          emotion: response.data.emotion,
-          confidence: response.data.probabilities[0], // Assuming it's the probabilities array
-        });
+        // Step 2: Store the predicted emotion in the database only if a pet is selected
+        if (selectedPet) {
+          await axios.post("http://localhost:5000/pets/store-prediction", {
+            petId: selectedPet,
+            emotion: response.data.emotion,
+            confidence: response.data.probabilities[0], // Assuming it's the probabilities array
+          });
+        }
 
         setErrorMessage(""); // Clear any error
       }
@@ -109,6 +120,7 @@ const EmotionPrediction = () => {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div
@@ -142,6 +154,9 @@ const EmotionPrediction = () => {
               label="Select Pet" // Important: Bind the label here to keep it in place
               className="bg-white text-black border border-gray-300 rounded-lg focus:!outline-none focus:!ring-2 focus:!ring-teal-500"
             >
+              <MenuItem value="">
+                None
+              </MenuItem>
               {pets.map((pet) => (
                 <MenuItem key={pet._id} value={pet._id}>
                   {pet.name}

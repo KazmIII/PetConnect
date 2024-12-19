@@ -1,7 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 
-// Create a Context for Navbar state
 const NavbarContext = createContext();
 
 export const NavbarProvider = ({ children }) => {
@@ -12,6 +11,7 @@ export const NavbarProvider = ({ children }) => {
   const [otpCode, setOtpCode] = useState('');
   const [role, setRole] = useState('');
   const [userRole, setUserRole] = useState('');
+  const [update, setUpdate] = useState(false);
 
   const checkLoginStatus = async () => {
     try {
@@ -34,19 +34,19 @@ export const NavbarProvider = ({ children }) => {
       }
     }
   };
-
-  // Check login status on page load
   useEffect(() => {
     checkLoginStatus();
   }, []);
 
-  const handleShowComponent = (component, type = '', email = '', otpCode = '', role = '') => {
+  const handleShowComponent = (component, type = '', email = '', otpCode = '', role = '', update) => {
     console.log("Setting role:", role); // Debugging log
+    console.log("setting update to ", update);
     setActiveComponent(component);
     setOtpType(type); // Set OTP type if passed (for OTP components)
     setUserEmail(email); // Set user email if passed (for OTP components)
     setOtpCode(otpCode);
     setRole(role);
+    setUpdate(update);
   };
 
   const handleHideComponents = () => {
@@ -54,7 +54,7 @@ export const NavbarProvider = ({ children }) => {
   };
 
   return (
-    <NavbarContext.Provider value={{ isLoggedIn, userRole, setIsLoggedIn, activeComponent, checkLoginStatus, handleShowComponent, handleHideComponents, otpType, userEmail, otpCode, role }}>
+    <NavbarContext.Provider value={{ isLoggedIn, update, userRole, setIsLoggedIn, activeComponent, checkLoginStatus, handleShowComponent, handleHideComponents, otpType, userEmail, otpCode, role }}>
       {children}
     </NavbarContext.Provider>
   );

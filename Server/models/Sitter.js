@@ -51,6 +51,12 @@ const SitterSchema = new mongoose.Schema({
         type: Boolean, 
         default: false, 
     },
+    services: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'SitterService', 
+        }
+    ],
     resetPasswordToken:String,
     resetPasswordTokenExpiresAt:Date,
     verificationToken:String,

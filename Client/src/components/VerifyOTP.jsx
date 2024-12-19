@@ -87,8 +87,8 @@ const VerifyOTP = ({ onOTPSuccess, onClose, type = 'email', email, role}) => {
         endpoint = 'http://localhost:5000/auth/resendResetOtp';
       }
 
-      console.log('The email is:', email);
-      const response = await axios.post(endpoint, { email });
+      console.log('The email is:', email, 'the role is', role);
+      const response = await axios.post(endpoint, { email, role, });
       setMessageType('success');
       setMessage(response.data.message || 'OTP resent successfully!');
     } catch (error) {

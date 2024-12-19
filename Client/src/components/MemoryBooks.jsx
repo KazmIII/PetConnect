@@ -241,18 +241,6 @@ const MemoryBooks = () => {
         {!sharing ? (
           [
             <MenuItem
-              key="share"
-              onClick={() => {
-                handleShare();
-                handleMenuClose(); // Close menu
-              }}
-            >
-              <ListItemIcon>
-                <ShareIcon />
-              </ListItemIcon>
-              Share
-            </MenuItem>,
-            <MenuItem
               key="add-memory"
               onClick={() => {
                 handleAddMemory();

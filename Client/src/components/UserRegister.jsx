@@ -166,7 +166,7 @@ export default function UserRegister({ onRegisterSuccess, onClose }) {
 
                 <input 
                   type="submit" 
-                  value={isLoading ? "Signing Up..." : "Sign Up"} // Change text when loading
+                  value={isLoading ? "Signing Up..." : "Sign Up As Pet Owner"} // Change text when loading
                   className="w-full p-2 text-white font-medium bg-gradient-to-r from-teal-600 to-teal-800 hover:from-teal-500 hover:to-teal-700 rounded"
                   disabled={isLoading} // Disable the button while loading
                 />

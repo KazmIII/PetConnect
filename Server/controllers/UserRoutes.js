@@ -230,3 +230,313 @@ export const DeletePetProfile = async (req, res) => {
     });
   }
 };
+
+export const GetUserInfo = async (req, res) => {
+  console.log("Query received:", req.query);
+  const { userRole } = req.query;
+  console.log("Extracted userRole:", userRole);
+  try {
+    const tokenMappings = {
+      pet_owner: "pet_ownerToken",
+      vet: "vetToken",
+      groomer: "groomerToken",
+    };
+
+    const cookieName = tokenMappings[userRole];
+    if (!cookieName) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role provided",
+      });
+    }
+
+    const token = req.cookies[cookieName];
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "No token provided, unauthorized",
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+
+    if (!userId) {
+      return res.status(400).json({success: false, message: "User ID is required",});
+    }
+
+    const modelMappings = {
+      pet_owner: UserModel,
+      vet: VetModel,
+      groomer: GroomerModel,
+    };
+
+    const Model = modelMappings[userRole];
+    if (!Model) {
+      return res.status(400).json({ success: false, message: "Invalid role provided" });
+    }
+
+    const user = await Model.findById(userId);
+    if (!user) {
+      return res.status(404).json({success: false, message: "User not found",});
+    }
+
+    return res.status(200).json({ success: true, user,});
+  } catch (error) {
+    console.error("Error fetching User info:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const UpdateUserInfo = async (req, res) => {
+  console.log("Query received:", req.query);
+  console.log("Cookies received on server:", req.cookies);
+
+  const { userRole } = req.query;
+  console.log("Extracted userRole:", userRole);
+  try {
+    const tokenMappings = {
+      pet_owner: "pet_ownerToken",
+      vet: "vetToken",
+      groomer: "groomerToken",
+    };
+
+    const cookieName = tokenMappings[userRole];
+    if (!cookieName) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role provided",
+      });
+    }
+
+    const token = req.cookies[cookieName];
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "No token provided, unauthorized",
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+
+    if (!userId) {
+      return res.status(400).json({success: false, message: "User ID is required",});
+    }
+
+    const modelMappings = {
+      pet_owner: UserModel,
+      vet: VetModel,
+      groomer: GroomerModel,
+    };
+
+    const Model = modelMappings[userRole];
+    if (!Model) {
+      return res.status(400).json({ success: false, message: "Invalid role provided" });
+    }
+
+    const user = await Model.findById(userId);
+    console.log("userf ound:", user);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const { name, email, phone, password } = req.body;
+
+    if (email && email !== user.email) {
+      const existingUser = await Model.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: "Email is already in use. Please choose another one.",
+        });
+      }
+
+      const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+      const verificationTokenExpiresAt = Date.now() + 5 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000;
+
+      user.email = email;
+      user.emailVerified = false;
+      user.verificationToken = verificationToken;
+      user.verificationTokenExpiresAt = verificationTokenExpiresAt;
+
+      setImmediate(async () => {
+        try {
+          await sendVerificationEmail(user.email, verificationToken);
+        } catch (error) {
+          console.error("Error sending verification email:", error);
+        }
+      });
+    }
+    if (phone) {
+      user.phone = phone;
+    }
+    if(name){
+      user.name = name;
+    }
+    if (password) {
+      const hashedPassword = bcryptjs.hashSync(password, 10);
+      user.password = hashedPassword;
+    }
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "User profile updated successfully",
+      user,
+    });
+  } catch (error) {
+    console.error("Error updating user info:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const GetSitterInfo = async (req, res) => {
+  console.log("in sitter info get route");
+  try {
+    const token = req.cookies.sitterToken;
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "No token provided, unauthorized",
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const sitterId = decoded.id; 
+
+    if (!sitterId) {
+      return res.status(400).json({success: false, message: "Sitter ID is required",});
+    }
+    const sitter = await SitterModel.findById(sitterId);
+
+  console.log("in sitter info get route the sitter iss:", sitter);
+
+
+    if (!sitter) {
+      return res.status(404).json({success: false, message: "Sitter not found",});
+    }
+
+    // Return the clinic data
+    return res.status(200).json({ success: true, sitter,});
+  } catch (error) {
+    console.error("Error fetching clinic info:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const UpdateSitterInfo = async (req, res) => {
+  try {
+    const token = req.cookies.sitterToken;
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "No token provided, unauthorized",
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const sitterId = decoded.id;
+
+    if (!sitterId) {
+      return res.status(400).json({
+        success: false,
+        message: "Sitter ID is required",
+      });
+    }
+
+    const sitter = await SitterModel.findById(sitterId);
+
+    if (!sitter) {
+      return res.status(404).json({
+        success: false,
+        message: "Sitter not found",
+      });
+    }
+
+    const { name, email, phone, password, city, sitterAddress } = req.body;
+
+    // Handle `name` update
+    if (name && name !== sitter.name) {
+      sitter.name = name;
+    }
+
+    // Handle `email` update
+    if (email && email !== sitter.email) {
+      const existingSitter = await SitterModel.findOne({ email });
+      if (existingSitter) {
+        return res.status(400).json({
+          success: false,
+          message: "Email is already in use. Please choose another one.",
+        });
+      }
+
+      const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+      const verificationTokenExpiresAt = Date.now() + 5 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000; //1 Hour
+
+      sitter.email = email;
+      sitter.emailVerified = false;
+      sitter.verificationToken = verificationToken;
+      sitter.verificationTokenExpiresAt = verificationTokenExpiresAt;
+
+      // Send verification email asynchronously
+      setImmediate(async () => {
+        try {
+          await sendVerificationEmail(sitter.email, verificationToken);
+        } catch (error) {
+          console.error("Error sending verification email:", error);
+        }
+      });
+    }
+
+    // Handle `phone` update
+    if (phone && phone !== sitter.phone) {
+      sitter.phone = phone;
+    }
+
+    // Handle `password` update
+    if (password) {
+      const hashedPassword = bcryptjs.hashSync(password, 10);
+      sitter.password = hashedPassword;
+    }
+
+    // Handle `city` update
+    if (city && city !== sitter.city) {
+      sitter.city = city;
+    }
+
+    // Handle `sitterAddress` update
+    if (sitterAddress && sitterAddress !== sitter.sitterAddress) {
+      sitter.sitterAddress = sitterAddress;
+    }
+
+    // Save the updated sitter
+    await sitter.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Sitter profile updated successfully",
+      sitter,
+    });
+  } catch (error) {
+    console.error("Error updating sitter info:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};

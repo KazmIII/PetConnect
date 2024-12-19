@@ -235,7 +235,7 @@ export const RegisterClinic = async (req, res) => {
     const hashedPassword = bcryptjs.hashSync(password, 10);
     const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
 
-    const verificationTokenExpiresAt = Date.now() + 5 * 60 * 60 * 1000 + 24 * 60 * 60 * 1000;
+    const verificationTokenExpiresAt = Date.now() + 5 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000;
 
     // Extract file buffers from Multer request (since you're using memory storage)
     const clinicRegistrationFileBuffer = req.files['clinicRegistrationFile']?.[0]?.buffer;
@@ -247,11 +247,6 @@ export const RegisterClinic = async (req, res) => {
     if (!clinicRegistrationFileBuffer || !NICFileBuffer || !vetLicenseFileBuffer || !proofOfAddressFileBuffer) {
       return res.status(400).json({ success: false, message: 'All required files must be uploaded.' });
     }
-
-    // Optional: You can upload these buffers to a file storage service (e.g., AWS S3, Cloudinary) if needed.
-    // For example, if you're uploading to S3, you would get the file URL from the upload and store that in the database.
-
-    // Create the clinic registration document
     const clinic = new ClinicModel({
       clinicName,
       email,
@@ -302,9 +297,9 @@ export const VerifyEmail = async (req, res) => {
     const roleModelMap = {
       pet_owner: UserModel,
       clinic: ClinicModel,
-      Veterinarian: VetModel,
-      "Pet Groomer": GroomerModel,
-      "Pet Sitter": SitterModel,
+      vet: VetModel,
+      groomer: GroomerModel,
+      sitter: SitterModel,
     };
 
     // Get the model based on the role
@@ -368,13 +363,27 @@ export const VerifyEmail = async (req, res) => {
 // Forgot Password Function
 export const ForgotPassword = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, role } = req.body;
 
     if (!email) {
       return res.status(400).json({ success: false, message: "Email is required" });
     }
 
-    const user = await UserModel.findOne({ email });
+    // Define model mappings
+    const modelMappings = {
+      pet_owner: UserModel,
+      clinic: ClinicModel,
+      vet: VetModel,
+      groomer: GroomerModel,
+      sitter: SitterModel,
+    };
+
+    const Model = modelMappings[role];
+    if (!Model) {
+      return res.status(400).json({ success: false, message: "Invalid role provided" });
+    }
+
+    const user = await Model.findOne({ email });
 
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
@@ -406,22 +415,31 @@ export const ForgotPassword = async (req, res) => {
 
 // Reset Password Function
 export const ResetPassword = async (req, res) => {
-  console.log("in reset pass route the body is:", req.body);
   try {
-    const { token, newPassword } = req.body;
-  console.log("in reset pass route..token:", token, "newpass:", newPassword);
+    const { token, newPassword, role } = req.body;
 
     if (!token || !newPassword) {
       return res.status(400).json({ success: false, message: "Token and new password are required" });
     }
-    console.log("Current time (UTC):", Date.now());
-    const user = await UserModel.findOne({
+    const modelMappings = {
+      pet_owner: UserModel,
+      clinic: ClinicModel,
+      vet: VetModel,
+      groomer: GroomerModel,
+      sitter: SitterModel,
+    };
+
+    const Model = modelMappings[role];
+    if (!Model) {
+      return res.status(400).json({ success: false, message: "Invalid role provided" });
+    }
+
+    const user = await Model.findOne({
       resetPasswordToken: token,
-      resetPasswordTokenExpiresAt: { $gt: Date.now() },
+      resetPasswordTokenExpiresAt: { $gt: Date.now() }, 
     });
     
     console.log("User found:", user);
-
 
     if (!user) {
       return res.status(400).json({ success: false, message: "Invalid or expired reset token" });
@@ -441,14 +459,27 @@ export const ResetPassword = async (req, res) => {
 
 // Resend Verification Code Function
 export const ResendVerificationCode = async (req, res) => {
+  console.log("in resend verification route");
   try {
-    const { email } = req.body;
+    const { email, role } = req.body;
 
     if (!email) {
       return res.status(400).json({ success: false, message: "Email is required" });
     }
+    const modelMappings = {
+      pet_owner: UserModel,
+      clinic: ClinicModel,
+      vet: VetModel,
+      groomer: GroomerModel,
+      sitter: SitterModel,
+    };
 
-    const user = await UserModel.findOne({ email });
+    const Model = modelMappings[role];
+    if (!Model) {
+      return res.status(400).json({ success: false, message: "Invalid role provided" });
+    }
+
+    const user = await Model.findOne({ email });
 
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
@@ -459,9 +490,8 @@ export const ResendVerificationCode = async (req, res) => {
     }
     const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
     user.verficationToken = verificationToken;
-    user.verficationTokenExpiresAt = Date.now() + 24 * 60 * 60 * 1000; // Token valid for 24 hours
+    user.verficationTokenExpiresAt = Date.now() + 1 * 60 * 60 * 1000; // Token valid for 24 hours
 
-    // Save updated user with new token
     await user.save();
 
     await sendVerificationEmail(user.email, verificationToken);
@@ -479,13 +509,26 @@ export const ResendVerificationCode = async (req, res) => {
 // Resend Reset OTP Function
 export const ResendResetOtp = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, role} = req.body;
 
     if (!email) {
       return res.status(400).json({ success: false, message: "Email is required" });
     }
 
-    const user = await UserModel.findOne({ email });
+    const modelMappings = {
+      pet_owner: UserModel,
+      clinic: ClinicModel,
+      vet: VetModel,
+      groomer: GroomerModel,
+      sitter: SitterModel,
+    };
+
+    const Model = modelMappings[role];
+    if (!Model) {
+      return res.status(400).json({ success: false, message: "Invalid role provided" });
+    }
+
+    const user = await Model.findOne({email });
 
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
@@ -598,7 +641,6 @@ export const Login = async (req, res) => {
 export const Logout = async (req, res) => {
   try {
     const { role } = req.body;
-    console.log("role:", role);
 
     // Define model mappings for token cookie names based on roles
     const tokenMappings = {

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import backgroundImage from "../assets/BgMemoryhd.jpg";
+
 import {
   Fab,
   CircularProgress,
@@ -272,12 +273,6 @@ const MemoryList = () => {
                   <FacebookIcon />
                 </ListItemIcon>
                 Facebook
-              </MenuItem>,
-              <MenuItem key="twitter" onClick={() => shareOnPlatform('twitter')}>
-                <ListItemIcon>
-                  <TwitterIcon />
-                </ListItemIcon>
-                Twitter
               </MenuItem>,
               <MenuItem key="whatsapp" onClick={() => shareOnPlatform('whatsapp')}>
                 <ListItemIcon>

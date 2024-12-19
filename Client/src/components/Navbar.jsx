@@ -1,4 +1,4 @@
-import { Menu, X, ChevronDown, ChevronUp, User, LogOut, PawPrint, CircleHelp, LayoutDashboard } from "lucide-react";
+import { Menu, X, ChevronDown, ChevronUp, User, LogOut, PawPrint, CircleHelp, LayoutDashboard, ClipboardPenLine } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { navItems } from "../constants";
 import { useNavigate } from 'react-router-dom';
@@ -68,7 +68,22 @@ const Navbar = () => {
 
   const handleProfileClick = () => {
     setIsProfileDropdownOpen(false);
-    navigate('./profile');
+
+    if(userRole === 'vet'){
+      navigate('./profile/vet');
+    } else if(userRole === 'groomer'){
+      navigate('./profile/groomer');
+    } else if(userRole === 'sitter'){
+      navigate('./profile/sitter');
+    }
+    else{
+      navigate('./profile/clinic');
+    }
+  };
+
+  const handleUserProfileClick = () => {
+    setIsProfileDropdownOpen(false);
+    navigate('./profile/user');
   };
   
   useEffect(() => {
@@ -121,6 +136,13 @@ const Navbar = () => {
       navigate(path);  // Use navigate to go to the path
     }
   };
+
+  const handleServiceClick = () => {
+    setIsProfileDropdownOpen(false);
+    navigate('/services');
+  };
+
+  if(isLoggedIn === null){return null;}
   
   return (
     <nav className="flex justify-between items-center p-6 shadow-md bg-black opacity-75 sticky text-white top-0 z-50 py-3 backdrop-blur-lg border-b border-neutral-700/80">
@@ -252,7 +274,7 @@ const Navbar = () => {
                 <ul className="space-y-4">
                   <li className="flex items-center hover:text-orange-500">
                     <User className="w-5 h-5 mr-3 text-orange-500" />
-                    <button>Profile</button>
+                    <button onClick={handleUserProfileClick}>Profile</button>
                   </li>
                   <li className="flex items-center hover:text-orange-500">
                     <PawPrint className="w-5 h-5 mr-3 text-orange-500" />
@@ -286,9 +308,15 @@ const Navbar = () => {
                     <User className="w-5 h-5 mr-3 text-orange-500" />
                     <button onClick={handleProfileClick}>Profile</button>
                   </li>
-                  <li className="flex items-center hover:text-orange-500">
+                  {userRole === 'clinic' && 
+                    <li className="flex items-center hover:text-orange-500">
                     <LayoutDashboard className="w-5 h-5 mr-3 text-orange-500" />
                     <button onClick={handleDashboardClick}>Dashboard</button>
+                  </li>
+                  }
+                  <li className="flex items-center hover:text-orange-500">
+                    <ClipboardPenLine className="w-5 h-5 mr-3 text-orange-500" />
+                    <button onClick={handleServiceClick}>My Services</button>
                   </li>
                   <li className="flex items-center hover:text-orange-500">
                     <CircleHelp className="w-5 h-5 mr-3 text-orange-500" />

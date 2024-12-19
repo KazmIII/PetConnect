@@ -14,8 +14,6 @@ import jwt from 'jsonwebtoken';
 export const GetClinicInfo = async (req, res) => {
   try {
     const token = req.cookies.clinicToken;
-    console.log("in get clinic info route the token is:", token);
-
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -30,8 +28,6 @@ export const GetClinicInfo = async (req, res) => {
     if (!clinicId) {
       return res.status(400).json({success: false, message: "Clinic ID is required",});
     }
-
-    // Fetch the clinic information from the Clinic model
     const clinic = await ClinicModel.findById(clinicId);
 
     if (!clinic) {
@@ -49,6 +45,84 @@ export const GetClinicInfo = async (req, res) => {
   }
 };
 
+export const UpdateClinicProfile = async (req, res) => {
+  try {
+    const token = req.cookies.clinicToken;
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "No token provided, unauthorized",
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const clinicId = decoded.id; // Assuming clinicId is part of the token payload
+
+    if (!clinicId) {
+      return res.status(400).json({
+        success: false,
+        message: "Clinic ID is required",
+      });
+    }
+
+    const clinic = await ClinicModel.findById(clinicId);
+
+    if (!clinic) {
+      return res.status(404).json({
+        success: false,
+        message: "Clinic not found",
+      });
+    }
+
+    const { email, phone, password } = req.body;
+
+    if (email && email !== clinic.email) {
+      const existingClinic = await ClinicModel.findOne({ email });
+      if (existingClinic) {
+        return res.status(400).json({
+          success: false,
+          message: "Email is already in use. Please choose another one.",
+        });
+      }
+
+      const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+      const verificationTokenExpiresAt = Date.now() + 5 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000;
+
+      clinic.email = email;
+      clinic.emailVerified = false;
+      clinic.verificationToken = verificationToken;
+      clinic.verificationTokenExpiresAt = verificationTokenExpiresAt;
+
+      setImmediate(async () => {
+        try {
+          await sendVerificationEmail(clinic.email, verificationToken);
+        } catch (error) {
+          console.error("Error sending verification email:", error);
+        }
+      });
+    }
+    if (phone) {
+      clinic.phone = phone;
+    }
+    if (password) {
+      const hashedPassword = bcryptjs.hashSync(password, 10);
+      clinic.password = hashedPassword;
+    }
+    await clinic.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Clinic profile updated successfully",
+      clinic,
+    });
+  } catch (error) {
+    console.error("Error updating clinic info:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
 
 export const GetClinicsByCity = async (req, res) => {
   console.log("in get clinic by city route");
