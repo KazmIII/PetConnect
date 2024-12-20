@@ -41,6 +41,7 @@ const VerifyOTP = ({ onOTPSuccess, onClose, type = 'email', email, role}) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    console.log("role in verify otp:", role);
 
     try {
       const otpCode = otp.join(''); // Combine digits into a single string

@@ -281,6 +281,8 @@ export const RegisterClinic = async (req, res) => {
 export const VerifyEmail = async (req, res) => {
   try {
     const { code, type, role } = req.body;
+  console.log("code:", code, "type:", type, "role", role );
+
 
     if (!code || !type || !role) {
       return res.status(400).json({ success: false, message: "Code, type, and role are required" });

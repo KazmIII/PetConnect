@@ -38,6 +38,7 @@ export const NavbarProvider = ({ children }) => {
   }, []);
 
   const handleShowComponent = (component, type = '', email = '', otpCode = '', role = '', update) => {
+    console.log('setting role to:', role);
     setActiveComponent(component);
     setOtpType(type); // Set OTP type if passed (for OTP components)
     setUserEmail(email); // Set user email if passed (for OTP components)
