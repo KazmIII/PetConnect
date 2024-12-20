@@ -91,7 +91,7 @@ const Modal = () => {
                   if(update){
                     handleHideComponents();
                   }
-                  else if (role === 'clinic' || role === 'Veterinarian' || role === 'Pet Groomer' || role === 'Pet Sitter') {
+                  else if (role === 'clinic' || role === 'vet' || role === 'groomer' || role === 'sitter') {
                     setShowModal(true); // Show modal for clinics or providers
                   } else {
                     handleShowComponent('login'); // Redirect to login for other roles
