@@ -28,11 +28,11 @@ export const RegisterProvider = async (req, res) => {
     }
 
     // Check if the provider already exists by email based on the role
-    if (role === "Veterinarian") {
+    if (role === "vet") {
       provider = await VetModel.findOne({ email });
-    } else if (role === "Pet Groomer") {
+    } else if (role === "groomer") {
       provider = await GroomerModel.findOne({ email });
-    } else if (role === "Pet Sitter") {
+    } else if (role === "sitter") {
       provider = await SitterModel.findOne({ email });
     }
 
@@ -53,20 +53,20 @@ export const RegisterProvider = async (req, res) => {
     const sitterCertificateBuffer = req.files['sitterCertificate']?.[0]?.buffer;
 
     // Ensure all required files are uploaded for specific roles
-    if (role === "Veterinarian" && (!vetResumeBuffer || !vetLicenseBuffer || !vetDegreeBuffer || !clinic)) {
+    if (role === "vet" && (!vetResumeBuffer || !vetLicenseBuffer || !vetDegreeBuffer || !clinic)) {
       return res.status(400).json({ success: false, message: "All required files (resume, license, degree) must be uploaded for Veterinarian" });
     }
 
-    if (role === "Pet Groomer" && (!groomerCertificateBuffer || !clinic)) {
+    if (role === "groomer" && (!groomerCertificateBuffer || !clinic)) {
       return res.status(400).json({ success: false, message: "Grooming Certificate is required for Pet Groomer" });
     }
 
-    if (role === "Pet Sitter" && !sitterCertificateBuffer) {
+    if (role === "sitter" && !sitterCertificateBuffer) {
       return res.status(400).json({ success: false, message: "Sitter Certificate is required for Pet Sitter" });
     }
 
     // Create the provider registration document with the clinicId
-    if (role === "Veterinarian") {
+    if (role === "vet") {
       provider = new VetModel({
         name,
         email,
@@ -82,7 +82,7 @@ export const RegisterProvider = async (req, res) => {
         verificationStatus: "pending",
         clinicId: foundClinic._id,  
       });
-    } else if (role === "Pet Groomer") {
+    } else if (role === "groomer") {
       provider = new GroomerModel({
         name,
         email,
@@ -97,7 +97,7 @@ export const RegisterProvider = async (req, res) => {
         verificationStatus: "pending",
         clinicId: foundClinic._id, 
       });
-    } else if (role === "Pet Sitter") {
+    } else if (role === "sitter") {
       provider = new SitterModel({
         name,
         email,
