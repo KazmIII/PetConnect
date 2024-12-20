@@ -63,7 +63,7 @@ const Navbar = () => {
 
   const handleDashboardClick = () => {
     setIsProfileDropdownOpen(false);
-    navigate('./clinic');
+    navigate('./clinic/dashboard');
   };
 
   const handleProfileClick = () => {
@@ -310,14 +310,16 @@ const Navbar = () => {
                   </li>
                   {userRole === 'clinic' && 
                     <li className="flex items-center hover:text-orange-500">
-                    <LayoutDashboard className="w-5 h-5 mr-3 text-orange-500" />
-                    <button onClick={handleDashboardClick}>Dashboard</button>
-                  </li>
+                      <LayoutDashboard className="w-5 h-5 mr-3 text-orange-500" />
+                      <button onClick={handleDashboardClick}>Dashboard</button>
+                    </li>
                   }
-                  <li className="flex items-center hover:text-orange-500">
-                    <ClipboardPenLine className="w-5 h-5 mr-3 text-orange-500" />
-                    <button onClick={handleServiceClick}>My Services</button>
-                  </li>
+                  {userRole !== 'clinic' && 
+                    <li className="flex items-center hover:text-orange-500">
+                      <ClipboardPenLine className="w-5 h-5 mr-3 text-orange-500" />
+                      <button onClick={handleServiceClick}>My Services</button>
+                    </li>
+                  }
                   <li className="flex items-center hover:text-orange-500">
                     <CircleHelp className="w-5 h-5 mr-3 text-orange-500" />
                     <button>Help</button>

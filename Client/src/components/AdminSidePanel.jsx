@@ -23,14 +23,14 @@ const AdminSidePanel = ({ activeSection, handleSectionChange, isSidePanelOpen, s
   }`}
   >
     <nav className="flex flex-col gap-2 p-4">
-      <button
+      {/* <button
         onClick={() => handleNavigation("dashboard")}
         className={`p-2 text-left rounded hover:bg-gray-500 hover:text-orange-300 transition ${
           activeSection === "dashboard" ? "bg-gray-500" : ""
         }`}
       >
         Dashboard
-      </button>
+      </button> */}
       <button
         onClick={() => handleNavigation("requests/clinic")}
         className={`p-2 text-left rounded hover:bg-gray-500 hover:text-orange-300 transition ${
