@@ -140,14 +140,19 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     return null;
   }
 
-  if (isLoggedIn && (!requiredRole || userRole === requiredRole)) {
+  const isAuthorized =
+    isLoggedIn &&
+    (Array.isArray(requiredRole)
+      ? requiredRole.includes(userRole)
+      : userRole === requiredRole);
+
+  if (isAuthorized) {
     return children;
   }
   return <Navigate to="/" />;
 };
 
 const AppContent = () => {
-  const { userRole  } = useNavbar();
   const location = useLocation();
 
   const isAdminRoute = location.pathname.startsWith("/admin");
@@ -164,9 +169,9 @@ const AppContent = () => {
         <Route path="/profile/vet" element={<ProtectedRoute requiredRole="vet"> <UserProfile /> </ProtectedRoute>} />
 
         <Route path="/profile/groomer" element={<ProtectedRoute requiredRole="groomer"> <UserProfile /> </ProtectedRoute>} />
-        <Route path="/add-service" element={<ProtectedRoute requiredRole={userRole}> <AddService /> </ProtectedRoute>} />
-        <Route path="/services" element={<ProtectedRoute requiredRole={userRole}> <Services /> </ProtectedRoute>} />
-        <Route path="/edit-service/:serviceId" element={<ProtectedRoute requiredRole={userRole}> <EditService /> </ProtectedRoute>} />
+        <Route path="/add-service" element={<ProtectedRoute requiredRole={["groomer", "sitter", "vet"]}> <AddService /> </ProtectedRoute>} />
+        <Route path="/services" element={<ProtectedRoute requiredRole={["groomer", "sitter", "vet"]}> <Services /> </ProtectedRoute>} />
+        <Route path="/edit-service/:serviceId" element={<ProtectedRoute requiredRole={["groomer", "sitter", "vet"]}> <EditService /> </ProtectedRoute>} />
 
         <Route path="/profile/sitter" element={<ProtectedRoute requiredRole="sitter"> <SitterProfile /> </ProtectedRoute>} />
 
