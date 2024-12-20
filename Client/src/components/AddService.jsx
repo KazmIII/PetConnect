@@ -202,7 +202,6 @@ const handleSubmit = async (e) => {
 
     navigate('/services');
   } catch (error) {
-    console.error('Error adding service:', error.response?.data || error.message);
     // Handle errors, e.g., show an error message to the user
   }
 };

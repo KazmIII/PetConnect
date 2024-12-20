@@ -1,19 +1,14 @@
-import { sendVerificationEmail, sendResetPasswordEmail} from "../middleware/Email.js";
+import { sendVerification1Email, sendResetPasswordEmail} from "../middleware/Email.js";
 import { UserModel } from "../models/User.js";
-import {PetModel} from '../models/Pet.js';
 import {ClinicModel} from '../models/Clinic.js'; 
 import { VetModel } from "../models/Vet.js";
 import { GroomerModel } from "../models/Groomer.js";
 import { SitterModel } from "../models/Sitter.js";
-import MemoryBook from '../models/MemoryBook.js';
-import Memory from '../models/Memory.js'; 
 
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import sharp from 'sharp'; // For image processing
 
 export const RegisterProvider = async (req, res) => {
-  console.log("In provider register route");
 
   try {
     const { name, email, phone, password, city, clinic, yearsOfExperience, role } = req.body;
@@ -125,7 +120,7 @@ export const RegisterProvider = async (req, res) => {
     // Send verification email (asynchronous)
     setImmediate(async () => {
       try {
-        await sendVerificationEmail(provider.email, verificationToken);
+        await sendVerification1Email(provider.email, verificationToken);
       } catch (error) {
         console.error("Error sending verification email:", error);
       }
@@ -196,7 +191,7 @@ export const Register = async (req, res) => {
 
     setImmediate(async () => {
       try {
-        await sendVerificationEmail(user.email, verificationToken);
+        await sendVerification1Email(user.email, verificationToken);
       } catch (error) {
         console.error("Error sending verification email:", error);
       }
@@ -214,9 +209,7 @@ export const Register = async (req, res) => {
 };
 
 export const RegisterClinic = async (req, res) => {
-  console.log("in clinic register route");
   try {
-    console.log("clinic request body:", req.body);
     const { clinicName, email, phone, password, city, address } = req.body;
     
     if (!clinicName || !email || !password || !phone || !city || !address) {
@@ -267,7 +260,7 @@ export const RegisterClinic = async (req, res) => {
 
     setImmediate(async () => {
       try {
-        await sendVerificationEmail(clinic.email, verificationToken);
+        await sendVerification1Email(clinic.email, verificationToken);
       } catch (error) {
         console.error('Error sending verification email:', error);
       }
@@ -288,7 +281,6 @@ export const RegisterClinic = async (req, res) => {
 export const VerifyEmail = async (req, res) => {
   try {
     const { code, type, role } = req.body;
-    console.log("In verify email the req body:", req.body);
 
     if (!code || !type || !role) {
       return res.status(400).json({ success: false, message: "Code, type, and role are required" });
@@ -439,7 +431,6 @@ export const ResetPassword = async (req, res) => {
       resetPasswordTokenExpiresAt: { $gt: Date.now() }, 
     });
     
-    console.log("User found:", user);
 
     if (!user) {
       return res.status(400).json({ success: false, message: "Invalid or expired reset token" });
@@ -459,7 +450,6 @@ export const ResetPassword = async (req, res) => {
 
 // Resend Verification Code Function
 export const ResendVerificationCode = async (req, res) => {
-  console.log("in resend verification route");
   try {
     const { email, role } = req.body;
 
@@ -494,7 +484,7 @@ export const ResendVerificationCode = async (req, res) => {
 
     await user.save();
 
-    await sendVerificationEmail(user.email, verificationToken);
+    await sendVerification1Email(user.email, verificationToken);
 
     return res.status(200).json({
       success: true,

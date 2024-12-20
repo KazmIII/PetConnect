@@ -41,7 +41,6 @@ const VerifyOTP = ({ onOTPSuccess, onClose, type = 'email', email, role}) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    console.log("in verify component the role is:", role);
 
     try {
       const otpCode = otp.join(''); // Combine digits into a single string
@@ -52,8 +51,6 @@ const VerifyOTP = ({ onOTPSuccess, onClose, type = 'email', email, role}) => {
       });
 
       if (response.data.success) {
-      console.log('OTP Code to be sent to home:', otpCode);
-
         onOTPSuccess(otpCode);
       } else {
         setMessage(response.data.message || 'Invalid OTP. Please try again!');
@@ -87,7 +84,6 @@ const VerifyOTP = ({ onOTPSuccess, onClose, type = 'email', email, role}) => {
         endpoint = 'http://localhost:5000/auth/resendResetOtp';
       }
 
-      console.log('The email is:', email, 'the role is', role);
       const response = await axios.post(endpoint, { email, role, });
       setMessageType('success');
       setMessage(response.data.message || 'OTP resent successfully!');

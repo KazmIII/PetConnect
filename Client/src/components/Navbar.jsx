@@ -222,7 +222,7 @@ const Navbar = () => {
             {userRole === 'pet_owner' && (
               <div className="relative">
               <button
-                onClick={() => { console.log("join button clicked"); toggleJoinDropdown(); }}
+                onClick={() => toggleJoinDropdown }
                 className="hidden md:block py-2 px-2 bg-gradient-to-r from-orange-500 to-orange-800 rounded-md hover:opacity-90"
                 ref={joinButtonRef}
               >

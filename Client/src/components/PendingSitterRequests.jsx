@@ -37,7 +37,6 @@ const PendingSitterRequests = () => {
       });
 
       if (response.data.success) {
-        console.log(`Sitter status updated successfully.`);
         fetchSitters(); // Refresh the list
       }
     } catch (error) {

@@ -1,8 +1,3 @@
-import HeroSection from './HeroSection';
-import FeatureSection from './FeatureSection';
-import Workflow from './Workflow';
-import Pricing from './Pricing';
-import Testimonials from './Testimonials';
 import HomeSearchComponent from './HomeSearchComponent';
 import ServiceCards from './ServiceCards';
 
@@ -18,11 +13,6 @@ export default function Home() {
           <ServiceCards />
         </div>
       </div>
-
-      {/* <FeatureSection />
-      <Workflow />
-      <Pricing />
-      <Testimonials /> */}
     </div>
   );
 }

@@ -44,7 +44,6 @@ const RegisteredUsers = () => {
   // Handle Restrict button click, shows confirmation dialog
   const handleRestrictClick = (user) => {
     setSelectedUser(user);
-    console.log("selecsted user:", user);
     setShowRestrictConfirm(true); // Show confirmation modal
   };
 

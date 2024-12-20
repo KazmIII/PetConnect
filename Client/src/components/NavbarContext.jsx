@@ -20,7 +20,6 @@ export const NavbarProvider = ({ children }) => {
       });
   
       if (response.data.success === false && response.data.message === "User not authenticated") {
-        console.log("user not authenticated");
         setIsLoggedIn(false);
       } else if (response.data.success === true) {
         setIsLoggedIn(true);
@@ -39,8 +38,6 @@ export const NavbarProvider = ({ children }) => {
   }, []);
 
   const handleShowComponent = (component, type = '', email = '', otpCode = '', role = '', update) => {
-    console.log("Setting role:", role); // Debugging log
-    console.log("setting update to ", update);
     setActiveComponent(component);
     setOtpType(type); // Set OTP type if passed (for OTP components)
     setUserEmail(email); // Set user email if passed (for OTP components)

@@ -6,7 +6,6 @@ import { useNavbar } from './NavbarContext';
 
 const UserProfile = () => {
   const {handleShowComponent, userRole} = useNavbar();
-  console.log("in user profile the role is :", userRole);
   const [showPassword, setShowPassword] = useState(false);
   const [userData, setUserData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -31,7 +30,6 @@ const UserProfile = () => {
           params: { userRole },  // Passing role as query parameter
           withCredentials: true,
         });
-        console.log("Request URL:", response.config.url);
     
         setUserData(response.data.user);
         setFormData({

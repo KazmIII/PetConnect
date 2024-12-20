@@ -41,7 +41,6 @@ export default function ClinicRegister({ onRegisterSuccess, onClose }) {
   const handleFileChange = async (e) => {
     const selectedFile = e.target.files?.[0];
     const fileName = e.target.name;
-    console.log("file name to be set in form data:", fileName);
     if (selectedFile) {
       setFormData({ ...formData, [fileName]: selectedFile });
     }
@@ -52,8 +51,6 @@ export default function ClinicRegister({ onRegisterSuccess, onClose }) {
 
     try {
       setIsLoading(true);
-      console.log("form data:", formData);
-
       const response = await axios.post('http://localhost:5000/auth/clinic-register', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -66,7 +63,6 @@ export default function ClinicRegister({ onRegisterSuccess, onClose }) {
         setErrorMessage(response.data.message || 'Failed to register. Please try again.');
       }
     } catch (error) {
-      console.error('Error sending data:', error);
       setErrorMessage(error.response?.data?.message || 'An error occurred. Please try again.');
     } finally {
       setIsLoading(false);

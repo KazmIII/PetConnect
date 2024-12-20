@@ -17,8 +17,7 @@ const ForgotPassword = ({ notVerified, onMailSuccess, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    console.log("form data:", formData);
-  
+      
     try {
       const response = await axios.post('http://localhost:5000/auth/forgot-password', formData);
   

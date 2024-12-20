@@ -1,7 +1,6 @@
-import { sendVerificationEmail, sendResetPasswordEmail} from "../middleware/Email.js";
+import { sendVerificationEmail} from "../middleware/Email.js";
 import { UserModel } from "../models/User.js";
 import {PetModel} from '../models/Pet.js';
-import {ClinicModel} from '../models/Clinic.js'; 
 import { VetModel } from "../models/Vet.js";
 import { GroomerModel } from "../models/Groomer.js";
 import { SitterModel } from "../models/Sitter.js";
@@ -223,7 +222,6 @@ export const DeletePetProfile = async (req, res) => {
       success: true
     });
   } catch (error) {
-    console.log('Error deleting pet profile:', error);
     return res.status(500).json({
       message: 'Error deleting pet profile',
       success: false
@@ -232,9 +230,7 @@ export const DeletePetProfile = async (req, res) => {
 };
 
 export const GetUserInfo = async (req, res) => {
-  console.log("Query received:", req.query);
   const { userRole } = req.query;
-  console.log("Extracted userRole:", userRole);
   try {
     const tokenMappings = {
       pet_owner: "pet_ownerToken",
@@ -292,11 +288,7 @@ export const GetUserInfo = async (req, res) => {
 };
 
 export const UpdateUserInfo = async (req, res) => {
-  console.log("Query received:", req.query);
-  console.log("Cookies received on server:", req.cookies);
-
   const { userRole } = req.query;
-  console.log("Extracted userRole:", userRole);
   try {
     const tokenMappings = {
       pet_owner: "pet_ownerToken",
@@ -339,7 +331,6 @@ export const UpdateUserInfo = async (req, res) => {
     }
 
     const user = await Model.findById(userId);
-    console.log("userf ound:", user);
 
     if (!user) {
       return res.status(404).json({
@@ -402,7 +393,6 @@ export const UpdateUserInfo = async (req, res) => {
 };
 
 export const GetSitterInfo = async (req, res) => {
-  console.log("in sitter info get route");
   try {
     const token = req.cookies.sitterToken;
     if (!token) {
@@ -419,9 +409,6 @@ export const GetSitterInfo = async (req, res) => {
       return res.status(400).json({success: false, message: "Sitter ID is required",});
     }
     const sitter = await SitterModel.findById(sitterId);
-
-  console.log("in sitter info get route the sitter iss:", sitter);
-
 
     if (!sitter) {
       return res.status(404).json({success: false, message: "Sitter not found",});

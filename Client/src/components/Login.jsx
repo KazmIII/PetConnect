@@ -35,12 +35,10 @@ const handleSubmit = async (e) => {
       onLoginSuccessful();
     } else {
       setErrorMessage('Invalid email or password');
-      console.error('Login failed:', response.data.message);
     }
   } catch (error) {
     if (error.response) {
       setErrorMessage(error.response.data.message || 'Invalid email or password');
-      console.error('Login failed:', error.response.data);
   
       // Check if the error is a 403 (email not verified)
       if (error.response.status === 403) {
@@ -53,7 +51,6 @@ const handleSubmit = async (e) => {
     } else {
       // Other errors (network, timeout, etc.)
       setErrorMessage('Something went wrong, try again later.');
-      console.error('Error:', error.message);
     }
   }  
 };

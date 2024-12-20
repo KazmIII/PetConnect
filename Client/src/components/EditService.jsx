@@ -93,7 +93,6 @@ const EditService = () => {
         });
   
       } catch (error) {
-        console.error("Error fetching service:", error);
         setError("Error fetching service data.");
       } finally {
         setLoading(false);  // Set loading to false once fetching is done

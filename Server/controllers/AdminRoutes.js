@@ -1,26 +1,20 @@
-import { sendVerificationEmail, sendResetPasswordEmail} from "../middleware/Email.js";
 import { UserModel } from "../models/User.js";
-import {PetModel} from '../models/Pet.js';
 import {ClinicModel} from '../models/Clinic.js'; 
 import { VetModel } from "../models/Vet.js";
 import { GroomerModel } from "../models/Groomer.js";
 import { SitterModel } from "../models/Sitter.js";
-import MemoryBook from '../models/MemoryBook.js';
-import Memory from '../models/Memory.js'; 
+import {sendVerificationStatusEmail} from '../middleware/Email.js';
 
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import sharp from 'sharp'; // For image processing
 
 export const AdminLogin = async (req, res) => {
-  console.log("in admin login route");
   const { email, password } = req.body;
 
   // Validate email and password
   if (email === process.env.ADMIN_EMAIL) {
     const isMatch = bcryptjs.compareSync(password, process.env.ADMIN_PASSWORD); // Synchronous comparison
     if (isMatch) {
-      console.log("login successful");
 
       const payload = { email };
       const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -31,14 +25,11 @@ export const AdminLogin = async (req, res) => {
         path: "/", 
       });
 
-      // Respond with a success message
       return res.status(200).json({ message: "Login successful!" });
     } else {
-      console.log("Invalid credentials");
       return res.status(400).json({ message: "Invalid credentials" });
     }
   } else {
-    console.log("Invalid credentials");
     return res.status(400).json({ message: "Invalid credentials" });
   }
 };
@@ -84,7 +75,6 @@ try {
 }
 };
 
-// Update Clinic Verfication Status
 export const UpdateClinicVerificationStatus = async (req, res) => {
   try {
     const { clinicId, status } = req.body; // Status can be 'verified' or 'rejected'
@@ -98,8 +88,12 @@ export const UpdateClinicVerificationStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Clinic not found.' });
     }
 
+    // Update verification status
     clinic.verificationStatus = status;
     await clinic.save();
+
+    // Send email to the clinic about the status update
+    await sendVerificationStatusEmail(clinic.email, status, 'clinic');
 
     return res.status(200).json({
       success: true,
@@ -111,10 +105,10 @@ export const UpdateClinicVerificationStatus = async (req, res) => {
   }
 };
 
-// Update Sitter Verfication Status
+// Update Sitter Verification Status
 export const UpdateSitterVerificationStatus = async (req, res) => {
   try {
-    const { sitterId, status } = req.body; 
+    const { sitterId, status } = req.body;
 
     // Validate inputs
     if (!sitterId || !['verified', 'rejected'].includes(status)) {
@@ -126,18 +120,23 @@ export const UpdateSitterVerificationStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: `Sitter not found.` });
     }
 
+    // Update verification status
     sitter.verificationStatus = status;
     await sitter.save();
+
+    // Send email to the sitter about the status update
+    await sendVerificationStatusEmail(sitter.email, status, 'sitter');
 
     return res.status(200).json({
       success: true,
       message: `Sitter ${status === 'verified' ? 'approved' : 'rejected'} successfully.`,
     });
   } catch (error) {
-    console.error('Error updating verification status:', error);
+    console.error('Error updating sitter verification status:', error);
     return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+
 
 export const GetClinicDetails = async (req, res) => {
   try {
@@ -172,10 +171,8 @@ export const GetClinicDetails = async (req, res) => {
 };
 
 export const GetSitterDetails = async (req, res) => {
-    console.log("In sitter detail route");
     try {
       const { sitterId } = req.params;
-      console.log("In sitter detail route, the sitter ID is:", sitterId);
   
       // Fetch the sitter details
       const sitter = await SitterModel.findById(sitterId).lean();
@@ -183,7 +180,6 @@ export const GetSitterDetails = async (req, res) => {
       if (!sitter) {
         return res.status(404).json({ message: "Sitter not found" });
       }
-      console.log("the return object is: ", sitter);
       return res.status(200).json({ sitter });
     } catch (error) {
       console.error("Error fetching sitter details:", error);

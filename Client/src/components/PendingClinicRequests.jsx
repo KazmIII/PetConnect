@@ -29,19 +29,16 @@ export const PendingClinicRequests = () => {
 
   const handleStatusUpdate = async (clinicId, status) => {
     try {
-      // Send the request to the backend to update the status
       const response = await axios.post("http://localhost:5000/auth/admin/update-clinic-status", {
         clinicId,
         status,
       });
 
       if (response.data.success) {
-        console.log("Clinic status updated successfully.");
       }
       fetchPendingRequests();
     } catch (error) {
       console.error("Error updating clinic status:", error);
-      // Handle error (optional: revert optimistic UI update)
     }
   };
 

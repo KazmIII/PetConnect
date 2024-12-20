@@ -61,7 +61,6 @@ export default function ProviderRegister({onRegisterSuccess, onClose}) {
   const handleFileChange = (e) => {
    const selectedFile = e.target.files?.[0];
     const fileName = e.target.name;
-    console.log("file name to be set in form data:", fileName);
     if (selectedFile) {
       setFormData({ ...formData, [fileName]: selectedFile });
     }
@@ -109,13 +108,11 @@ export default function ProviderRegister({onRegisterSuccess, onClose}) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
   
     const formDataToSend = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
       formDataToSend.append(key, value);
     });
-    console.log("role on forntend:", formDataToSend.get('role'));
   
     try {
       setLoading(true);

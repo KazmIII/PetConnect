@@ -1,17 +1,9 @@
-import { sendVerificationEmail, sendResetPasswordEmail} from "../middleware/Email.js";
-import { UserModel } from "../models/User.js";
-import {PetModel} from '../models/Pet.js';
-import {ClinicModel} from '../models/Clinic.js'; 
 import { VetModel } from "../models/Vet.js";
 import { GroomerModel } from "../models/Groomer.js";
 import { PetGroomerService } from "../models/GroomerService.js";
 import { PetSitterService } from "../models/SitterService.js";
 import { VeterinarianService } from "../models/VetService.js";
 import { SitterModel } from "../models/Sitter.js";
-import MemoryBook from '../models/MemoryBook.js';
-import Memory from '../models/Memory.js'; 
-
-import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 export const AddService = async (req, res) => {
@@ -96,7 +88,6 @@ export const AddService = async (req, res) => {
     }
 };
   
-
 export const GetServicesByProvider = async (req, res) => {
     try {
       const { userRole } = req.query;
@@ -277,5 +268,3 @@ export const UpdateService = async (req, res) => {
       return res.status(500).json({ success: false, message: "Server error" });
     }
 };
-  
-  

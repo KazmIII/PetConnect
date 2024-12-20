@@ -28,7 +28,6 @@ const ClinicProfile = () => {
         const response = await axios.get('http://localhost:5000/auth/clinic/profile', {
           withCredentials: true,
         });
-        console.log('Fetched clinic data:', response.data);
         setClinicData(response.data.clinic);
         setFormData({
           phone: response.data.clinic.phone,
@@ -66,7 +65,6 @@ const ClinicProfile = () => {
         email: formData.email,
       });
     } catch (error) {
-      console.error('Error updating profile:', error);
       setError('Failed to update profile. Please try again.');
     } finally {
         setIsLoading(false);
