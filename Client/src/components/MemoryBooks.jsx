@@ -227,9 +227,9 @@ const MemoryBooks = () => {
         <div className="flex justify-end mt-6">
           <button
             className="px-6 py-2 font-semibold bg-gradient-to-r from-orange-400 to-orange-700 text-white rounded-lg hover:from-orange-500 hover:to-orange-800 transition duration-200 shadow-md"
-            onClick={() => navigate(`/myPets`)}
+            onClick={() => navigate(`/myPets/${petId}`)}
           >
-            Back to Pet Profiles
+            Back to Pet Profile
           </button>
         </div>
       </div>

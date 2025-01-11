@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Trash2, Pencil, Camera } from "lucide-react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from "axios";
 import Papa from "papaparse";
 import backgroundImage from "../assets/BgMemoryhd.jpg";
@@ -27,6 +27,7 @@ const MyPets = () => {
   const [updatedPet, setUpdatedPet] = useState({});
   const [breeds, setBreeds] = useState({});
   const [errorMessage, setErrorMessage] = useState('');
+  const { petId } = useParams();
 
   const navigate = useNavigate();
 
@@ -85,6 +86,15 @@ const MyPets = () => {
       })
       .catch((error) => console.error("Error loading CSV:", error));
   }, [selectedPet]);
+
+  useEffect(() => {
+    if (petId) {
+      const pet = pets.find((pet) => pet._id === petId); // Find the pet by ID
+      setSelectedPet(pet);
+    } else {
+      setSelectedPet(null);
+    }
+  }, [petId, pets]);
 
   const handleInputChange = (e) => {
     setErrorMessage('');
@@ -275,7 +285,7 @@ const MyPets = () => {
                   <div
                     key={index}
                     className="flex justify-between items-center border mb-6 p-2 bg-slate-200 rounded-lg cursor-pointer hover:bg-slate-300 transition-colors duration-200"
-                    onClick={() => setSelectedPet(pet)} // Set the selected pet
+                    onClick={() => navigate(`/myPets/${pet._id}`)} // Set the selected pet
                   >
                     <div className=" flex items-center">
                       {pet.photo && (
@@ -749,6 +759,7 @@ const MyPets = () => {
                 href="#"
                 className="text-teal-600 hover:text-teal-700 hover:underline"
                 onClick={() => {
+                  navigate(`/myPets`);
                   setContent("pets");
                   setIsEditing(false);
                   setSelectedPet(null); // Reset selected pet when navigating back to My Pets

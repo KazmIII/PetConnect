@@ -75,7 +75,12 @@ export default function ClinicRegister({ onRegisterSuccess, onClose }) {
 
   const validateEmail = (email) => {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email);
+    return (
+      emailRegex.test(email) &&                 // Check basic email format
+      !/\.\./.test(email) &&                   // Reject consecutive dots
+      !email.endsWith('.') &&                  // Reject trailing dot
+      !/(\.[a-zA-Z]{2,63})\1/.test(email)      // Reject repeated TLD-like segments (e.g., `.com.com`)
+    );
   };
   
   const nextStep = (event) => {

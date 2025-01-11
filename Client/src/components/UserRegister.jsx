@@ -40,8 +40,13 @@ export default function UserRegister({ onRegisterSuccess, onClose }) {
   };
 
   const validateEmail = (email) => {
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email);
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$/;
+    return (
+      emailRegex.test(email) &&                 // Check basic email format
+      !/\.\./.test(email) &&                   // Reject consecutive dots
+      !email.endsWith('.') &&                  // Reject trailing dot
+      !/(\.[a-zA-Z]{2,63})\1/.test(email)      // Reject repeated TLD-like segments (e.g., `.com.com`)
+    );
   };
 
   const handleSubmit = async (e) => {
@@ -167,7 +172,7 @@ export default function UserRegister({ onRegisterSuccess, onClose }) {
                 <input 
                   type="submit" 
                   value={isLoading ? "Signing Up..." : "Sign Up As Pet Owner"} // Change text when loading
-                  className="w-full p-2 text-white font-medium bg-gradient-to-r from-teal-600 to-teal-800 hover:from-teal-500 hover:to-teal-700 rounded"
+                  className="w-full p-2 cursor-pointer text-white font-medium bg-gradient-to-r from-teal-600 to-teal-800 hover:from-teal-500 hover:to-teal-700 rounded"
                   disabled={isLoading} // Disable the button while loading
                 />
               </form>

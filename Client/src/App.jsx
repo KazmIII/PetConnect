@@ -165,6 +165,7 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/myPets" element={<ProtectedRoute requiredRole="pet_owner"> <MyPets /> </ProtectedRoute>} />
+        <Route path="/myPets/:petId" element={<ProtectedRoute requiredRole="pet_owner"> <MyPets /> </ProtectedRoute>} />
         <Route path="/profile/user" element={<ProtectedRoute requiredRole="pet_owner"> <UserProfile /> </ProtectedRoute>} />
         <Route path="/profile/vet" element={<ProtectedRoute requiredRole="vet"> <UserProfile /> </ProtectedRoute>} />
 

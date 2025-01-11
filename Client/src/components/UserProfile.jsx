@@ -128,11 +128,16 @@ const UserProfile = () => {
 
   const validateEmail = (email) => {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email);
+    return (
+      emailRegex.test(email) &&                 // Check basic email format
+      !/\.\./.test(email) &&                   // Reject consecutive dots
+      !email.endsWith('.') &&                  // Reject trailing dot
+      !/(\.[a-zA-Z]{2,63})\1/.test(email)      // Reject repeated TLD-like segments (e.g., `.com.com`)
+    );
   };
 
   return (
-    <div className="max-w-4xl mx-auto my-10 p-5 bg-orange-200 shadow-lg rounded-lg">
+    <div className="max-w-2xl mx-auto my-10 p-5 bg-orange-200 shadow-lg rounded-lg">
     {!userData ? (
       <div className="flex justify-center items-center p-4 m-20">
         <Spinner />
@@ -140,7 +145,7 @@ const UserProfile = () => {
     ) : (
         <>
         <h2 className="text-2xl font-bold text-teal-700 mb-6 text-center">Profile</h2>
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-lg mx-auto">
             <div>
             <label className="block text-md font-medium text-black">Name</label>
             <input
@@ -221,7 +226,7 @@ const UserProfile = () => {
         <div className="max-w-2xl mx-auto mt-6 flex justify-between items-center">
         <button
             onClick={handleEditToggle}
-            className={`px-4 py-2 w-1/3 text-white rounded-lg ${
+            className={`px-4 py-2 w-1/3 mx-auto text-white rounded-lg ${
                 isEditing
                 ? 'bg-gray-500 hover:bg-gray-600' // Styles for "Cancel"
                 : 'bg-gradient-to-r from-orange-500 to-orange-800 hover:from-orange-400 hover:to-orange-700' // Styles for "Edit Profile"
@@ -234,7 +239,7 @@ const UserProfile = () => {
             <button
                 onClick={handleSave}
                 disabled={isLoading}
-                className="px-4 py-2 w-1/3 bg-gradient-to-r from-teal-500 to-teal-800 hover:from-teal-400 hover:to-teal-700 text-white rounded-lg"
+                className="px-4 py-2 w-1/3 bg-gradient-to-r mx-auto  from-teal-500 to-teal-800 hover:from-teal-400 hover:to-teal-700 text-white rounded-lg"
             >
                 {isLoading ? 'Saving...' : 'Save Changes'}
             </button>
