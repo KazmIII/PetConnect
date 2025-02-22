@@ -19,7 +19,6 @@ const SitterDetails = () => {
           `http://localhost:5000/auth/admin/sitter-details/${sitterId}`
         );
         setSitterDetails(response.data.sitter);
-        console.log("response in frontend:", response.data.sitter);
       } catch (error) {
         console.error("Error fetching sitter details:", error);
       } finally {

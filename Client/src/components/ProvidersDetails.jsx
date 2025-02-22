@@ -12,7 +12,6 @@ const ProviderDetails = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("in forntend of details");
     const fetchProviderDetails = async () => {
       try {
         const response = await axios.get(
@@ -67,7 +66,6 @@ const ProviderDetails = () => {
   }, [providerDetails]);
 
   const handleBack = () => {
-    console.log("in handle back");
     // Navigate back dynamically based on state or fallback to browser history
     if (location.state?.from) {
       navigate(location.state.from); // Navigate to the specific previous route

@@ -27,7 +27,6 @@ const AdminLogin = () => {
           withCredentials: true,
         }
       );
-      console.log("Logged in successfully");
       navigate('/admin');  // Navigate to the admin dashboard
     } catch (err) {
       alert(err.response.data.message);

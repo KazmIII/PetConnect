@@ -5,6 +5,7 @@ import ClinicNavbar from "./ClinicNavbar";
 import ClinicSidePanel from "./ClinicSidePanel";
 import ProviderDetails from "./ProvidersDetails";
 import RegisteredClinicStaff from "./RegisteredClinicStaff";
+import ClinicHome from "./ClinicHome";
 
 const ClinicDashboard = () => {
   const location = useLocation();
@@ -95,7 +96,7 @@ const ClinicDashboard = () => {
           } bg-gray-100 overflow-auto hide-scrollbar`}
         >
           <Routes>
-            {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+            <Route path="/dashboard" element={<ClinicHome />} />
             <Route path="/requests" element={<PendingProvidersRequests />} />
             <Route path="/requests/:role/:provider_id" element={<ProviderDetails />} />
             <Route path="/staff/:role/:provider_id" element={<ProviderDetails />} />

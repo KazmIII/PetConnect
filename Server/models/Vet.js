@@ -55,6 +55,12 @@ const VetSchema = new mongoose.Schema({
         type: Boolean, 
         default: false, 
     },
+    services: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'VetService', 
+        }
+    ],
     resetPasswordToken:String,
     resetPasswordTokenExpiresAt:Date,
     verificationToken:String,

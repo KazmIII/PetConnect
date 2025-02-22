@@ -41,7 +41,6 @@ export default function ClinicRegister({ onRegisterSuccess, onClose }) {
   const handleFileChange = async (e) => {
     const selectedFile = e.target.files?.[0];
     const fileName = e.target.name;
-    console.log("file name to be set in form data:", fileName);
     if (selectedFile) {
       setFormData({ ...formData, [fileName]: selectedFile });
     }
@@ -52,8 +51,6 @@ export default function ClinicRegister({ onRegisterSuccess, onClose }) {
 
     try {
       setIsLoading(true);
-      console.log("form data:", formData);
-
       const response = await axios.post('http://localhost:5000/auth/clinic-register', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -66,7 +63,6 @@ export default function ClinicRegister({ onRegisterSuccess, onClose }) {
         setErrorMessage(response.data.message || 'Failed to register. Please try again.');
       }
     } catch (error) {
-      console.error('Error sending data:', error);
       setErrorMessage(error.response?.data?.message || 'An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
@@ -79,7 +75,12 @@ export default function ClinicRegister({ onRegisterSuccess, onClose }) {
 
   const validateEmail = (email) => {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email);
+    return (
+      emailRegex.test(email) &&                 // Check basic email format
+      !/\.\./.test(email) &&                   // Reject consecutive dots
+      !email.endsWith('.') &&                  // Reject trailing dot
+      !/(\.[a-zA-Z]{2,63})\1/.test(email)      // Reject repeated TLD-like segments (e.g., `.com.com`)
+    );
   };
   
   const nextStep = (event) => {

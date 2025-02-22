@@ -1,19 +1,14 @@
-import { sendVerificationEmail, sendResetPasswordEmail} from "../middleware/Email.js";
+import { sendVerification1Email, sendResetPasswordEmail} from "../middleware/Email.js";
 import { UserModel } from "../models/User.js";
-import {PetModel} from '../models/Pet.js';
 import {ClinicModel} from '../models/Clinic.js'; 
 import { VetModel } from "../models/Vet.js";
 import { GroomerModel } from "../models/Groomer.js";
 import { SitterModel } from "../models/Sitter.js";
-import MemoryBook from '../models/MemoryBook.js';
-import Memory from '../models/Memory.js'; 
 
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import sharp from 'sharp'; // For image processing
 
 export const RegisterProvider = async (req, res) => {
-  console.log("In provider register route");
 
   try {
     const { name, email, phone, password, city, clinic, yearsOfExperience, role } = req.body;
@@ -33,11 +28,11 @@ export const RegisterProvider = async (req, res) => {
     }
 
     // Check if the provider already exists by email based on the role
-    if (role === "Veterinarian") {
+    if (role === "vet") {
       provider = await VetModel.findOne({ email });
-    } else if (role === "Pet Groomer") {
+    } else if (role === "groomer") {
       provider = await GroomerModel.findOne({ email });
-    } else if (role === "Pet Sitter") {
+    } else if (role === "sitter") {
       provider = await SitterModel.findOne({ email });
     }
 
@@ -58,20 +53,20 @@ export const RegisterProvider = async (req, res) => {
     const sitterCertificateBuffer = req.files['sitterCertificate']?.[0]?.buffer;
 
     // Ensure all required files are uploaded for specific roles
-    if (role === "Veterinarian" && (!vetResumeBuffer || !vetLicenseBuffer || !vetDegreeBuffer || !clinic)) {
+    if (role === "vet" && (!vetResumeBuffer || !vetLicenseBuffer || !vetDegreeBuffer || !clinic)) {
       return res.status(400).json({ success: false, message: "All required files (resume, license, degree) must be uploaded for Veterinarian" });
     }
 
-    if (role === "Pet Groomer" && (!groomerCertificateBuffer || !clinic)) {
+    if (role === "groomer" && (!groomerCertificateBuffer || !clinic)) {
       return res.status(400).json({ success: false, message: "Grooming Certificate is required for Pet Groomer" });
     }
 
-    if (role === "Pet Sitter" && !sitterCertificateBuffer) {
+    if (role === "sitter" && !sitterCertificateBuffer) {
       return res.status(400).json({ success: false, message: "Sitter Certificate is required for Pet Sitter" });
     }
 
     // Create the provider registration document with the clinicId
-    if (role === "Veterinarian") {
+    if (role === "vet") {
       provider = new VetModel({
         name,
         email,
@@ -87,7 +82,7 @@ export const RegisterProvider = async (req, res) => {
         verificationStatus: "pending",
         clinicId: foundClinic._id,  
       });
-    } else if (role === "Pet Groomer") {
+    } else if (role === "groomer") {
       provider = new GroomerModel({
         name,
         email,
@@ -102,7 +97,7 @@ export const RegisterProvider = async (req, res) => {
         verificationStatus: "pending",
         clinicId: foundClinic._id, 
       });
-    } else if (role === "Pet Sitter") {
+    } else if (role === "sitter") {
       provider = new SitterModel({
         name,
         email,
@@ -125,7 +120,7 @@ export const RegisterProvider = async (req, res) => {
     // Send verification email (asynchronous)
     setImmediate(async () => {
       try {
-        await sendVerificationEmail(provider.email, verificationToken);
+        await sendVerification1Email(provider.email, verificationToken);
       } catch (error) {
         console.error("Error sending verification email:", error);
       }
@@ -196,7 +191,7 @@ export const Register = async (req, res) => {
 
     setImmediate(async () => {
       try {
-        await sendVerificationEmail(user.email, verificationToken);
+        await sendVerification1Email(user.email, verificationToken);
       } catch (error) {
         console.error("Error sending verification email:", error);
       }
@@ -214,9 +209,7 @@ export const Register = async (req, res) => {
 };
 
 export const RegisterClinic = async (req, res) => {
-  console.log("in clinic register route");
   try {
-    console.log("clinic request body:", req.body);
     const { clinicName, email, phone, password, city, address } = req.body;
     
     if (!clinicName || !email || !password || !phone || !city || !address) {
@@ -235,7 +228,7 @@ export const RegisterClinic = async (req, res) => {
     const hashedPassword = bcryptjs.hashSync(password, 10);
     const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
 
-    const verificationTokenExpiresAt = Date.now() + 5 * 60 * 60 * 1000 + 24 * 60 * 60 * 1000;
+    const verificationTokenExpiresAt = Date.now() + 5 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000;
 
     // Extract file buffers from Multer request (since you're using memory storage)
     const clinicRegistrationFileBuffer = req.files['clinicRegistrationFile']?.[0]?.buffer;
@@ -247,11 +240,6 @@ export const RegisterClinic = async (req, res) => {
     if (!clinicRegistrationFileBuffer || !NICFileBuffer || !vetLicenseFileBuffer || !proofOfAddressFileBuffer) {
       return res.status(400).json({ success: false, message: 'All required files must be uploaded.' });
     }
-
-    // Optional: You can upload these buffers to a file storage service (e.g., AWS S3, Cloudinary) if needed.
-    // For example, if you're uploading to S3, you would get the file URL from the upload and store that in the database.
-
-    // Create the clinic registration document
     const clinic = new ClinicModel({
       clinicName,
       email,
@@ -272,7 +260,7 @@ export const RegisterClinic = async (req, res) => {
 
     setImmediate(async () => {
       try {
-        await sendVerificationEmail(clinic.email, verificationToken);
+        await sendVerification1Email(clinic.email, verificationToken);
       } catch (error) {
         console.error('Error sending verification email:', error);
       }
@@ -293,7 +281,8 @@ export const RegisterClinic = async (req, res) => {
 export const VerifyEmail = async (req, res) => {
   try {
     const { code, type, role } = req.body;
-    console.log("In verify email the req body:", req.body);
+  console.log("code:", code, "type:", type, "role", role );
+
 
     if (!code || !type || !role) {
       return res.status(400).json({ success: false, message: "Code, type, and role are required" });
@@ -302,9 +291,9 @@ export const VerifyEmail = async (req, res) => {
     const roleModelMap = {
       pet_owner: UserModel,
       clinic: ClinicModel,
-      Veterinarian: VetModel,
-      "Pet Groomer": GroomerModel,
-      "Pet Sitter": SitterModel,
+      vet: VetModel,
+      groomer: GroomerModel,
+      sitter: SitterModel,
     };
 
     // Get the model based on the role
@@ -368,13 +357,27 @@ export const VerifyEmail = async (req, res) => {
 // Forgot Password Function
 export const ForgotPassword = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, role } = req.body;
 
     if (!email) {
       return res.status(400).json({ success: false, message: "Email is required" });
     }
 
-    const user = await UserModel.findOne({ email });
+    // Define model mappings
+    const modelMappings = {
+      pet_owner: UserModel,
+      clinic: ClinicModel,
+      vet: VetModel,
+      groomer: GroomerModel,
+      sitter: SitterModel,
+    };
+
+    const Model = modelMappings[role];
+    if (!Model) {
+      return res.status(400).json({ success: false, message: "Invalid role provided" });
+    }
+
+    const user = await Model.findOne({ email });
 
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
@@ -406,22 +409,30 @@ export const ForgotPassword = async (req, res) => {
 
 // Reset Password Function
 export const ResetPassword = async (req, res) => {
-  console.log("in reset pass route the body is:", req.body);
   try {
-    const { token, newPassword } = req.body;
-  console.log("in reset pass route..token:", token, "newpass:", newPassword);
+    const { token, newPassword, role } = req.body;
 
     if (!token || !newPassword) {
       return res.status(400).json({ success: false, message: "Token and new password are required" });
     }
-    console.log("Current time (UTC):", Date.now());
-    const user = await UserModel.findOne({
+    const modelMappings = {
+      pet_owner: UserModel,
+      clinic: ClinicModel,
+      vet: VetModel,
+      groomer: GroomerModel,
+      sitter: SitterModel,
+    };
+
+    const Model = modelMappings[role];
+    if (!Model) {
+      return res.status(400).json({ success: false, message: "Invalid role provided" });
+    }
+
+    const user = await Model.findOne({
       resetPasswordToken: token,
-      resetPasswordTokenExpiresAt: { $gt: Date.now() },
+      resetPasswordTokenExpiresAt: { $gt: Date.now() }, 
     });
     
-    console.log("User found:", user);
-
 
     if (!user) {
       return res.status(400).json({ success: false, message: "Invalid or expired reset token" });
@@ -442,13 +453,25 @@ export const ResetPassword = async (req, res) => {
 // Resend Verification Code Function
 export const ResendVerificationCode = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, role } = req.body;
 
     if (!email) {
       return res.status(400).json({ success: false, message: "Email is required" });
     }
+    const modelMappings = {
+      pet_owner: UserModel,
+      clinic: ClinicModel,
+      vet: VetModel,
+      groomer: GroomerModel,
+      sitter: SitterModel,
+    };
 
-    const user = await UserModel.findOne({ email });
+    const Model = modelMappings[role];
+    if (!Model) {
+      return res.status(400).json({ success: false, message: "Invalid role provided" });
+    }
+
+    const user = await Model.findOne({ email });
 
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
@@ -459,12 +482,11 @@ export const ResendVerificationCode = async (req, res) => {
     }
     const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
     user.verficationToken = verificationToken;
-    user.verficationTokenExpiresAt = Date.now() + 24 * 60 * 60 * 1000; // Token valid for 24 hours
+    user.verficationTokenExpiresAt = Date.now() + 1 * 60 * 60 * 1000; // Token valid for 24 hours
 
-    // Save updated user with new token
     await user.save();
 
-    await sendVerificationEmail(user.email, verificationToken);
+    await sendVerification1Email(user.email, verificationToken);
 
     return res.status(200).json({
       success: true,
@@ -479,13 +501,26 @@ export const ResendVerificationCode = async (req, res) => {
 // Resend Reset OTP Function
 export const ResendResetOtp = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, role} = req.body;
 
     if (!email) {
       return res.status(400).json({ success: false, message: "Email is required" });
     }
 
-    const user = await UserModel.findOne({ email });
+    const modelMappings = {
+      pet_owner: UserModel,
+      clinic: ClinicModel,
+      vet: VetModel,
+      groomer: GroomerModel,
+      sitter: SitterModel,
+    };
+
+    const Model = modelMappings[role];
+    if (!Model) {
+      return res.status(400).json({ success: false, message: "Invalid role provided" });
+    }
+
+    const user = await Model.findOne({email });
 
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
@@ -598,7 +633,6 @@ export const Login = async (req, res) => {
 export const Logout = async (req, res) => {
   try {
     const { role } = req.body;
-    console.log("role:", role);
 
     // Define model mappings for token cookie names based on roles
     const tokenMappings = {

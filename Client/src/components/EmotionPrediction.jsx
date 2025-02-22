@@ -58,7 +58,6 @@ const EmotionPrediction = () => {
         setSelectedFile(null);
         setImagePreview(null); // Clear the preview if the file is invalid
       } else {
-        setErrorMessage("");
         setSelectedFile(file);
         setImagePreview(URL.createObjectURL(file)); // Generate image preview
       }

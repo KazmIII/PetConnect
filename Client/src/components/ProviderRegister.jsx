@@ -55,13 +55,17 @@ export default function ProviderRegister({onRegisterSuccess, onClose}) {
 
   const validateEmail = (email) => {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email);
+    return (
+      emailRegex.test(email) &&                 // Check basic email format
+      !/\.\./.test(email) &&                   // Reject consecutive dots
+      !email.endsWith('.') &&                  // Reject trailing dot
+      !/(\.[a-zA-Z]{2,63})\1/.test(email)      // Reject repeated TLD-like segments (e.g., `.com.com`)
+    );
   };
 
   const handleFileChange = (e) => {
    const selectedFile = e.target.files?.[0];
     const fileName = e.target.name;
-    console.log("file name to be set in form data:", fileName);
     if (selectedFile) {
       setFormData({ ...formData, [fileName]: selectedFile });
     }
@@ -70,7 +74,7 @@ export default function ProviderRegister({onRegisterSuccess, onClose}) {
   const handleNext = async () => {
     setLoading(true); // Set loading to true to show a loading state
     if (validateStep1()) {
-      if (formData.role === 'Veterinarian' || formData.role === 'Pet Groomer') {
+      if (formData.role === 'vet' || formData.role === 'groomer') {
         try {
           const response = await axios.get(`http://localhost:5000/auth/clinics/${formData.city}`);
           if (response.status === 204) {
@@ -94,7 +98,7 @@ export default function ProviderRegister({onRegisterSuccess, onClose}) {
   };  
 
   const validateStep1 = () => {
-    if (!formData.name || !formData.email || !formData.phone || !formData.city || !formData.role) {
+    if (!formData.name || !formData.email || !formData.phone || !formData.password || !formData.city || !formData.role) {
       setErrorMessage('Please fill out all required fields.');
       return false;
     }
@@ -109,13 +113,11 @@ export default function ProviderRegister({onRegisterSuccess, onClose}) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
   
     const formDataToSend = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
       formDataToSend.append(key, value);
     });
-    console.log("role on forntend:", formDataToSend.get('role'));
   
     try {
       setLoading(true);
@@ -125,6 +127,7 @@ export default function ProviderRegister({onRegisterSuccess, onClose}) {
         },
       });
       if (response.status === 200) {
+        console.log("role in provider register:", formData.role);
         onRegisterSuccess(formData.email, formData.role); 
       }
     }  catch (error) {
@@ -249,9 +252,9 @@ export default function ProviderRegister({onRegisterSuccess, onClose}) {
                       required
                     >
                       <option value="" disabled>Select your role</option>
-                      <option value="Veterinarian">Veterinarian</option>
-                      <option value="Pet Groomer">Pet Groomer</option>
-                      <option value="Pet Sitter">Pet Sitter</option>
+                      <option value="vet">Veterinarian</option>
+                      <option value="groomer">Pet Groomer</option>
+                      <option value="sitter">Pet Sitter</option>
                     </select>
                     <span className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-600">
                       <ChevronDown />
@@ -285,7 +288,7 @@ export default function ProviderRegister({onRegisterSuccess, onClose}) {
                   />
 
                   <div>
-                    {formData.role === 'Veterinarian' && (
+                    {formData.role === 'vet' && (
                       <>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -351,7 +354,7 @@ export default function ProviderRegister({onRegisterSuccess, onClose}) {
                       </>
                     )}
 
-                    {formData.role === 'Pet Groomer' && (
+                    {formData.role === 'groomer' && (
                       <>
                         <div className="relative">
                           <select
@@ -398,7 +401,7 @@ export default function ProviderRegister({onRegisterSuccess, onClose}) {
                       </>
                     )}
 
-                    {formData.role === 'Pet Sitter' && (
+                    {formData.role === 'sitter' && (
                       <>
                         <input
                           type="text"

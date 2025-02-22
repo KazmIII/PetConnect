@@ -11,7 +11,6 @@ import RegisteredStaff from './RegisteredStaff';
 import ProviderDetails from "./ProvidersDetails";
 
 const AdminDashboard = () => {
-  // Retrieve the active section from localStorage, or default to 'dashboard'
   const storedActiveSection = localStorage.getItem("activeSection");
 
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(true);
@@ -42,20 +41,19 @@ const AdminDashboard = () => {
     } else {
       setActiveSection("dashboard");
     }
-    localStorage.setItem("activeSection", activeSection); // Update localStorage
+    localStorage.setItem("activeSection", activeSection);
   }, [location.pathname]);
 
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 992) {
-        setIsSidePanelOpen(false); // Close side panel on smaller screens
+        setIsSidePanelOpen(false); 
       } else {
         setIsSidePanelOpen(true);
       }
     };
 
     const handleClickOutside = (event) => {
-      // Profile Dropdown
       if (
         profileDropdownRef.current &&
         !profileDropdownRef.current.contains(event.target) &&
@@ -65,14 +63,10 @@ const AdminDashboard = () => {
       }
     };
 
-    // Add event listeners
     document.addEventListener("mousedown", handleClickOutside);
     window.addEventListener("resize", handleResize);
 
-    // Call the resize handler on mount to set the initial state
     handleResize();
-
-    // Cleanup the event listeners on component unmount
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       window.removeEventListener("resize", handleResize);
