@@ -5,6 +5,7 @@ import axios from 'axios';
 const Login = ({ notVerified, onUserRegisterClick, onForgotPasswordClick, onLoginSuccessful, onClose }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -21,9 +22,11 @@ const Login = ({ notVerified, onUserRegisterClick, onForgotPasswordClick, onLogi
   };
 
 
-const handleSubmit = async (e) => {
+const handleLogin = async (e) => {
   e.preventDefault();
+  setIsLoading(true);
   try {
+    console.log("role on fronend login: ", formData.role);
     const response = await axios.post('http://localhost:5000/auth/login', formData, {
       headers: {
         'Content-Type': 'application/json',
@@ -43,7 +46,7 @@ const handleSubmit = async (e) => {
       // Check if the error is a 403 (email not verified)
       if (error.response.status === 403) {
         if (error.response.data.message === 'email_not_verified') {
-          notVerified(formData.email); // Trigger the email verification flow
+          notVerified(formData.email, formData.role); // Trigger the email verification flow
         } else if (error.response.data.message === 'account_restricted') {
           setErrorMessage('Your account has been restricted. Please contact support.'); // Show account restricted message
         }
@@ -53,6 +56,7 @@ const handleSubmit = async (e) => {
       setErrorMessage('Something went wrong, try again later.');
     }
   }  
+  setIsLoading(false);
 };
 
 
@@ -77,7 +81,7 @@ const handleSubmit = async (e) => {
             <div>
               <div className="text-gray-800 my-7 mx-4">
                 <p className="mb-2">Please provide login credentials below.</p>
-                <form onSubmit={handleSubmit} className="space-y-4 text-gray-800">
+                <form onSubmit={handleLogin} className="space-y-4 text-gray-800">
                   <div className="relative">
                     <input
                       type="text"
@@ -153,9 +157,12 @@ const handleSubmit = async (e) => {
 
                   <button
                     type="submit"
-                    className="w-full p-2 text-white font-medium bg-gradient-to-r from-teal-600 to-teal-800 hover:from-teal-500 hover:to-teal-700 rounded"
+                    className={`w-full p-2 text-white font-medium bg-gradient-to-r from-teal-600 to-teal-800 
+                      hover:from-teal-500 hover:to-teal-700 rounded ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                    disabled={isLoading}
+                    onClick={handleLogin}
                   >
-                    Login
+                    {isLoading ? "Logging in..." : "Login"}
                   </button>
 
                   <button

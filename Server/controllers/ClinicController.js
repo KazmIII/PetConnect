@@ -230,7 +230,6 @@ export const UpdateProviderVerificationStatus = async (req, res) => {
   }
 };
 
-
 export const GetVetsAndGroomersByClinic = async (req, res) => {
   try {
     const token = req.cookies.clinicToken;

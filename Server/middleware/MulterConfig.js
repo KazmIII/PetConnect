@@ -38,6 +38,6 @@ const UploadMultiple = (fields) => {
     fileFilter: fileFilter
   }).fields(fields); // Handle dynamic fields
 };
-
+ 
 
 export { uploadSingle, UploadMultiple };

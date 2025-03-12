@@ -23,11 +23,19 @@ import SitterProfile from './components/SitterProfile';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
 import ProtectedRoute1 from './components/ProtectedRoute';
+import ListPetAdoption from './components/ListPetAdoption';
 import InfoModal from './components/InfoModal';
 import Footer from './components/Footer';
 import ClinicDashboard from './components/ClinicDashboard';
 import ClinicProfile from './components/ClinicProfile';
 import PetEmotion from './components/PetEmotion';
+
+import PetAdoption from './components/PetAdoption';
+import PetAdoptionDetail from './components/PetAdoptionDetail';
+import AdoptionForm from './components/AdoptionForm';
+import MyApplications from './components/MyApplications';
+import MyListings from './components/MyListings';
+
 import UserProfile from './components/UserProfile';
 import AddService from './components/AddService';
 import Services from './components/Services';
@@ -44,7 +52,7 @@ const Modal = () => {
           {/* Dynamically Render Active Component */}
           {activeComponent === 'login' && (
             <Login
-              notVerified = {(email) => handleShowComponent('verifyOTP', 'email', email)}
+              notVerified = {(email, role) => handleShowComponent('verifyOTP', 'email', email, '', role)}
               onRegisterClick={() => handleShowComponent('userRegister')}
               onUserRegisterClick={() => handleShowComponent('userRegister')}
               onForgotPasswordClick={() => handleShowComponent('forgotPassword')}
@@ -164,9 +172,15 @@ const AppContent = () => {
       {!isAdminRoute && !isClinicRoute && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/find-a-pet" element={<PetAdoption />} />
+        <Route path="/pet-listing/:id" element={<PetAdoptionDetail />} />
+        <Route path="/pet-listing/:id/adoption-application" element={<ProtectedRoute requiredRole="pet_owner"> <AdoptionForm /> </ProtectedRoute>} />
         <Route path="/myPets" element={<ProtectedRoute requiredRole="pet_owner"> <MyPets /> </ProtectedRoute>} />
+        <Route path="/myEnquiries" element={<ProtectedRoute requiredRole="pet_owner"> <MyApplications /> </ProtectedRoute>} />
+        <Route path="/myListings" element={<ProtectedRoute requiredRole="pet_owner"> <MyListings /> </ProtectedRoute>} />
         <Route path="/myPets/:petId" element={<ProtectedRoute requiredRole="pet_owner"> <MyPets /> </ProtectedRoute>} />
         <Route path="/profile/user" element={<ProtectedRoute requiredRole="pet_owner"> <UserProfile /> </ProtectedRoute>} />
+        <Route path="/profile/post-adoption" element={<ProtectedRoute requiredRole="pet_owner"> <ListPetAdoption /> </ProtectedRoute>} />
         <Route path="/profile/vet" element={<ProtectedRoute requiredRole="vet"> <UserProfile /> </ProtectedRoute>} />
 
         <Route path="/profile/groomer" element={<ProtectedRoute requiredRole="groomer"> <UserProfile /> </ProtectedRoute>} />

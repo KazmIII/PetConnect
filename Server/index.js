@@ -7,6 +7,7 @@ import AuthRoutes from './routes/auth.routes.js';
 import memoryBookRoutes from './routes/memoryBookRoutes.js';
 import memoryRoutes from './routes/memoryRoutes.js';
 import predictedEmotion from './routes/PredictedEmotion.js';
+import predictMatch from "./routes/predictMatch.js";
 import cookieParser from "cookie-parser";
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -27,8 +28,8 @@ DbCon();
 
 // Apply middleware in the correct order
 app.use(cors(corsOptions)); // CORS middleware must be added before routes
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());    // JSON middleware must also be applied before routes
+app.use(express.urlencoded({ limit: "500mb", extended: true }));
+app.use(express.json({ limit: "500mb" }));    // JSON middleware must also be applied before routes
 app.use('/uploads', express.static('uploads'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(cookieParser());
@@ -43,6 +44,7 @@ app.use('/auth', AuthRoutes);
 app.use('/api/memory-books', memoryBookRoutes); // Route for memory book actions (e.g., create, delete, rename)
 app.use('/api/memory-books', memoryRoutes);
 app.use("/pets", predictedEmotion); // Define routes after middleware
+app.use("/api", predictMatch);
 
 
 app.listen(PORT, () => {

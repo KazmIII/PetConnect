@@ -5,7 +5,7 @@ const InfoModal = ({ title, message, onClose }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/3 p-6">
         {/* Title */}
-        <h2 className="text-2xl font-bold text-orange-800 mb-4 text-center">
+        <h2 className="text-2xl font-bold text-green-800 mb-4 text-center">
           {title}
         </h2>
 
@@ -16,7 +16,7 @@ const InfoModal = ({ title, message, onClose }) => {
         <div className="flex justify-center">
           <button
             onClick={onClose}
-            className="bg-orange-700 hover:bg-orange-800 text-white py-2 px-6 rounded-lg shadow-md transform hover:scale-105 transition-transform duration-300"
+            className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-6 rounded-lg shadow-md transform hover:scale-105 transition-transform duration-300"
           >
             Close
           </button>

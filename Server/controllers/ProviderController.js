@@ -130,7 +130,6 @@ export const GetServicesByProvider = async (req, res) => {
     }
 };
   
-
 export const GetServiceDetails = async (req, res) => {
     const { userRole } = req.query; // The userRole comes from the query parameters (e.g., ?userRole=groomer)
     const { serviceId } = req.params; // The serviceId comes from the URL parameters

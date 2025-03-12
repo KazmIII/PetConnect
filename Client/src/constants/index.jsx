@@ -13,4 +13,5 @@ export const navItems = [
   { label: "Lost n Found", path: "#" },
   { label: "Pet Emotion", path: "/predict-emotion" },
   { label: "Blogs", path: "#" },
+  { label: "Adopt a Pet", path: "/find-a-pet" },
 ];

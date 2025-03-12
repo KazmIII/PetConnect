@@ -33,6 +33,8 @@ export const NavbarProvider = ({ children }) => {
       }
     }
   };
+
+
   useEffect(() => {
     checkLoginStatus();
   }, []);
