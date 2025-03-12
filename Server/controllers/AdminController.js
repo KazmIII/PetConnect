@@ -137,7 +137,6 @@ export const UpdateSitterVerificationStatus = async (req, res) => {
   }
 };
 
-
 export const GetClinicDetails = async (req, res) => {
   try {
     const { clinicName } = req.params;

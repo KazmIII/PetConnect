@@ -74,6 +74,35 @@ export const CreatePetProfile = async (req, res) => {
   }
 };
 
+export const GetPetProfile = async (req, res) => {
+  try {
+      const { petId } = req.params;
+
+      // Fetch the pet by its ID and populate the owner's details
+      const pet = await PetModel.findById(petId);
+
+      if (!pet) {
+          return res.status(404).json({
+              message: 'Pet not found',
+              success: false,
+          });
+      }
+
+      return res.status(200).json({
+          pet,
+          message: 'Pet profile fetched successfully',
+          success: true,
+      });
+  } catch (error) {
+      console.error('Error fetching pet profile:', error);
+      return res.status(500).json({
+          message: 'Error fetching pet profile',
+          success: false,
+      });
+  }
+};
+
+
 export const GetUserPets = async (req, res) => {
     try {
         const token = req.cookies.pet_ownerToken; 
@@ -238,8 +267,11 @@ export const GetUserInfo = async (req, res) => {
       groomer: "groomerToken",
     };
 
-    const cookieName = tokenMappings[userRole];
+    const role = userRole && tokenMappings[userRole] ? userRole : 'pet_owner';
+    const cookieName = tokenMappings[role];
+
     if (!cookieName) {
+      console.log("cookie name not availble");
       return res.status(400).json({
         success: false,
         message: "Invalid role provided",
@@ -258,6 +290,8 @@ export const GetUserInfo = async (req, res) => {
     const userId = decoded.id;
 
     if (!userId) {
+      console.log("user not availble");
+
       return res.status(400).json({success: false, message: "User ID is required",});
     }
 
@@ -267,8 +301,10 @@ export const GetUserInfo = async (req, res) => {
       groomer: GroomerModel,
     };
 
-    const Model = modelMappings[userRole];
+    const Model = modelMappings[role];
     if (!Model) {
+      console.log("model name not availble");
+
       return res.status(400).json({ success: false, message: "Invalid role provided" });
     }
 
@@ -391,6 +427,216 @@ export const UpdateUserInfo = async (req, res) => {
     });
   }
 };
+
+export const UpdateDetailUserInfo = async (req, res) => {
+  try {
+    const token = req.cookies.pet_ownerToken;
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "No token provided, unauthorized",
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
+
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const {
+      housingType,
+      spaceAvailable,
+      existingPet,
+      petFriendly,
+      accessOutdoor,
+      preferredPetType,
+      preferredPetAge,
+      experienceWithPets,
+      energyLevelPreference,
+      groomingPreference,
+      dailyActivityLevel,
+      securityNeeds,
+      // Additional info fields:
+      petOwner,
+      kidsAtHome,
+      kidsAge,
+      petOwnershipType,
+      // Ideal pet details:
+      idealAgePreference,
+      idealGenderPreference,
+      idealSizePreference,
+      idealCoatLength,
+      idealNeeds,
+      idealSpecialNeedsReceptiveness,
+      idealBreed
+    } = req.body;
+
+    // Update basic detailed fields
+    if (housingType) user.housingType = housingType;
+    if (spaceAvailable) user.spaceAvailable = spaceAvailable;
+    if (existingPet) user.existingPet = existingPet;
+    if (petFriendly !== undefined) user.petFriendly = petFriendly;
+    if (accessOutdoor !== undefined) user.accessOutdoor = accessOutdoor;
+    if (preferredPetType) user.preferredPetType = preferredPetType;
+    if (preferredPetAge) user.preferredPetAge = preferredPetAge;
+    if (experienceWithPets) user.experienceWithPets = experienceWithPets;
+    if (energyLevelPreference) user.energyLevelPreference = energyLevelPreference;
+    if (groomingPreference !== undefined) user.groomingPreference = groomingPreference;
+    if (dailyActivityLevel) user.dailyActivityLevel = dailyActivityLevel;
+    if (securityNeeds !== undefined) user.securityNeeds = securityNeeds;
+
+    // Update additional info fields
+    if (petOwner) user.petOwner = petOwner;
+    if (kidsAtHome) user.kidsAtHome = kidsAtHome;
+    if (kidsAge) user.kidsAge = kidsAge;
+    if (petOwnershipType) user.petOwnershipType = petOwnershipType;
+
+    // Update ideal pet details
+    if (idealAgePreference) user.idealAgePreference = idealAgePreference;
+    if (idealGenderPreference) user.idealGenderPreference = idealGenderPreference;
+    if (idealSizePreference) user.idealSizePreference = idealSizePreference;
+    if (idealCoatLength) user.idealCoatLength = idealCoatLength;
+    if (idealNeeds) user.idealNeeds = idealNeeds;
+    if (idealSpecialNeedsReceptiveness)
+      user.idealSpecialNeedsReceptiveness = idealSpecialNeedsReceptiveness;
+    if (idealBreed) user.idealBreed = idealBreed;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "User detailed information updated successfully",
+      user,
+    });
+  } catch (error) {
+    console.error("Error updating detailed user info:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const GetAdopterProfile = async (req, res) => {
+  try {
+    const token = req.cookies.pet_ownerToken;
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "No token provided, unauthorized",
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
+
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Define essential fields that you consider most important for matching.
+    const essentialFields = [
+      "preferredPetType",
+      "dailyActivityLevel",
+      "housingType",
+      "existingPet",
+      "accessOutdoor",
+      "preferredPetAge",
+      "idealSizePreference",
+      "idealAgePreference",
+      "idealGenderPreference",
+      "kidsAtHome",
+      "idealSpecialNeedsReceptiveness",
+    ];
+
+    // Define all detailed profile fields (optional + essential)
+    const allDetailFields = [
+      "housingType",
+      "spaceAvailable",
+      "existingPet",
+      "petFriendly",
+      "accessOutdoor",
+      "preferredPetType",
+      "preferredPetAge",
+      "experienceWithPets",
+      "energyLevelPreference",
+      "groomingPreference",
+      "dailyActivityLevel",
+      "securityNeeds",
+      "petOwner",
+      "kidsAtHome",
+      "kidsAge",
+      "petOwnershipType",
+      "idealAgePreference",
+      "idealGenderPreference",
+      "idealSizePreference",
+      "idealCoatLength",
+      "idealNeeds",
+      "idealSpecialNeedsReceptiveness",
+      "idealBreed",
+    ];
+
+    // Check if essential fields are filled (not null, undefined, or empty string)
+    const isEssentialProfileComplete = essentialFields.every(
+      (field) =>
+        user[field] !== undefined &&
+        user[field] !== null &&
+        (typeof user[field] === "string" ? user[field].trim() !== "" : true) &&
+        (Array.isArray(user[field]) ? user[field].length > 0 : true)
+    );
+
+    // Compute overall completeness percentage
+    const filledCount = allDetailFields.filter(
+      (field) =>
+        user[field] !== undefined &&
+        user[field] !== null &&
+        (typeof user[field] === "string" ? user[field].trim() !== "" : true) &&
+        (Array.isArray(user[field]) ? user[field].length > 0 : true)
+    ).length;
+    const completenessPercentage = (filledCount / allDetailFields.length) * 100;
+
+    // Decide if profile is "complete enough" based on a threshold (e.g., 50%)
+    const isProfileCompleteEnough = completenessPercentage >= 50;
+
+    return res.status(200).json({
+      success: true,
+      isEssentialProfileComplete,
+      isProfileCompleteEnough,
+      completenessPercentage,
+      user, // Optionally, return user data so the frontend can show what's missing.
+    });
+  } catch (error) {
+    console.error("Error in GetAdopterProfile:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 
 export const GetSitterInfo = async (req, res) => {
   try {

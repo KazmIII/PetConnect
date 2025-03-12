@@ -41,6 +41,7 @@ const petSchema = new mongoose.Schema({
         {
           emotion: { type: String, required: true },
           confidence: { type: Array, required: true },
+          activity: {type: String},
           timestamp: { type: Date, default: Date.now },
         },
       ],

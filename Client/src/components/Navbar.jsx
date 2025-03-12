@@ -1,4 +1,5 @@
-import { Menu, X, ChevronDown, ChevronUp, User, LogOut, PawPrint, CircleHelp, LayoutDashboard, ClipboardPenLine } from "lucide-react";
+import { Menu, X, ChevronDown, ChevronUp, User, LogOut, PawPrint, CircleHelp,
+   LayoutDashboard, ClipboardPenLine, Dog, FolderSearch, ListCollapse } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { navItems } from "../constants";
 import { useNavigate } from 'react-router-dom';
@@ -33,6 +34,7 @@ const Navbar = () => {
   };
 
   const toggleJoinDropdown = () => {
+    console.log("toggle function triggered");
     setIsJoinDropdownOpen((prev) => !prev);
     if (isServicesDropdownOpen) setIsServicesDropdownOpen(false); // Close Services dropdown if open
   };
@@ -59,6 +61,21 @@ const Navbar = () => {
   const handleNavigateToPets = () => {
     setIsProfileDropdownOpen(false);
     navigate('/myPets'); // navigate to '/myPets'
+  };
+
+  const handleNavigateToEnquiries = () => {
+    setIsProfileDropdownOpen(false);
+    navigate('/myEnquiries'); 
+  };
+
+  const handleNavigateToListings = () => {
+    setIsProfileDropdownOpen(false);
+    navigate('/myListings'); 
+  };
+  
+  const handleNavigateToAdoption = () => {
+    setIsProfileDropdownOpen(false);
+    navigate('/profile/post-adoption'); 
   };
 
   const handleDashboardClick = () => {
@@ -222,7 +239,7 @@ const Navbar = () => {
             {userRole === 'pet_owner' && (
               <div className="relative">
               <button
-                onClick={() => toggleJoinDropdown }
+                onClick={toggleJoinDropdown }
                 className="hidden md:block py-2 px-2 bg-gradient-to-r from-orange-500 to-orange-800 rounded-md hover:opacity-90"
                 ref={joinButtonRef}
               >
@@ -268,24 +285,36 @@ const Navbar = () => {
             {/* Profile Dropdown */}
             {isProfileDropdownOpen && userRole === 'pet_owner' && (
               <div
-                className="absolute right-0 top-12 z-30 shadow-lg bg-neutral-800 w-48 p-4 rounded-lg"
+                className="absolute right-0 top-12 z-30 shadow-lg bg-neutral-800 w-40 p-4 rounded-lg"
                 ref={profileDropdownRef}
               >
                 <ul className="space-y-4">
                   <li className="flex items-center hover:text-orange-500">
-                    <User className="w-5 h-5 mr-3 text-orange-500" />
-                    <button onClick={handleUserProfileClick}>Profile</button>
+                    <User className="w-5 h-5 mr-4 text-lime-400" />
+                    <button onClick={handleUserProfileClick}>My Profile</button>
                   </li>
                   <li className="flex items-center hover:text-orange-500">
-                    <PawPrint className="w-5 h-5 mr-3 text-orange-500" />
+                    <PawPrint className="w-5 h-5 mr-4 text-lime-400" />
                     <button onClick={handleNavigateToPets}>My Pets</button>
                   </li>
                   <li className="flex items-center hover:text-orange-500">
-                    <CircleHelp className="w-5 h-5 mr-3 text-orange-500" />
+                    <FolderSearch className="w-5 h-5 mr-4 text-lime-400" />
+                    <button onClick={handleNavigateToEnquiries}>My Enquiries</button>
+                  </li>
+                  <li className="flex items-center hover:text-orange-500">
+                    <Dog className="w-5 h-5 mr-3 text-lime-400" />
+                    <button onClick={handleNavigateToAdoption}>Rehome Pet</button>
+                  </li>
+                  <li className="flex items-center hover:text-orange-500">
+                    <ListCollapse className="w-5 h-5 mr-3 text-lime-400" />
+                    <button onClick={handleNavigateToListings}>My Listings</button>
+                  </li>
+                  <li className="flex items-center hover:text-orange-500">
+                    <CircleHelp className="w-5 h-5 mr-4 text-lime-400" />
                     <button>Help</button>
                   </li>
                   <li className="flex items-center hover:text-orange-500">
-                    <LogOut className="w-5 h-5 mr-3 text-orange-500" />
+                    <LogOut className="w-5 h-5 mr-4 text-lime-400" />
                     <button
                       onClick={() => {
                         setIsProfileDropdownOpen(false);

@@ -18,9 +18,8 @@ export const RegisterProvider = async (req, res) => {
     if (!name || !email || !password || !phone || !city || !yearsOfExperience || !role) {
       return res.status(400).json({ success: false, message: "All fields are required" });
     }
-
     let foundClinic;
-    if(role !== 'Pet Sitter'){
+    if(role !== 'sitter'){
       foundClinic = await ClinicModel.findOne({ _id: clinic });
       if (!foundClinic) {
         return res.status(400).json({ success: false, message: "Clinic not found" });
@@ -552,10 +551,32 @@ export const ResendResetOtp = async (req, res) => {
   }
 };
 
+const sendVerifyEmailOTP = async (user) => {
+  try {
+    const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationTokenExpiresAt = Date.now() + 5 * 60 * 60 * 1000 + 15 * 60 * 1000; // 5 hours + 15 minutes
+
+    // Update the user's verification token and expiration time in the database
+    user.verificationToken = verificationToken;
+    user.verificationTokenExpiresAt = verificationTokenExpiresAt;
+    await user.save();
+
+    // Send the email
+    await sendVerification1Email(user.email, verificationToken);
+    return true;
+  } catch (error) {
+    console.error("Error sending verification email:", error);
+    return false;
+  }
+};
+
+
 // Login Function
 export const Login = async (req, res) => {
   try {
     const { email, password, role } = req.body;
+    console.log("role in login in backend:", role);
+
 
     // Validate input
     if (!email || !password || !role) {
@@ -586,7 +607,18 @@ export const Login = async (req, res) => {
 
     // Check if email is verified for all users
     if (!user.emailVerified) {
-      return res.status(403).json({ success: false, message: "email_not_verified" });
+      const emailSent = await sendVerifyEmailOTP(user);
+      if (emailSent) {
+        return res.status(403).json({
+          success: false,
+          message: "email_not_verified",
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          message: "Error sending verification email.",
+        });
+      }
     }
 
     if (user.restricted) {
