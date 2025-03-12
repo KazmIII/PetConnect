@@ -32,6 +32,9 @@ import UserProfile from './components/UserProfile';
 import AddService from './components/AddService';
 import Services from './components/Services';
 import EditService from './components/EditService';
+import BlogSection from './components/BlogSection';
+import BlogDetail from './components/BlogDetail';
+import ReportPet from './components/ReportPet';
 
 const Modal = () => {
   const { activeComponent, update, checkLoginStatus, handleHideComponents, otpType, otpCode, userEmail, role, handleShowComponent } = useNavbar();
@@ -189,6 +192,9 @@ const AppContent = () => {
         <Route path="/memory-books/:petId/:bookId/memories/:memoryId" element={<ProtectedRoute requiredRole="pet_owner"><MemoryDetail /> </ProtectedRoute>} />
         <Route path="/pet/:petName/emotions" element={<ProtectedRoute requiredRole="pet_owner"><PetEmotion /> </ProtectedRoute>} />
         <Route path="/predict-emotion" element={<EmotionPrediction />} />
+        <Route path="/blogs" element={<BlogSection />} />
+        <Route path="/blog/:id" element={<BlogDetail />} />
+        <Route path="/lost" element={<ReportPet />} />
       </Routes>
       {/* Render modal globally */}
       <Modal />

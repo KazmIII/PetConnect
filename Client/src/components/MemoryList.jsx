@@ -4,8 +4,6 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import backgroundImage from "../assets/BgMemoryhd.jpg";
 
-import { Helmet } from 'react-helmet';
-
 import {
   Fab,
   CircularProgress,

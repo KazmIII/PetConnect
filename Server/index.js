@@ -7,6 +7,7 @@ import AuthRoutes from './routes/auth.routes.js';
 import memoryBookRoutes from './routes/memoryBookRoutes.js';
 import memoryRoutes from './routes/memoryRoutes.js';
 import predictedEmotion from './routes/PredictedEmotion.js';
+import blogRoutes from "./routes/blogRoutes.js";
 import cookieParser from "cookie-parser";
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -40,6 +41,7 @@ app.use(session({
 }));
 
 app.use('/auth', AuthRoutes);
+app.use("/api/blogs", blogRoutes);
 app.use('/api/memory-books', memoryBookRoutes); // Route for memory book actions (e.g., create, delete, rename)
 app.use('/api/memory-books', memoryRoutes);
 app.use("/pets", predictedEmotion); // Define routes after middleware
