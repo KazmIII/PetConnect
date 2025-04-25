@@ -23,12 +23,14 @@ import { GetClinicsByCity, GetVetsAndGroomersByClinic, GetProviderDetails, Updat
 import {AddService, GetServicesByProvider, GetServiceDetails, DeleteService, UpdateService} from '../controllers/ProviderController.js';
 
 import {SubmitAdoptionAd, GetAllAdoptionAds, GetAdoptionAdById, SubmitAdoptionApplication, CheckUserApplication, GetMyApplications, 
-  GetUserAdoptionAds
+  GetUserAdoptionAds, UpdateAdoptionAd, GetAdoptionApplications, GetAdoptionApplicationDetails
 } from '../controllers/AdoptionController.js';
 
 const AuthRoutes = express.Router();
 
 // PetConnect Routes
+AuthRoutes.post('/addAdoptionAd', UploadMultiple([{ name: 'photos', maxCount: 5 }]), SubmitAdoptionAd);
+AuthRoutes.put("/update-adoption-ad/:id", UploadMultiple([{ name: 'photos', maxCount: 5 }]), UpdateAdoptionAd);
 AuthRoutes.get('/get-adoption-ads', GetAllAdoptionAds);
 AuthRoutes.get('/get-adoption-ads/:id', GetAdoptionAdById);
 AuthRoutes.get("/user-adoption-ads", GetUserAdoptionAds);
@@ -36,8 +38,10 @@ AuthRoutes.get('/check-adopter-profile', GetAdopterProfile);
 AuthRoutes.post('/adoption-application/:id', UploadMultiple([{ name: 'homeImages', maxCount: 4 }]), SubmitAdoptionApplication);
 AuthRoutes.get("/check-application/:id", CheckUserApplication);
 AuthRoutes.get('/get-my-applications', GetMyApplications);
+AuthRoutes.get("/get-adoption-applications/:id", GetAdoptionApplications);
+AuthRoutes.get("/adoption-applications/:applicationId", GetAdoptionApplicationDetails);
 
-
+ 
 // service providers route
 AuthRoutes.post('/add-service', AddService);
 AuthRoutes.get('/get-services', GetServicesByProvider);
@@ -73,8 +77,6 @@ AuthRoutes.get('/get-user-pets', GetUserPets);
 AuthRoutes.put("/update-pet/:petId", uploadSingle, UpdatePetProfile);
 AuthRoutes.delete('/pets/:petId', DeletePetProfile);
 AuthRoutes.get('/pets/:petId', GetPetProfile);
-
-AuthRoutes.post('/addAdoptionAd', UploadMultiple([{ name: 'photos', maxCount: 5 }]), SubmitAdoptionAd);
 
 
 AuthRoutes.get('/clinics/:city', GetClinicsByCity);

@@ -9,7 +9,7 @@ const ServiceCards = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="container grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 w-full mx-auto lg:max-w-6xl mb-16 
+        <div className="container grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 w-full mx-auto lg:max-w-6xl mb-8
         custom-lg:max-w-4xl max-w-xs custom-xs:max-w-md sm:max-w-xl md:max-w-2xl rounded-3xl mt-4 md:mt-7">
             {/* Online Now Card */}
             <div className="custom-lg:w-full  cursor-pointer">

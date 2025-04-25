@@ -76,7 +76,7 @@ const PetAdoptionDetail = () => {
   };
 
   if (!pet) {
-    return <Spinner />;
+    return <div className="flex justify-center items-center mx-auto"><Spinner /></div>;
   }
 
   return (

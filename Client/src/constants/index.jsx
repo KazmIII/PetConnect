@@ -10,8 +10,8 @@ export const navItems = [
       { label: "Sitting", path: "/services/sitting" },
     ],
   },
-  { label: "Lost n Found", path: "#" },
+  { label: "Lost n Found", path: "lost" },
   { label: "Pet Emotion", path: "/predict-emotion" },
-  { label: "Blogs", path: "#" },
+  { label: "Blogs", path: "/blogs" },
   { label: "Adopt a Pet", path: "/find-a-pet" },
 ];

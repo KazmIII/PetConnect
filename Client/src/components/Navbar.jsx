@@ -306,7 +306,7 @@ const Navbar = () => {
                     <button onClick={handleNavigateToAdoption}>Rehome Pet</button>
                   </li>
                   <li className="flex items-center hover:text-orange-500">
-                    <ListCollapse className="w-5 h-5 mr-3 text-lime-400" />
+                    <Dog className="w-5 h-5 mr-3 text-lime-400" />
                     <button onClick={handleNavigateToListings}>My Listings</button>
                   </li>
                   <li className="flex items-center hover:text-orange-500">

@@ -12,6 +12,7 @@ const BlogSchema = new Schema({
   Title: { type: String, required: true },
   Content: { type: String, required: true },
   Images: { type: String },
+  Category: { type: String, enum: ["Dog Care", "Cat Care", "Pet Nutrition", "General Pet Care", "Pet Health"], required: true },
   comments: { type: [CommentSchema], default: [] }, // default empty array for existing blogs
 });
 

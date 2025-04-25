@@ -1,10 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pandas as pd
-import numpy as np
 from pymongo import MongoClient
 from tqdm import tqdm
-from rapidfuzz import fuzz  # Still used for other fuzzy matching tasks
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 

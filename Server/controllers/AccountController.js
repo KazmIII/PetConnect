@@ -158,7 +158,7 @@ export const Profile = async (req, res) => {
 
 export const Register = async (req, res) => {
   try {
-    const { email, password, name, phone } = req.body;
+    const { email, password, name, phone, city } = req.body;
 
     if (!email || !password || !name || !phone) {
       return res.status(400).json({ success: false, message: "All fields are required" });
@@ -182,6 +182,7 @@ export const Register = async (req, res) => {
       password: hashPassword,
       name,
       phone,
+      city,
       verificationToken: verificationToken,
       verificationTokenExpiresAt, // Correct expiration time in UTC+5
     });

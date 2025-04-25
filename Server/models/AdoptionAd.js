@@ -191,6 +191,11 @@ const adoptionAdSchema = new mongoose.Schema({
 
   // Contact Info
   phone: { type: String },
+  status: { 
+    type: String, 
+    enum: ["Available", "Pending", "Adopted"], 
+    default: "Available" 
+  },
 
   // Date Created
   createdAt: { type: Date, default: Date.now },

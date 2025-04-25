@@ -1,6 +1,6 @@
 // EditPetAdoption.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { Camera, Dog, Cat, Rabbit, Save } from "lucide-react";
+import { Camera, Dog, Cat, Rabbit, Save, ChevronLeft } from "lucide-react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import backgroundImage from "../assets/BgMemoryhd.jpg";
@@ -211,7 +211,6 @@ const EditPetAdoption = () => {
   const [showBreedModal, setShowBreedModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [tempSelectedBreeds, setTempSelectedBreeds] = useState([]);
-  const [acceptTerms, setAcceptTerms] = useState(false);
   
   // Loading state for fetching listing
   const [loadingListing, setLoadingListing] = useState(true);
@@ -220,10 +219,10 @@ const EditPetAdoption = () => {
   useEffect(() => {
     const fetchListing = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/auth/get-adoption-ad/${id}`, {
+        const response = await axios.get(`http://localhost:5000/auth/get-adoption-ads/${id}`, {
           withCredentials: true,
         });
-        const ad = response.data.ad;
+        const ad = response.data;
         setFormData({
           species: ad.species || "",
           reasonsForRehoming: ad.reasonsForRehoming || [],
@@ -239,7 +238,8 @@ const EditPetAdoption = () => {
           gender: ad.gender || "",
           spayedNeutered: ad.spayedNeutered || "",
           microchipped: ad.microchipped || "",
-          photos: [], // File inputs are not pre-populated\n          ownedDuration: ad.ownedDuration || "",
+          photos: [], // Do not prepopulate file inputs
+          ownedDuration: ad.ownedDuration || "",
           acquiredFrom: ad.acquiredFrom || "",
           colors: ad.colors || [],
           dogCharacteristics: ad.dogCharacteristics || [],
@@ -258,7 +258,11 @@ const EditPetAdoption = () => {
           dietDescription: ad.dietDescription || "",
           phone: ad.phone || "",
         });
-        initialFormDataRef.current = response.data.ad;
+        initialFormDataRef.current = ad;
+        // If there are stored images, set them as previews so they display
+        if (ad.photos && ad.photos.length > 0) {
+          setPreviews(ad.photos);
+        }
       } catch (err) {
         console.error("Error fetching listing:", err);
         setError("Failed to fetch listing data.");
@@ -267,7 +271,7 @@ const EditPetAdoption = () => {
       }
     };
     fetchListing();
-  }, [id]);
+  }, [id]);  
   
   // CSV parsing for breeds
   useEffect(() => {
@@ -394,10 +398,13 @@ const EditPetAdoption = () => {
     }
     const newPhotos = [...formData.photos, ...files];
     setFormData({ ...formData, photos: newPhotos });
+    
+    // Revoke old URLs if necessary, then create new ones:
     previews.forEach((url) => URL.revokeObjectURL(url));
-    const newPreviews = [...previews, ...files.map((file) => URL.createObjectURL(file))];
-    setPreviews(newPreviews);
+    const newPreviews = files.map((file) => URL.createObjectURL(file));
+    setPreviews((prev) => [...prev, ...newPreviews]);
   };
+  
   
   const removeImage = (index) => {
     const updatedPhotos = formData.photos.filter((_, i) => i !== index);
@@ -429,7 +436,7 @@ const EditPetAdoption = () => {
         !formData.gender ||
         !formData.spayedNeutered ||
         !formData.microchipped ||
-        formData.photos.length < MIN_PHOTOS ||
+        previews.length < MIN_PHOTOS ||
         !formData.ownedDuration ||
         !formData.acquiredFrom ||
         formData.colors.length === 0
@@ -476,7 +483,8 @@ const EditPetAdoption = () => {
       const submissionData = new FormData();
       Object.keys(formData).forEach((key) => {
         if (key !== "photos") {
-          const value = formData[key];
+          // Use the current value, or if it's falsy, use the original value from initialFormDataRef
+          const value = formData[key] || initialFormDataRef.current[key] || "";
           if (Array.isArray(value)) {
             value.forEach((item) => {
               submissionData.append(key, item);
@@ -486,10 +494,12 @@ const EditPetAdoption = () => {
           }
         }
       });
+      // Append any new uploaded photos (if any)
       formData.photos.forEach((file) => {
         submissionData.append("photos", file);
       });
   
+      // For debugging: Log the submission data
       for (let pair of submissionData.entries()) {
         console.log(pair[0], pair[1]);
       }
@@ -506,6 +516,7 @@ const EditPetAdoption = () => {
       if (response.data.success) {
         console.log("Listing updated successfully:", response.data);
         setSuccessMessage("Your Adoption Ad has been updated successfully!");
+        // Reset form data if desired
         const emptyForm = {
           species: "",
           reasonsForRehoming: [],
@@ -556,6 +567,14 @@ const EditPetAdoption = () => {
     }
   };
   
+  const handleBack = () => {
+    if (location.state?.from) {
+      navigate(location.state.from);
+    } else {
+      navigate(-1); 
+    }
+  };
+
   const relevantBreeds =
     formData.species && breeds[formData.species] ? breeds[formData.species] : [];
   const filteredBreeds = relevantBreeds.filter((breedName) =>
@@ -893,43 +912,47 @@ const EditPetAdoption = () => {
               </div>
             </div>
             <div className="mb-4">
-              <label className="block mb-2 font-medium">Pet Photos (min 4, max 5)<span className="text-red-600"> *</span></label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {previews.map((src, index) => (
-                  <div
-                    key={index}
-                    className="relative w-32 h-32 border-2 border-orange-500 rounded-lg overflow-hidden flex items-center justify-center"
-                  >
-                    <img
-                      src={src}
-                      alt={`Preview ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                    <button
-                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                      onClick={() => removeImage(index)}
+                <label className="block mb-2 font-medium">
+                    Pet Photos (min 4, max 5)
+                    <span className="text-red-600"> *</span>
+                </label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                    {previews.map((src, index) => (
+                    <div
+                        key={index}
+                        className="relative w-32 h-32 border-2 border-orange-500 rounded-lg overflow-hidden flex items-center justify-center"
                     >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-                {previews.length < MAX_PHOTOS && (
-                  <label className="cursor-pointer w-32 h-32 border-2 border-dashed border-orange-500 rounded-lg flex items-center justify-center bg-gray-100">
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={handleFileChange}
-                      multiple
-                      accept="image/*"
-                    />
-                    <div className="text-center text-orange-500 flex flex-col items-center">
-                      <Camera size={30} />
-                      <span className="text-sm mt-1.5">Upload</span>
+                        <img
+                        src={src}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        />
+                        <button
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                        onClick={() => removeImage(index)}
+                        >
+                        ✕
+                        </button>
                     </div>
-                  </label>
-                )}
-              </div>
+                    ))}
+                    {previews.length < MAX_PHOTOS && (
+                    <label className="cursor-pointer w-32 h-32 border-2 border-dashed border-orange-500 rounded-lg flex items-center justify-center bg-gray-100">
+                        <input
+                        type="file"
+                        className="hidden"
+                        onChange={handleFileChange}
+                        multiple
+                        accept="image/*"
+                        />
+                        <div className="text-center text-orange-500 flex flex-col items-center">
+                        <Camera size={30} />
+                        <span className="text-sm mt-1.5">Upload</span>
+                        </div>
+                    </label>
+                    )}
+                </div>
             </div>
+
             <div className="mb-4">
               <label className="block mb-2 font-medium">
                 How long have you owned your pet?<span className="text-red-600"> *</span>
@@ -982,6 +1005,70 @@ const EditPetAdoption = () => {
                 ))}
               </div>
             </div>
+
+            <div className="mb-4">
+                <label className="block mb-2 font-medium text-gray-900">
+                    Pet Color(s)<span className="text-red-600"> *</span>
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-2 gap-2">
+                    {[
+                    ...new Set([...petColorsList, ...formData.colors])
+                    ].map((color) => {
+                    // Adjusted color shades
+                    const colorMapping = {
+                        Black: "#000000",
+                        "Brown / Chocolate": "#944300",
+                        Blue: "#456789",
+                        "Cream / Fawn / Yellow": "#F3c188",
+                        "Gold / Apricot": "#F3901c",
+                        Other: "#D3D3D3",
+                        "Mixed Colour": "#A9A9A9",
+                        "Red / Ginger": "#e1621d",
+                        "Silver / Grey": "#cccccc",
+                        White: "#FFFFFF",
+                    };
+
+                    // Check if the background should be dark
+                    const isDarkColor = ["Black", "Brown / Chocolate", "Blue", "Red / Ginger"].includes(color);
+                    const isSelected = formData.colors.includes(color);
+
+                    // Use the mapped color if available, or fallback to the raw value if not
+                    const backgroundColor = isSelected
+                        ? (colorMapping[color] || color)
+                        : "#FEF3C7"; // light orange when not selected
+
+                    return (
+                        <label
+                        key={color}
+                        className="flex items-center p-2 border border-gray-300 rounded cursor-pointer transition-all"
+                        style={{
+                            backgroundColor: backgroundColor,
+                            color: isSelected && isDarkColor ? "#FFFFFF" : "#1F2937",
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = colorMapping[color] || color;
+                            e.currentTarget.style.color = isDarkColor ? "#FFFFFF" : "#1F2937";
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = backgroundColor;
+                            e.currentTarget.style.color = isSelected && isDarkColor ? "#FFFFFF" : "#1F2937";
+                        }}
+                        >
+                        <input
+                            type="checkbox"
+                            name="colors"
+                            value={color}
+                            checked={isSelected}
+                            onChange={handleChange}
+                            className="form-checkbox h-5 w-5 accent-orange-700"
+                        />
+                        <span className="ml-2">{color}</span>
+                        </label>
+                    );
+                    })}
+                </div>
+            </div>
+
           </>
         );
       case 4:
@@ -1290,28 +1377,6 @@ const EditPetAdoption = () => {
               />
               {error && <p className="text-red-500 text-sm">{error}</p>}
             </div>
-            <div className="mb-24 mt-5">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="acceptTerms"
-                  checked={acceptTerms}
-                  onChange={(e) => setAcceptTerms(e.target.checked)}
-                  className="form-checkbox h-5 w-5 accent-teal-600"
-                  required
-                />
-                <span className="ml-2 text-gray-700">
-                  I accept the{" "}<a
-                    href="/terms-and-conditions"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-teal-600 hover:underline"
-                  >
-                    Terms and Conditions<span className="text-red-600"> *</span>
-                  </a>
-                </span>
-              </label>
-            </div>
           </>
         );
       default:
@@ -1321,7 +1386,7 @@ const EditPetAdoption = () => {
   
   if (loadingListing) {
     return (
-      <div className="w-full flex justify-center items-center my-6">
+      <div className="flex justify-center items-center m-20">
         <Spinner />
       </div>
     );
@@ -1337,10 +1402,14 @@ const EditPetAdoption = () => {
         backgroundRepeat: "no-repeat",
       }}
     >
+      
       <form
         onSubmit={handleSubmit}
         className="max-w-4xl mx-auto md:p-6 bg-orange-200 rounded-2xl shadow-xl border border-gray-200 mb-8"
       >
+        <button className='flex flex-row text-gray-700 items-center mb-2 font-semibold hover:underline'onClick={handleBack}> 
+              <ChevronLeft className="w-5 h-5"/> Back
+            </button>
         <div className="p-4">
           <h1 className="text-3xl font-semibold text-teal-800 mb-6 text-center">
             Edit Your Adoption Listing

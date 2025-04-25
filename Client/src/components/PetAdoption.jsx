@@ -266,6 +266,12 @@ const PetAdoption = () => {
         >
           {loading ? "Finding your match..." : "Find Your Perfect Match"}
         </button>
+        <button
+                className="bg-gray-100 text-black py-2 px-4 rounded hover:font-semibold"
+                onClick={resetAdvancedSearch}
+              >
+                Reset
+              </button>
       </div>
 
       {/* ADVANCED FILTER MODAL */}
@@ -390,12 +396,7 @@ const PetAdoption = () => {
               >
                 Search
               </button>
-              <button
-                className="bg-gray-300 w-1/5 text-black py-2 px-4 rounded hover:bg-gray-400"
-                onClick={resetAdvancedSearch}
-              >
-                Reset
-              </button>
+              
             </div>
           </div>
         </div>

@@ -36,6 +36,7 @@ const UserProfile = () => {
     email: '',
     name: '',
     phone: '',
+    city: '',
     password: '',
     confirmPassword: '',
     // Detailed fields
@@ -199,6 +200,22 @@ const UserProfile = () => {
     fetchUserData();
   }, [userRole]);
 
+  const majorCitiesPakistan = [
+    "Karachi",
+    "Lahore",
+    "Islamabad",
+    "Rawalpindi",
+    "Faisalabad",
+    "Peshawar",
+    "Quetta",
+    "Multan",
+    "Hyderabad",
+    "Sialkot",
+    "Gujranwala",
+    "Sargodha",
+    "Bahawalpur"
+  ];
+
   const handleSave = async () => {
     if (!validateEmail(formData.email)) {
       setError('Invalid email format.');
@@ -220,6 +237,7 @@ const UserProfile = () => {
         phone: formData.phone,
         email: formData.email,
         name: formData.name,
+        city: formData.city,
       });
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -411,6 +429,24 @@ const UserProfile = () => {
                 className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-300"
               />
             </div>
+            <div>
+              <label className="block text-sm text-gray-700">City</label>
+              <select
+                name="city"
+                value={isEditing ? formData.city : userData?.city}
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-300"
+              >
+                <option value="" disabled>Select a city</option>
+                {majorCitiesPakistan.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {isEditing && (
               <>
                 <div>
@@ -523,6 +559,24 @@ const UserProfile = () => {
                   disabled={!isEditing}
                   className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-300"
                 />
+              </div>
+              <div className="mt-4">
+                {/* City Dropdown */}
+                <label className="block text-sm text-gray-700">City</label>
+                <select
+                  name="city"
+                  value={isEditing ? formData.city : userData?.city}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-300"
+                >
+                  <option value="" disabled>Select a city</option>
+                  {majorCitiesPakistan.map((city) => (
+                    <option key={city} value={city}>
+                      {city}
+                    </option>
+                  ))}
+                </select>
               </div>
               {isEditing && (
                 <>

@@ -421,6 +421,68 @@ export const SubmitAdoptionApplication = async (req, res) => {
   }
 };
 
+export const GetAdoptionApplications = async (req, res) => {
+  try {
+    const petId = req.params.id;
+    if (!petId) {
+      return res.status(400).json({
+        success: false,
+        message: "Pet ID is required.",
+      });
+    }
+    
+    // Find all adoption applications for the specified petId
+    const applications = await AdoptionApplicationModel.find({ petId });
+    
+    return res.status(200).json({
+      success: true,
+      applications, // Returns an array of applications
+    });
+  } catch (error) {
+    console.error("Error fetching adoption applications:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const GetAdoptionApplicationDetails = async (req, res) => {
+  try {
+    // Extract application ID from URL parameters
+    const { applicationId } = req.params; 
+    if (!applicationId) {
+      return res.status(400).json({
+        success: false,
+        message: "Application ID is required.",
+      });
+    }
+
+    // Find the application and optionally populate related fields
+    const application = await AdoptionApplicationModel.findById(applicationId)
+      .populate("userId", "name email")  // populates user details if needed
+      .populate("petId", "title description"); // populates pet details if needed
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: "Adoption application not found.",
+      });
+    }
+
+    // Return the application details as JSON
+    return res.status(200).json({
+      success: true,
+      application,
+    });
+  } catch (error) {
+    console.error("Error fetching adoption application details:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
 
 export const CheckUserApplication = async (req, res) => {
   try {

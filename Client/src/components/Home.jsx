@@ -1,5 +1,6 @@
 import HomeSearchComponent from './HomeSearchComponent';
 import ServiceCards from './ServiceCards';
+import AdoptionOrRehome from './AdoptionOrRehome';
 
 export default function Home() {
 
@@ -12,6 +13,8 @@ export default function Home() {
         <div className="w-full">
           <ServiceCards />
         </div>
+      <AdoptionOrRehome />
+        
       </div>
     </div>
   );

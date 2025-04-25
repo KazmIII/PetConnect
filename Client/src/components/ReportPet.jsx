@@ -296,7 +296,7 @@ function ReportPet() {
           {match.name && (
             <div className="flex items-center text-gray-600 text-lg mt-2">
               <FaUser className="mr-2 text-teal-600" />
-              <span>{match.name}</span>
+              <span>Found by {match.name}</span>
             </div>
           )}
           {match.phone_number && (

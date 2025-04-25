@@ -23,18 +23,21 @@ import SitterProfile from './components/SitterProfile';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
 import ProtectedRoute1 from './components/ProtectedRoute';
-import ListPetAdoption from './components/ListPetAdoption';
 import InfoModal from './components/InfoModal';
 import Footer from './components/Footer';
 import ClinicDashboard from './components/ClinicDashboard';
 import ClinicProfile from './components/ClinicProfile';
 import PetEmotion from './components/PetEmotion';
 
+import ListPetAdoption from './components/ListPetAdoption';
+import EditPetAdoption from './components/EditPetAdoption';
 import PetAdoption from './components/PetAdoption';
 import PetAdoptionDetail from './components/PetAdoptionDetail';
 import AdoptionForm from './components/AdoptionForm';
 import MyApplications from './components/MyApplications';
 import MyListings from './components/MyListings';
+import ApplicationsForAd from './components/ApplicationsForAd';
+import AdoptionApplicationDetail from './components/AdoptionApplicationDetail';
 
 import UserProfile from './components/UserProfile';
 import AddService from './components/AddService';
@@ -184,6 +187,9 @@ const AppContent = () => {
         <Route path="/myPets/:petId" element={<ProtectedRoute requiredRole="pet_owner"> <MyPets /> </ProtectedRoute>} />
         <Route path="/profile/user" element={<ProtectedRoute requiredRole="pet_owner"> <UserProfile /> </ProtectedRoute>} />
         <Route path="/profile/post-adoption" element={<ProtectedRoute requiredRole="pet_owner"> <ListPetAdoption /> </ProtectedRoute>} />
+        <Route path="/profile/view-applications/:id" element={<ProtectedRoute requiredRole="pet_owner"> <ApplicationsForAd /> </ProtectedRoute>} />
+        <Route path="/profile/edit-adoption/:id" element={<ProtectedRoute requiredRole="pet_owner"> <EditPetAdoption /> </ProtectedRoute>} />
+        <Route path="/profile/applications/:applicationId" element={<ProtectedRoute requiredRole="pet_owner"> <AdoptionApplicationDetail /> </ProtectedRoute>} />
         <Route path="/profile/vet" element={<ProtectedRoute requiredRole="vet"> <UserProfile /> </ProtectedRoute>} />
 
         <Route path="/profile/groomer" element={<ProtectedRoute requiredRole="groomer"> <UserProfile /> </ProtectedRoute>} />
