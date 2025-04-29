@@ -65,47 +65,105 @@ const Services = () => {
       ) : (
         <>
           <h1 className="text-2xl font-semibold text-center mb-6 text-orange-700">Your Services</h1>
-          <div className="text-right mb-4">
-            <button
-              onClick={handleAddService}
-              className="px-6 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600"
-            >
-              Add Service
-            </button>
-          </div>
+          {services.length === 0 && (
+            <div className="text-right mb-4">
+              <button
+                onClick={handleAddService}
+                className="px-6 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600"
+              >
+                Add Service
+              </button>
+            </div>
+          )}
 
-          <div className="space-y-4">
-            {services.map(service => (
-              <div key={service._id} className="bg-slate-200 md:bg-white mx-auto md:mx-10 shadow-lg rounded-lg overflow-hidden p-4 border-l-8 border-teal-500">
-                <div className="flex flex-row justify-between">
-                    <div className="flex flex-col space-y-2">
-                    <h2 className="text-xl font-semibold text-teal-700">{service.serviceName}</h2>
-                    <p className="text-sm text-gray-600">{service.description}</p>
-                    <p className="mt-2 text-lg font-bold text-orange-600">Price: Rs. {service.price}</p>
+          {services.length === 0 ? (
+            <div className="text-center text-lg text-gray-500 mt-10">
+              No services added yet.
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {services.map(service => (
+                <div
+                  key={service._id}
+                  className="bg-white border border-gray-200 shadow-md rounded-lg p-6 transition duration-300 hover:shadow-lg"
+                >
+                  {/* Header Section */}
+                  <div className="flex justify-between items-start mb-4">
+                    <h2 className="text-2xl font-semibold text-teal-800">
+                      {service.services.join(', ')}
+                    </h2>
+
+                    {/* Icons with spacing */}
+                    <div className="flex items-center space-x-6 mt-1">
+                      {/* Edit Icon */}
+                      <div className="relative group">
+                        <Link
+                          to={`/edit-service/${service._id}`}
+                          className="text-yellow-600 hover:text-yellow-800"
+                        >
+                          <Pencil className="w-6 h-6" />
+                        </Link>
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 text-xs bg-gray-200 text-gray-800 rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                          Edit
+                        </span>
+                      </div>
+
+                      {/* Delete Icon */}
+                      <div className="relative group">
+                        <button
+                          onClick={() => {
+                            setServiceToDelete(service);
+                            setShowDeleteConfirm(true);
+                          }}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <Trash2 className="w-6 h-6" />
+                        </button>
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 text-xs bg-gray-200 text-gray-800 rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                          Delete
+                        </span>
+                      </div>
                     </div>
-                    <div className="mt-4 flex justify-start items-center space-x-10">
-                    <Link
-                      to={`/edit-service/${service._id}`}
-                      className="text-yellow-600 hover:text-yellow-800"
-                    >
-                      <Pencil className="w-5 h-5 md:w-6 md:h-6" />
-                    </Link>
-                    <button
-                      onClick={() => {
-                        setServiceToDelete(service);
-                        setShowDeleteConfirm(true);
-                      }}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      <Trash2  />
-                    </button>
+
+                  </div>
+
+                  {/* Delivery Methods */}
+                  <div className="mb-3">
+                    <p className="text-sm font-medium text-gray-600">Delivery Methods:</p>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {service.deliveryMethods?.length ? (
+                        service.deliveryMethods.map((method) => (
+                          <span
+                            key={method}
+                            className="text-sm bg-orange-100 text-orange-700 px-3 py-1 rounded-full"
+                          >
+                            {method}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-sm text-gray-500">Not specified</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-sm text-gray-700 mb-4 whitespace-pre-line">
+                    {service.description}
+                  </p>
+
+                  {/* Price */}
+                  <div className="text-right">
+                    <span className="text-lg font-semibold text-red-600">
+                      Fee: Rs. {service.price}
+                    </span>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </>
       )}
+
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg shadow-xl px-2 py-3 md:p-6 max-w-sm md:max-w-md w-full">

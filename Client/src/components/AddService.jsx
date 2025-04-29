@@ -1,22 +1,29 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
 import { useNavbar } from "./NavbarContext";
-import {ChevronLeft} from 'lucide-react';
+import {ChevronLeft, ChevronDown, ChevronUp} from 'lucide-react';
 
 const AddService = () => {
   const {userRole} = useNavbar();
   const [error, setError] = useState("");
+  const [priceError, setPriceError] = useState('');
+  const dropdownRef = useRef(null);
+  const servicesDropdownRef = useRef(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
+  const [durationError, setDurationError] = useState('');
+
   const [formData, setFormData] = useState({
-    serviceName: "",
     description: "",
     price: "",
     duration: "",
     isPackage: false,
     customService: "", 
+    services: [],  
     maxPets: 1, // Sitter only
     availability: [],
-    day: "",
+    deliveryMethods: [],
     startTime: "",
     endTime: "",
   });
@@ -41,20 +48,62 @@ const AddService = () => {
     }
   }, [userRole]);
 
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+      if (servicesDropdownRef.current && !servicesDropdownRef.current.contains(event.target)) {
+        setServiceDropdownOpen(false);
+      }
+    }
+  
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const toggleService = (service) => {
+    setFormData(prev => {
+      const has = prev.services.includes(service);
+      return {
+        ...prev,
+        services: has
+          ? prev.services.filter(s => s !== service)
+          : [...prev.services, service],
+        // if user just selected “Other”, reset customService
+        customService: !has && service === 'Other' ? '' : prev.customService
+      };
+    });
+  };
+
+  const toggleDelivery = (method) => {
+    setFormData(prev => ({
+      ...prev,
+      deliveryMethods: prev.deliveryMethods.includes(method)
+        ? prev.deliveryMethods.filter(m => m !== method)
+        : [...prev.deliveryMethods, method],
+    }));
+  };
+
   const roleServices = {
     vet: [
       "General Consultation",
-      "Vaccinations",
-      "Surgery",
-      "Emergency Care",
       "Health Check-ups",
+      "Vaccinations",
       "Microchipping",
-      "Dental Care",
-      "Spaying/Neutering",
-      "Diagnostic Imaging (X-rays, Ultrasounds)",
-      "Lab Tests (Blood tests, Urinalysis)",
       "Prescription Services",
-    ],
+      "Dental Care (Cleanings, Exams)",
+      "Dentistry (Extractions, Advanced Treatments)",
+      "Spaying/Neutering",
+      "General Surgery",
+      "Emergency Surgery",
+      "Diagnostic Imaging (X-rays, Ultrasounds)",
+      "Lab Tests (Bloodwork, Urinalysis)",
+      "Emergency Care",
+      "Other"
+    ],    
     groomer: [
       "Bathing",
       "Nail Trimming",
@@ -76,12 +125,37 @@ const AddService = () => {
       "Overnight Stay",
       "House Visits",
       "Special Needs Care (e.g., senior or disabled pets)",
+      "Other",
     ],
   };
 
   const handleInputChange = (e) => {
-    setError('');
     const { name, value } = e.target;
+    const val = Number(value);
+
+    if (name === "price") {
+      if(value === '' || isNaN(val)){
+        setPriceError('');
+      } else if (val < 500) {
+        setPriceError("Price must be at least 500 PKR.");
+      } else if (val > 10000) {
+        setPriceError("Price must not exceed 10,000 PKR.");
+      } else {
+        setPriceError(""); // Clear error
+      }
+    }
+
+    if (name === "duration") {
+      const duration = Number(value);
+      if(value === '' || isNaN(val)){
+        setDurationError('');
+      } else if (duration < 15 || duration > 30) {
+        setDurationError("Duration must be between 15 and 30 minutes.");
+      } else {
+        setDurationError(""); // Clear error when valid
+      }
+    }
+
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
@@ -97,11 +171,11 @@ const AddService = () => {
   };
 
   const handleAddAvailability = () => {
-    const { day, startTime, endTime, duration } = formData;
-    setError('');
+    const { days, startTime, endTime, duration } = formData;
+    setError("");
   
-    if (!day) {
-      setError("Please select a day.");
+    if (!days || days.length === 0) {
+      setError("Please select at least one day.");
       return;
     }
     if (!startTime) {
@@ -119,54 +193,52 @@ const AddService = () => {
   
     const start = new Date(`1970-01-01T${startTime}:00`);
     let end = new Date(`1970-01-01T${endTime}:00`);
-  
-    // Handle overnight cases (e.g., 10 PM to 12 AM)
     if (end <= start) {
-      end = new Date(end.getTime() + 24 * 60 * 60 * 1000); // Add 24 hours to the end time
+      end = new Date(end.getTime() + 24 * 60 * 60 * 1000);
     }
   
-    const minDuration = duration * 60000; // Convert duration to milliseconds
-  
-    const totalTime = end - start; // Total time in milliseconds
-    const maxDuration = totalTime / 60000; // Convert to minutes
-  
-    if (minDuration > totalTime) {
-      setError(
-        `The selected duration is too large. The maximum allowable duration is ${maxDuration} minutes for the selected time range.`
-      );
+    const slotMs = duration * 60000;
+    const totalMs = end - start;
+    if (slotMs > totalMs) {
+      const maxMin = totalMs / 60000;
+      setError(`Maximum duration is ${maxMin} minutes for that range.`);
       return;
     }
   
-    const formatTimeWithAMPM = (time) => {
-      const hours = time.getHours();
-      const minutes = time.getMinutes().toString().padStart(2, "0");
-      const period = hours >= 12 ? "PM" : "AM";
-      const formattedHours = hours % 12 || 12; // Convert 0 hour to 12 for 12-hour format
-      return `${formattedHours}:${minutes} ${period}`;
+    const fmt = (time) => {
+      const h = time.getHours();
+      const m = time.getMinutes().toString().padStart(2, "0");
+      const ap = h >= 12 ? "PM" : "AM";
+      const hr = h % 12 || 12;
+      return `${hr}:${m} ${ap}`;
     };
   
+    // build the common slots array once
     const slots = [];
-    let currentTime = start;
-  
-    while (currentTime < end) {
-      const slotStart = formatTimeWithAMPM(currentTime);
-      currentTime = new Date(currentTime.getTime() + minDuration);
-      if (currentTime > end) break; // Avoid creating an incomplete slot
-      const slotEnd = formatTimeWithAMPM(currentTime);
-      slots.push({ startTime: slotStart, endTime: slotEnd });
+    let cur = start;
+    while (cur < end) {
+      const s = fmt(cur);
+      cur = new Date(cur.getTime() + slotMs);
+      if (cur > end) break;
+      const e = fmt(cur);
+      slots.push({ startTime: s, endTime: e });
     }
   
-    setFormData((prevData) => ({
-      ...prevData,
-      availability: [...prevData.availability, { day, slots }],
-      day: "",
+    // map each selected day to its own availability object
+    const newAvailEntries = days.map((day) => ({
+      day,
+      slots,
+    }));
+  
+    setFormData((prev) => ({
+      ...prev,
+      availability: [...prev.availability, ...newAvailEntries],
+      days: [],       // clear selected days
       startTime: "",
       endTime: "",
       duration: "",
     }));
-    setError("");
   };
-  
 
   const handleDeleteSlot = (dayIndex, slotIndex) => {
     const updatedAvailability = formData.availability.map((item, index) => {
@@ -185,12 +257,39 @@ const AddService = () => {
     }));
   };
 
+  // inside your component, where userRole is in scope:
+const deliveryOptions = [
+  // only vets get the video option
+  ...(userRole === 'vet'
+    ? [{
+        value: 'Video Consultation',
+        label: 'Video Consultation',
+        description: 'Connect with clients via secure video calls.',
+      }]
+    : []),
+  {
+    value: 'In-Clinic',
+    label: 'In-Clinic',
+    description: 'Host pets at your clinic for appointments.',
+  },
+  {
+    value: 'Home Visit',
+    label: 'Home Visit',
+    description: 'Provide on-site visits at the pet owner’s home.',
+  },
+];
+
+
 
 const handleSubmit = async (e) => {
   e.preventDefault();
 
   if(formData.availability.length === 0){
     setError('Please add a slot');
+    return;
+  }
+  if(formData.deliveryMethods.length === 0){
+    setError('Please add a delivery method');
     return;
   }
 
@@ -226,66 +325,120 @@ const handleBack = () => {
         {userRole === "sitter" && "Add a Sitting Service"}
       </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-        {/* Service Dropdown */}
-        <div>
-            <label className="block text-gray-700 font-semibold mb-2">Service Name</label>
-            <select
-                name="serviceName"
-                value={formData.serviceName}
-                onChange={(e) => {
-                handleInputChange(e);
-                if (e.target.value === "Other") {
-                    setFormData((prevData) => ({ ...prevData, customService: "" }));
-                }
-                }}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                required
-            >
-                <option value="">Select a Service</option>
-                {roleServices[userRole]?.map((service) => (
-                <option key={service} value={service}>
-                    {service}
-                </option>
-                ))}
-            </select>
-        </div>
-
-        {/* Custom Service Name Input */}
-        {formData.serviceName === "Other" && (
-            <div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+          {/* Service Dropdown */}
+          <div className="relative" ref={servicesDropdownRef}>
             <label className="block text-gray-700 font-semibold mb-2">
-                Custom Service Name
+              Service Name
             </label>
-            <input
-                type="text"
-                name="customService"
-                value={formData.customService || ""}
-                onChange={(e) =>
-                setFormData((prevData) => ({
-                    ...prevData,
-                    customService: e.target.value,
-                }))
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                placeholder="Enter the service name"
-                required
-            />
-            </div>
-        )}
 
-        {/* Price Field */}
-        <div>
+            <button
+              type="button"
+                onClick={() => setServiceDropdownOpen(o => !o)}
+                className="w-full text-left px-4 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 flex justify-between items-center"
+              >
+                Select one or more services
+                {serviceDropdownOpen ? (
+                  <ChevronUp className="ml-2 h-5 w-5 text-gray-600" />
+                ) : (
+                  <ChevronDown className="ml-2 h-5 w-5 text-gray-600" />
+                )}
+            </button>
+
+            {/* Dropdown list */}
+            {serviceDropdownOpen && (
+              <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+                {(roleServices[userRole] || []).map(service => (
+                  <label
+                    key={service}
+                    className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      className="form-checkbox h-4 w-4 text-teal-600 mr-2"
+                      checked={formData.services.includes(service)}
+                      onChange={() => toggleService(service)}
+                    />
+                    <span>{service}</span>
+                  </label>
+                ))}
+
+                {formData.services.includes('Other') && (
+                  <div className="px-4 py-2 border-t border-gray-200">
+                    <input
+                      type="text"
+                      name="customService"
+                      value={formData.customService}
+                      onChange={handleInputChange}
+                      placeholder="Describe your custom service"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Render selected services below */}
+            {formData.services.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {formData.services.map(s => (
+                  <span
+                    key={s}
+                    className="inline-flex items-center px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-sm"
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Price Field */}
+          <div>
             <label className="block text-gray-700 font-semibold mb-2">Price</label>
             <input
             type="number"
             name="price"
+            min="500"
+            max="5000"
             value={formData.price}
             onChange={handleInputChange}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
             required
             />
-        </div>
+            <small className="text-gray-500">
+              The amount you want to charge for the session.
+            </small>
+            {priceError && (
+              <p className="text-red-500 text-sm mt-1">{priceError}</p>
+            )}
+          </div>
+          {/* Delivery Methods */}
+          <div className="mt-6">
+            <label className="block text-gray-700 font-semibold mb-2">
+              How will you deliver these services?
+            </label>
+            <div className="flex flex-col space-y-3">
+              {deliveryOptions.map(opt => (
+                <label
+                  key={opt.value}
+                  className="flex items-start px-4 py-2 border  bg-white border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    className="form-checkbox h-5 w-5 accent-teal-600 mt-1"
+                    checked={formData.deliveryMethods.includes(opt.value)}
+                    onChange={() => toggleDelivery(opt.value)}
+                  />
+                  <div className="ml-3">
+                    <span className="font-medium text-teal-700">{opt.label}</span>
+                    <p className="text-gray-500 text-sm">{opt.description}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
         </div>
 
         <div>
@@ -294,22 +447,33 @@ const handleBack = () => {
             name="description"
             value={formData.description}
             onChange={handleInputChange}
+            placeholder="Describe what’s included in your service"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
             rows="4"
           />
+          <small className="text-gray-500">
+            Briefly explain benefits or what’s covered.
+          </small>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             <div>
-            <label className="block text-gray-700 font-semibold mb-2">Duration (minutes)</label>
-            <input
-                type="number"
-                name="duration"
-                value={formData.duration}
-                onChange={handleInputChange}
-                min="10"
-                step="5"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-auto" 
-            />
+              <label className="block text-gray-700 font-semibold mb-2">Duration (minutes)</label>
+              <input
+                  type="number"
+                  name="duration"
+                  value={formData.duration}
+                  onChange={handleInputChange}
+                  min="15"
+                  max="30"
+                  step="5"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-auto" 
+              />
+              <small className="text-gray-500">
+                E.g. 30 for a half-hour session.
+              </small>
+              {durationError && (
+                <p className="text-red-500 text-sm mt-1">{durationError}</p>
+              )}
             </div>
             {userRole === 'groomer' && (
                 <div>
@@ -334,6 +498,10 @@ const handleBack = () => {
                     min="1"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                     />
+                    <small className="text-gray-500">
+                How many pets can you look after at once?
+              </small>
+
                 </div>
             )}
          
@@ -341,24 +509,64 @@ const handleBack = () => {
         <div>
           <h3 className="text-lg font-semibold text-teal-600 mb-4">Add Availability</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">Day</label>
-              <select
-                name="day"
-                value={formData.day}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            <div className="relative" ref={dropdownRef}>
+              <label className="block text-gray-700 font-semibold mb-2">Day(s)</label>
+              
+              {/* Dropdown Trigger */}
+              <div
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer bg-white"
               >
-                <option value="">Select Day</option>
-                {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(
-                  (day) => (
-                    <option key={day} value={day}>
+                {formData.days && formData.days.length > 0
+                  ? formData.days.includes("All Days")
+                    ? "All Days"
+                    : formData.days.join(", ")
+                  : "Select Days"}
+              </div>
+
+              {/* Dropdown Menu */}
+              {dropdownOpen && (
+                <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
+                  {/* Select All Option */}
+                  <label className="flex items-center px-4 py-2 hover:bg-gray-100">
+                    <input
+                      type="checkbox"
+                      checked={formData.days?.length === 7}
+                      onChange={() => {
+                        if (formData.days?.length === 7) {
+                          setFormData({ ...formData, days: [] });
+                        } else {
+                          setFormData({ ...formData, days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] });
+                        }
+                      }}
+                      className="mr-2"
+                    />
+                    Select All
+                  </label>
+
+                  {/* Individual Day Options */}
+                  {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => (
+                    <label key={day} className="flex items-center px-4 py-2 hover:bg-gray-100">
+                      <input
+                        type="checkbox"
+                        checked={formData.days?.includes(day)}
+                        onChange={() => {
+                          const selectedDays = formData.days || [];
+                          if (selectedDays.includes(day)) {
+                            setFormData({ ...formData, days: selectedDays.filter(d => d !== day) });
+                          } else {
+                            setFormData({ ...formData, days: [...selectedDays, day] });
+                          }
+                        }}
+                        className="mr-2"
+                      />
                       {day}
-                    </option>
-                  )
-                )}
-              </select>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
+
             <div>
               <label className="block text-gray-700 font-semibold mb-2">Start Time</label>
               <input
@@ -429,7 +637,7 @@ const handleBack = () => {
           type="submit"
           className="w-1/3 px-3 py-2 bg-gradient-to-r from-orange-500 to-orange-700 text-white text-lg font-semibold rounded-lg hover:bg-orange-900 focus:outline-none focus:ring-2 focus:ring-orange-700"
         >
-          Submit
+          Save Service
         </button>
         </div>
         

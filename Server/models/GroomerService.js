@@ -2,13 +2,16 @@ import mongoose from "mongoose";
 
 const PetGroomerServiceSchema = new mongoose.Schema({
   providerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Groomer', required: true },
-  serviceName: { type: String, required: true },
+
+  services: [{ type: String, required: true }],
   customService: { type: String, default: null },
   description: { type: String },
   price: { type: Number, required: true },
   duration: { type: Number },
+
   isPackage: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
+
   availability: [
     {
       day: {
@@ -21,11 +24,13 @@ const PetGroomerServiceSchema = new mongoose.Schema({
       slots: [
         {
           startTime: { type: String, required: true },
-          endTime: { type: String, required: true },
+          endTime:   { type: String, required: true },
         }
       ],
     }
   ],
+
+  deliveryMethods: [{ type: String }]
 });
 
 export const PetGroomerService = mongoose.model('GroomerService', PetGroomerServiceSchema);

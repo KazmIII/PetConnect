@@ -7,85 +7,95 @@ import { SitterModel } from "../models/Sitter.js";
 import jwt from 'jsonwebtoken';
 
 export const AddService = async (req, res) => {
-    const { userRole } = req.query; // Get the user role from query parameters
-    const serviceModelMappings = {
-      vet: VeterinarianService,
-      groomer: PetGroomerService,
-      sitter: PetSitterService,
+  const { userRole } = req.query; // Get the user role from query parameters
+  const serviceModelMappings = {
+    vet: VeterinarianService,
+    groomer: PetGroomerService,
+    sitter: PetSitterService,
+  };
+
+  const ServiceModel = serviceModelMappings[userRole];
+
+  if (!ServiceModel) {
+    return res.status(400).json({ message: 'Invalid role provided' });
+  }
+
+  const token = req.cookies[`${userRole}Token`];
+  if (!token) {
+    return res.status(401).json({ message: 'Unauthorized: No token provided' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const providerId = decoded.id;
+
+    // Extract service data from the request body
+    const { 
+      services,        // Now expecting an array of services
+      customService, 
+      description, 
+      price, 
+      duration, 
+      isPackage, 
+      maxPets, 
+      availability, 
+      deliveryMethods   // New field
+    } = req.body;
+
+    // Validate required fields
+    if (!services || !Array.isArray(services) || services.length === 0 || !price) {
+      return res.status(400).json({ message: 'At least one service and price are required' });
+    }
+
+    // Check provider existence
+    let provider;
+    if (userRole === 'vet') {
+      provider = await VetModel.findById(providerId);
+    } else if (userRole === 'groomer') {
+      provider = await GroomerModel.findById(providerId);
+    } else if (userRole === 'sitter') {
+      provider = await SitterModel.findById(providerId);
+    }
+
+    if (!provider) {
+      return res.status(404).json({ message: `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} not found` });
+    }
+
+    // Define the new service data
+    const serviceData = {
+      providerId,
+      services,           // Now an array
+      customService,
+      description,
+      price,
+      duration,
+      deliveryMethods,    // Now added
+      isActive: true,
+      availability,
     };
-  
-    const ServiceModel = serviceModelMappings[userRole];
-  
-    if (!ServiceModel) {
-      return res.status(400).json({ message: 'Invalid role provided' });
+
+    // Role-specific fields
+    if (userRole === 'groomer') {
+      serviceData.isPackage = isPackage || false;
+    } else if (userRole === 'sitter') {
+      serviceData.maxPets = maxPets || 1;
     }
-  
-    const token = req.cookies[`${userRole}Token`];
-    if (!token) {
-      return res.status(401).json({ message: 'Unauthorized: No token provided' });
-    }
-  
-    try {
-      // Decode token to get the providerId
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const providerId = decoded.id;
-  
-      // Extract service data from the request body
-      const { serviceName, customService, description, price, duration, isPackage, maxPets, availability } = req.body;
-  
-      // Validate the required fields
-      if (!serviceName || !price) {
-        return res.status(400).json({ message: 'Service name and price are required' });
-      }
-  
-      // Dynamically check if the provider exists based on the role
-      let provider;
-      if (userRole === 'vet') {
-        provider = await VetModel.findById(providerId);
-      } else if (userRole === 'groomer') {
-        provider = await GroomerModel.findById(providerId);
-      } else if (userRole === 'sitter') {
-        provider = await SitterModel.findById(providerId);
-      }
-  
-      if (!provider) {
-        return res.status(404).json({ message: `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} not found` });
-      }
-  
-      // Define the service fields based on the role
-      const serviceData = {
-        providerId,
-        serviceName,
-        customService,
-        description,
-        price,
-        duration,
-        isActive: true, // Default value for isActive
-        availability,
-      };
-  
-      // Add role-specific fields
-      if (userRole === 'groomer') {
-        serviceData.isPackage = isPackage; // Only for groomer service
-      } else if (userRole === 'sitter') {
-        serviceData.maxPets = maxPets || 1; // Only for sitter service, default to 1 if not provided
-      }
-  
-      // Create a new service based on the provided role
-      const newService = new ServiceModel(serviceData);
-  
-      const savedService = await newService.save();
-  
-      // Add the service ID to the provider's profile (if the provider has a services array)
-      provider.services = provider.services || [];
-      provider.services.push(savedService._id);
-      await provider.save();
-  
-      return res.status(201).json({ message: 'Service created successfully', service: savedService });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: 'Error creating service' });
-    }
+
+    // Create and save the new service
+    const newService = new ServiceModel(serviceData);
+    const savedService = await newService.save();
+
+    // Add the service ID to the provider's profile (if provider has a services array)
+    provider.services = provider.services || [];
+    provider.services.push(savedService._id);
+    await provider.save();
+
+    return res.status(201).json({ message: 'Service created successfully', service: savedService });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Error creating service' });
+  }
 };
   
 export const GetServicesByProvider = async (req, res) => {
@@ -163,107 +173,115 @@ export const GetServiceDetails = async (req, res) => {
 };
 
 export const DeleteService = async (req, res) => {
-    const { userRole } = req.query; // The userRole comes from the query parameters
-    const { serviceId } = req.params; // The serviceId comes from the URL parameters
-  
-    // Define the model mappings for each user role's service and user models
-    const serviceModelMappings = {
-      vet: VeterinarianService,
-      groomer: PetGroomerService,
-      sitter: PetSitterService,
-    };
-  
-    const userModelMappings = {
-      vet: VetModel,
-      groomer: GroomerModel,
-      sitter: SitterModel,
-    };
-  
-    // Select the appropriate service and user models based on userRole
-    const ServiceModel = serviceModelMappings[userRole];
-    const UserModel = userModelMappings[userRole];
-  
-    if (!ServiceModel || !UserModel) {
-      return res.status(400).json({ success: false, message: "Invalid role provided" });
+  const { userRole } = req.query;
+  const { serviceId } = req.params;
+
+  const serviceModelMappings = {
+    vet: VeterinarianService,
+    groomer: PetGroomerService,
+    sitter: PetSitterService,
+  };
+
+  const userModelMappings = {
+    vet: VetModel,
+    groomer: GroomerModel,
+    sitter: SitterModel,
+  };
+
+  const ServiceModel = serviceModelMappings[userRole];
+  const UserModel = userModelMappings[userRole];
+
+  if (!ServiceModel || !UserModel) {
+    return res.status(400).json({ success: false, message: "Invalid role provided" });
+  }
+
+  try {
+    const deletedService = await ServiceModel.findByIdAndDelete(serviceId);
+
+    if (!deletedService) {
+      return res.status(404).json({ success: false, message: "Service not found" });
     }
-  
-    try {
-      // Attempt to delete the service with the given serviceId from the selected service model
-      const deletedService = await ServiceModel.findByIdAndDelete(serviceId);
-  
-      if (!deletedService) {
-        return res.status(404).json({ success: false, message: "Service not found" });
-      }
-  
-      // Remove the serviceId from the associated user's account
-      await UserModel.updateOne(
-        { services: serviceId }, // Match the user who has this serviceId
-        { $pull: { services: serviceId } } // Remove the serviceId from their services array
-      );
-  
-      return res.status(200).json({ success: true, message: "Service deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting service:", error);
-      return res.status(500).json({ success: false, message: "Server error" });
-    }
+
+    // Remove the serviceId from the provider (user)'s services array
+    await UserModel.updateOne(
+      { services: serviceId },
+      { $pull: { services: serviceId } }
+    );
+
+    return res.status(200).json({ success: true, message: "Service deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting service:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
 };
-  
+
 export const UpdateService = async (req, res) => {
-    const { userRole } = req.query; // The userRole comes from the query parameters
-    const { serviceId } = req.params; // The serviceId comes from the URL parameters
-    const { serviceName, customService, description, price, duration, isPackage, availability } = req.body; // The updated service data
+  const { userRole } = req.query;
+  const { serviceId } = req.params;
   
-    // Define the model mappings for each user role's service and user models
-    const serviceModelMappings = {
-      vet: VeterinarianService,
-      groomer: PetGroomerService,
-      sitter: PetSitterService,
-    };
-  
-    const userModelMappings = {
-      vet: VetModel,
-      groomer: GroomerModel,
-      sitter: SitterModel,
-    };
-  
-    // Select the appropriate service and user models based on userRole
-    const ServiceModel = serviceModelMappings[userRole];
-    const UserModel = userModelMappings[userRole];
-  
-    if (!ServiceModel || !UserModel) {
-      return res.status(400).json({ success: false, message: "Invalid role provided" });
+  const { 
+    services,            
+    customService, 
+    description, 
+    price, 
+    duration, 
+    isPackage, 
+    maxPets, 
+    availability, 
+    deliveryMethods     
+  } = req.body;
+
+  const serviceModelMappings = {
+    vet: VeterinarianService,
+    groomer: PetGroomerService,
+    sitter: PetSitterService,
+  };
+
+  const userModelMappings = {
+    vet: VetModel,
+    groomer: GroomerModel,
+    sitter: SitterModel,
+  };
+
+  const ServiceModel = serviceModelMappings[userRole];
+  const UserModel = userModelMappings[userRole];
+
+  if (!ServiceModel || !UserModel) {
+    return res.status(400).json({ success: false, message: "Invalid role provided" });
+  }
+
+  if (!serviceId || !services || !Array.isArray(services) || services.length === 0 || !price) {
+    return res.status(400).json({ success: false, message: "Service ID, at least one service, and price are required" });
+  }
+
+  try {
+    const service = await ServiceModel.findById(serviceId);
+
+    if (!service) {
+      return res.status(404).json({ success: false, message: "Service not found" });
     }
-  
-    if (!serviceId || !serviceName || !price) {
-      return res.status(400).json({ success: false, message: "Service ID, service name, and price are required" });
+
+    // Update fields
+    service.services = services;
+    service.customService = customService;
+    service.description = description;
+    service.price = price;
+    service.duration = duration;
+    service.availability = availability;
+    service.deliveryMethods = deliveryMethods;
+
+    // Role-specific fields
+    if (userRole === 'groomer') {
+      service.isPackage = isPackage || false;
+    } else if (userRole === 'sitter') {
+      service.maxPets = maxPets || 1;
     }
-  
-    try {
-      // Attempt to find the service with the given serviceId from the selected service model
-      const service = await ServiceModel.findById(serviceId);
-  
-      if (!service) {
-        return res.status(404).json({ success: false, message: "Service not found" });
-      }
-  
-      // Update the service with the new data
-      service.serviceName = serviceName;
-      service.customService = customService;
-      service.description = description;
-      service.price = price;
-      service.duration = duration;
-      service.isPackage = isPackage;
-      service.availability = availability;
-  
-      // Save the updated service
-      const updatedService = await service.save();
-  
-      // Optionally, update the user's service data if needed (e.g., in their profile)
-      // This step may not be necessary if the service data in the user model is consistent with the service model
-  
-      return res.status(200).json({ success: true, message: "Service updated successfully", service: updatedService });
-    } catch (error) {
-      console.error("Error updating service:", error);
-      return res.status(500).json({ success: false, message: "Server error" });
-    }
+
+    const updatedService = await service.save();
+
+    return res.status(200).json({ success: true, message: "Service updated successfully", service: updatedService });
+  } catch (error) {
+    console.error("Error updating service:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
 };

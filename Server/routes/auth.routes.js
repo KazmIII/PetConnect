@@ -26,7 +26,13 @@ import {SubmitAdoptionAd, GetAllAdoptionAds, GetAdoptionAdById, SubmitAdoptionAp
   GetUserAdoptionAds, UpdateAdoptionAd, GetAdoptionApplications, GetAdoptionApplicationDetails
 } from '../controllers/AdoptionController.js';
 
+import {GetVerifiedVets, GetVetById } from '../controllers/VetController.js';
+
 const AuthRoutes = express.Router();
+
+//Vet Routes
+AuthRoutes.get('/vets', GetVerifiedVets);
+AuthRoutes.get('/vets/:vetId', GetVetById);
 
 // PetConnect Routes
 AuthRoutes.post('/addAdoptionAd', UploadMultiple([{ name: 'photos', maxCount: 5 }]), SubmitAdoptionAd);

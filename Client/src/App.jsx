@@ -29,6 +29,9 @@ import ClinicDashboard from './components/ClinicDashboard';
 import ClinicProfile from './components/ClinicProfile';
 import PetEmotion from './components/PetEmotion';
 
+import Vets from './components/Vets';
+import VetAppointment from './components/VetAppointment';
+
 import ListPetAdoption from './components/ListPetAdoption';
 import EditPetAdoption from './components/EditPetAdoption';
 import PetAdoption from './components/PetAdoption';
@@ -171,6 +174,11 @@ const AppContent = () => {
 
   const isAdminRoute = location.pathname.startsWith("/admin");
   const isClinicRoute = location.pathname.startsWith("/clinic");
+  const noFooterPaths = [
+    '/admin',
+    '/clinic',
+    '/video-consultation/vet/'
+  ];
 
   return (
     <>
@@ -178,6 +186,8 @@ const AppContent = () => {
       {!isAdminRoute && !isClinicRoute && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/video-consultation/vet" element={<Vets />} />
+        <Route path="/video-consultation/vet/:vetId" element={<VetAppointment />} />
         <Route path="/find-a-pet" element={<PetAdoption />} />
         <Route path="/pet-listing/:id" element={<PetAdoptionDetail />} />
         <Route path="/pet-listing/:id/adoption-application" element={<ProtectedRoute requiredRole="pet_owner"> <AdoptionForm /> </ProtectedRoute>} />
@@ -219,7 +229,7 @@ const AppContent = () => {
       {/* Render modal globally */}
       <Modal />
       <ToastContainer />
-      {!isAdminRoute && !isClinicRoute && <Footer />}
+      {!noFooterPaths.some(path => location.pathname.startsWith(path)) && <Footer />}
     </>
   );
 };

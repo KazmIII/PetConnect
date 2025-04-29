@@ -2,8 +2,8 @@ import mongoose from "mongoose";
 
 const PetSitterServiceSchema = new mongoose.Schema({
   providerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Sitter', required: true },
-  serviceName: { type: String, required: true },
-  customService: { type: String, default: null },
+  services: [{ type: String, required: true }],
+  customService: { type: String, default: null }, 
   description: { type: String },
   price: { type: Number, required: true },
   duration: { type: Number },
@@ -21,11 +21,12 @@ const PetSitterServiceSchema = new mongoose.Schema({
       slots: [
         {
           startTime: { type: String, required: true },
-          endTime: { type: String, required: true },
+          endTime:   { type: String, required: true },
         }
       ],
     }
   ],
+  deliveryMethods: [{ type: String }]
 });
 
 export const PetSitterService = mongoose.model('SitterService', PetSitterServiceSchema);

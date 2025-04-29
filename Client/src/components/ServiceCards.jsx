@@ -1,44 +1,42 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import vetMobile from '../assets/vetMobile.jpg';
 import vetPicture from '../assets/vetPicture.webp';
 import petSitting from '../assets/pet sitting.avif';
 import petGrooming from '../assets/pet grooming.jpg';
 
 const ServiceCards = () => {
-    const navigate = useNavigate();
-
     return (
         <div className="container grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 w-full mx-auto lg:max-w-6xl mb-8
         custom-lg:max-w-4xl max-w-xs custom-xs:max-w-md sm:max-w-xl md:max-w-2xl rounded-3xl mt-4 md:mt-7">
             {/* Online Now Card */}
-            <div className="custom-lg:w-full  cursor-pointer">
+            <Link to="/video-consultation/vet" className="custom-lg:w-full cursor-pointer">
                 <div className="relative bg-blue-50 rounded-lg shadow-md h-full sm:h-64">
-                <div className="relative h-2/3 flex items-center justify-center">
+                    <div className="relative h-2/3 flex items-center justify-center">
                     <img
-                    src={vetMobile}
-                    alt="Consult Online Now"
-                    className="w-full h-full mx-auto object-cover rounded-lg"
-                    fetchpriority="high"
+                        src={vetMobile}
+                        alt="Consult Online Now"
+                        className="w-full h-full mx-auto object-cover rounded-lg"
+                        fetchpriority="high"
                     />
                     <div className="absolute inset-x-0 bottom-2 flex items-center justify-center bg-orange-500 text-white text-xs md:text-sm font-semibold h-8">
-                    <span
+                        <span
                         className="w-2 h-2 bg-green-800 rounded-full mr-2"
                         style={{
-                        animation: "ping 2s cubic-bezier(0, 0, 0.3, 1) infinite",
+                            animation: "ping 2s cubic-bezier(0, 0, 0.3, 1) infinite",
                         }}
-                    ></span>
-                    3 Doctors Online Now
+                        ></span>
+                        3 Doctors Online Now
                     </div>
-                </div>
-                <div className="h-1/3 py-1 sm:py-4 px-4 bg-white flex flex-col justify-between">
+                    </div>
+                    <div className="h-1/3 py-1 sm:py-4 px-4 bg-white flex flex-col justify-between">
                     <h2 className="text-base sm:text-lg font-semibold">Consult Online Now</h2>
                     <p className="text-gray-600 text-sm pb-2 hidden lg:block">
-                    Instantly connect with Vets through Video call.
+                        Instantly connect with Vets through Video call.
                     </p>
+                    </div>
                 </div>
-                </div>
-            </div>
+            </Link>
 
             {/* In-Clinic Appointments Card */}
             <div className="custom-lg:w-full   cursor-pointer">
