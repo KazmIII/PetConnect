@@ -27,10 +27,10 @@ export default function Footer() {
                 <a href="#!" className="text-white hover:text-gray-400 block">Pet Sitting/Grooming</a>
               </li>
               <li>
-                <a href="#!" className="text-white hover:text-gray-400 block">Lost & Found</a>
+                <a href="/lost" className="text-white hover:text-gray-400 block">Lost & Found</a>
               </li>
               <li>
-                <a href="#!" className="text-white hover:text-gray-400 block">Detect Pet Emotion</a>
+                <a href="/predict-emotion" className="text-white hover:text-gray-400 block">Detect Pet Emotion</a>
               </li>
             </ul>
           </div>
@@ -39,7 +39,7 @@ export default function Footer() {
             <ul className="list-none text-center md:text-left">
               <li className="text-lg font-semibold mb-2">Our Services</li>
               <li>
-                <a href="#!" className="text-white hover:text-gray-400 block">Pet Adoption</a>
+                <a href="/find-a-pet" className="text-white hover:text-gray-400 block">Pet Adoption</a>
               </li>
               <li>
                 <a href="#!" className="text-white hover:text-gray-400 block">Pet Grooming</a>
@@ -52,40 +52,21 @@ export default function Footer() {
 
         <div className="flex flex-wrap items-center justify-between">
           <div className="w-full md:w-1/4 text-center md:text-left mb-4 md:mb-0">
-            <p className="text-sm">© 2024 Company Name. All rights reserved.</p>
+            <p className="text-sm">© 2025 PetConnect. All rights reserved.</p>
           </div>
 
           <div className="w-full md:w-1/2 text-center mb-4 md:mb-0">
             <ul className="list-none flex flex-wrap justify-center gap-6 text-xs">
-              <li><a href="#!" className="text-white hover:text-gray-400">FAQs</a></li>
-              <li><a href="#!" className="text-white hover:text-gray-400">Contact</a></li>
-              <li><a href="#!" className="text-white hover:text-gray-400">Privacy Policy</a></li>
-              <li><a href="#!" className="text-white hover:text-gray-400">Terms & Conditions</a></li>
+              <li><a href="/FAQs" className="text-white hover:text-gray-400">FAQs</a></li>
+              <li><a href="/contact" className="text-white hover:text-gray-400">Contact</a></li>
+              <li><a href="/privacy-policy" className="text-white hover:text-gray-400">Privacy Policy</a></li>
+              <li><a href="/terms-and-conditions" className="text-white hover:text-gray-400">Terms & Conditions</a></li>
             </ul>
           </div>
 
           <div className="w-full md:w-1/4 text-center md:text-right mb-4 md:mb-0">
             <div className="flex flex-col items-center md:items-end gap-4 mb-4">
-            <div className="flex gap-4">
-                <a
-                    href="https://play.google.com/store"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-black text-white py-1 px-2 rounded flex items-center text-sm transition-transform transform hover:scale-105 hover:bg-gray-800 hover:shadow-lg"
-                >
-                    <FontAwesomeIcon icon={faGooglePlay} className="h-5 w-5" />
-                    <span className="ml-2 hidden md:inline">Google Play</span>
-                </a>
-                <a
-                    href="https://apps.apple.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-black text-white py-1 px-2 rounded flex items-center text-sm transition-transform transform hover:scale-105 hover:bg-gray-800 hover:shadow-lg"
-                >
-                    <FontAwesomeIcon icon={faAppStore} className="h-5 w-5" />
-                    <span className="ml-2 hidden md:inline">App Store</span>
-                </a>
-            </div>
+            
 
 
               <h4 className="text-md">Connect with us</h4>

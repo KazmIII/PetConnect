@@ -18,17 +18,24 @@ function ReportPet() {
   // Ref for file input
   const fileInputRef = useRef(null);
 
-  const handleReportTypeChange = (type) => {
-    setReportType(type);
-    setMatches([]);
-    setMessage("");
-    setMessageStyle("text-red-600"); // Reset message style on type change
-    setLostSubmitted(false); // Reset submission flag on switching types
-    if (type === "lost") {
-      setPhoneNumber("");
-      setName("");
-    }
-  };
+  // (Make sure clearFileAndPreview is defined above this)
+const handleReportTypeChange = (type) => {
+  setReportType(type);
+
+  // 🚨 clear any selected file + preview
+  clearFileAndPreview();
+
+  setMatches([]);
+  setMessage("");
+  setMessageStyle("text-red-600");
+  setLostSubmitted(false);
+
+  if (type === "lost") {
+    setPhoneNumber("");
+    setName("");
+  }
+};
+
 
   const handleFileChange = (e) => {
     // Clear previous messages and match flags when a new file is chosen
@@ -155,7 +162,7 @@ function ReportPet() {
             : "Help reunite a pet with its owner by uploading a picture of a found pet."}
         </p>
 
-        <div className="mb-6 flex justify-center space-x-6">
+        {/* <div className="mb-6 flex justify-center space-x-6">
           <button
             onClick={() => handleReportTypeChange("lost")}
             className={`${
@@ -176,7 +183,36 @@ function ReportPet() {
           >
             Found Pet
           </button>
-        </div>
+        </div> */}
+
+        {/* Toggle Lost / Found */}
+{/* Segmented pill toggle */}
+<div className="flex justify-center mb-6">
+  <div className="inline-flex rounded-full border border-teal-800 overflow-hidden">
+    <button
+      onClick={() => handleReportTypeChange("lost")}
+      className={`px-8 py-2 min-w-[120px] text-center font-medium transition ${
+        reportType === "lost"
+          ? "bg-teal-800 text-white"
+          : "bg-white text-teal-800"
+      }`}
+    >
+      Lost
+    </button>
+    <button
+      onClick={() => handleReportTypeChange("found")}
+      className={`px-8 py-2 min-w-[120px] text-center font-medium transition ${
+        reportType === "found"
+          ? "bg-teal-800 text-white"
+          : "bg-white text-teal-800"
+      }`}
+    >
+      Found
+    </button>
+  </div>
+</div>
+
+
 
         {/* Flex container for form fields and preview */}
         <div className="flex flex-col sm:flex-row sm:space-x-6">

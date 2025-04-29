@@ -5,6 +5,7 @@ import { navItems } from "../constants";
 import { useNavigate } from 'react-router-dom';
 import { useNavbar } from './NavbarContext';
 import axios from "axios";
+import { Link } from 'react-router-dom';
 
 
 const Navbar = () => {
@@ -171,9 +172,9 @@ const Navbar = () => {
           </button>
         </div>
         {/* Logo Section */}
-        <span className="text-2xl mr-4 font-bold bg-gradient-to-r from-orange-500 to-orange-800 bg-clip-text text-transparent">
-          PetConnect
-        </span>
+        <Link to="/" className="text-2xl mr-4 font-bold bg-gradient-to-r from-orange-500 to-orange-800 bg-clip-text text-transparent">
+  PetConnect
+</Link>
       </div>
       
       {/* Center Section: Desktop Navigation */}

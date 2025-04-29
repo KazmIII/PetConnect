@@ -5,7 +5,7 @@ import verifyEmailDomain from '../middleware/VerifyEmailDomain.js';
 
 import {AdminLogin, VerifyAdmin, GetPendingClinics,  UpdateClinicVerificationStatus, GetClinicDetails, GetRegisteredUsers,
   GetPendingSitters, GetSitterDetails, UpdateSitterVerificationStatus, GetRegisteredVets, GetRegisteredGroomers, GetRegisteredSitters,
-  RestrictUser
+  RestrictUser,
 } from '../controllers/AdminController.js';
 
 import { Profile, Register, Logout, VerifyEmail, Login, ForgotPassword, ResetPassword,

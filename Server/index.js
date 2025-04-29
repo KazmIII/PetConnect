@@ -12,43 +12,94 @@ import blogRoutes from "./routes/blogRoutes.js";
 import cookieParser from "cookie-parser";
 import path from 'path';
 import { fileURLToPath } from 'url';
+import http from 'http';
+import { Server } from 'socket.io';
 
-const PORT = 5000;
 dotenv.config();
+const PORT = process.env.PORT || 5000;
 
-const corsOptions = {
-    origin: 'http://localhost:5173', 
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true
-};
+// Connect to MongoDB
+DbCon();
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-DbCon();
 
-// Apply middleware in the correct order
-app.use(cors(corsOptions)); // CORS middleware must be added before routes
+// Middleware
+app.use(cors({
+  origin: 'http://localhost:5173',
+  methods: ['GET','POST','PUT','DELETE'],
+  credentials: true
+}));
 app.use(express.urlencoded({ limit: "500mb", extended: true }));
-app.use(express.json({ limit: "500mb" }));    // JSON middleware must also be applied before routes
-app.use('/uploads', express.static('uploads'));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use(express.json({ limit: "500mb" }));
+app.use('/uploads', express.static(path.join(__dirname,'uploads')));
 app.use(cookieParser());
 app.use(session({
-    secret: process.env.SESSION_KEY, // Replace with a strong secret key
-    resave: false,
-    saveUninitialized: true,
-    cookie: { httpOnly: true, secure: false, maxAge: 3600000 } // Use `secure: true` in production with HTTPS
+  secret: process.env.SESSION_KEY,
+  resave: false,
+  saveUninitialized: true,
+  cookie: { httpOnly: true, secure: false, maxAge: 3600000 }
 }));
 
+// API routes
 app.use('/auth', AuthRoutes);
-app.use("/api/blogs", blogRoutes);
-app.use('/api/memory-books', memoryBookRoutes); // Route for memory book actions (e.g., create, delete, rename)
+app.use('/api/blogs', blogRoutes);
+app.use('/api/memory-books', memoryBookRoutes);
 app.use('/api/memory-books', memoryRoutes);
-app.use("/pets", predictedEmotion); // Define routes after middleware
-app.use("/api", predictMatch);
+app.use('/pets', predictedEmotion);
+app.use('/api', predictMatch);
 
+// Create HTTP server and attach socket.io
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: 'http://localhost:5173',
+    methods: ['GET','POST'],
+    credentials: true
+  }
+});
 
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+// Socket.IO signaling handlers
+io.on("connection", socket => {
+  console.log(`✅ Socket connected: ${socket.id}`);
+
+  socket.on("join-room", ({ roomID }) => {
+    socket.join(roomID);
+    console.log(`[Server] ${socket.id} joined room ${roomID}`);
+
+    socket.to(roomID).emit('ready-for-offer', { socketID: socket.id });
+  });
+  
+
+  socket.on("offer", ({ roomID, sdp, to }) => {
+  console.log("🔗 Server got OFFER for room", roomID);
+  
+  if (to) {
+    // 🔥 Send offer directly to one user (for "to" specific socket)
+    io.to(to).emit("offer", { sdp, from: socket.id });
+  } else {
+    // 🌍 If "to" is not specified, send offer to entire room (broadcast style)
+    socket.to(roomID).emit("offer", { sdp, from: socket.id });
+  }
+});
+
+  socket.on("answer", data => {
+    console.log("🔗 Server got ANSWER for room", data.roomID);
+    socket.to(data.roomID).emit("answer", data);
+  });
+  socket.on("ice-candidate", data => {
+    console.log("🔗 Server got ICE for room", data.roomID, data.candidate);
+    socket.to(data.roomID).emit("ice-candidate", data);
+  });
+  
+
+  socket.on("disconnect", reason => {
+    console.log(`❌ Socket disconnected: ${socket.id} (${reason})`);
+  });
+});
+
+// Start server
+server.listen(PORT, () => {
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });

@@ -47,6 +47,14 @@ import BlogSection from './components/BlogSection';
 import BlogDetail from './components/BlogDetail';
 import ReportPet from './components/ReportPet';
 
+import VideoPage from './components/VideoPage';
+import GoodbyePage from './components/GoodbyePage';
+import VetAppointments from './components/VetAppointments';
+import ClientAppointments from './components/ClientAppointments';
+import Faqpage from './components/Faqpage';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import ContactUs from './components/ContactUs';
+import TermsAndConditions from './components/TermsAndConditions';
 const Modal = () => {
   const { activeComponent, update, checkLoginStatus, handleHideComponents, otpType, otpCode, userEmail, role, handleShowComponent } = useNavbar();
   const [showModal, setShowModal] = useState(false);
@@ -175,7 +183,9 @@ const AppContent = () => {
   return (
     <>
       {/* Conditionally render Navbar */}
+      <div className="min-h-screen flex flex-col">
       {!isAdminRoute && !isClinicRoute && <Navbar />}
+      <div className="flex-grow">
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/find-a-pet" element={<PetAdoption />} />
@@ -215,11 +225,23 @@ const AppContent = () => {
         <Route path="/blogs" element={<BlogSection />} />
         <Route path="/blog/:id" element={<BlogDetail />} />
         <Route path="/lost" element={<ReportPet />} />
+
+        <Route path="/video" element={<VideoPage />} />
+        <Route path="/client-appointments" element={<ClientAppointments />} />
+        <Route path="/vet-appointments" element={<VetAppointments />} />
+        <Route path="/leave" element={<GoodbyePage />} />
+        <Route path="/FAQs" element={<Faqpage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/contact"     element={<ContactUs/>}    />
+        <Route path="/terms-and-conditions"     element={<TermsAndConditions/>}    />
+
       </Routes>
+      </div>
       {/* Render modal globally */}
       <Modal />
       <ToastContainer />
       {!isAdminRoute && !isClinicRoute && <Footer />}
+      </div>
     </>
   );
 };

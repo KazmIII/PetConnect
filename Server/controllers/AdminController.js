@@ -3,6 +3,7 @@ import {ClinicModel} from '../models/Clinic.js';
 import { VetModel } from "../models/Vet.js";
 import { GroomerModel } from "../models/Groomer.js";
 import { SitterModel } from "../models/Sitter.js";
+import Blog from "../models/Blog.js";  
 import {sendVerificationStatusEmail} from '../middleware/Email.js';
 
 import bcryptjs from 'bcryptjs';
@@ -262,3 +263,4 @@ export const RestrictUser = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+

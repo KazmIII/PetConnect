@@ -70,4 +70,56 @@ router.post("/:id/comments", async (req, res) => {
   }
 });
 
+/// routes/blogs.js
+
+// routes/blogs.js
+
+router.delete("/:id/comments/:commentId", async (req, res) => {
+  const { id, commentId } = req.params;
+  try {
+    // Atomically pull the comment subdoc with _id = commentId
+    const updatedBlog = await Blog.findByIdAndUpdate(
+      id,
+      { $pull: { comments: { _id: commentId } } },
+      { new: true }           // return the updated document
+    );
+    if (!updatedBlog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+    // If no comment was pulled, the array will be unchanged; you can optionally
+    // check length before/after if you want to 404 on missing comment
+    return res.json(updatedBlog);
+  } catch (err) {
+    console.error("🔥 Error in DELETE /:id/comments/:commentId:", err);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", detail: err.message });
+  }
+});
+
+// CREATE a new blog
+router.post("/", async (req, res) => {
+  try {
+    const { Title, Content, Images, Category } = req.body;
+    // Validate required fields:
+    if (!Title || !Content || !Category || !Images) {
+      return res
+        .status(400)
+        .json({ message: "Title, Content and Category are required." });
+    }
+
+    const newBlog = new Blog({ Title, Content, Images, Category });
+    const saved   = await newBlog.save();
+    return res.status(201).json(saved);
+  } catch (err) {
+    console.error("Error creating blog:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
+
+
+
+
 export default router;
