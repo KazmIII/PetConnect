@@ -31,6 +31,7 @@
     "nodemailer": "^6.9.16",
     "path": "^0.12.7",
     "sharp": "^0.33.5",
+    "socket.io": "^4.8.1",
     "svg-captcha": "^1.4.0"
   },
   "devDependencies": {

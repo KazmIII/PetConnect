@@ -9,6 +9,9 @@ import AdminNavbar from "./AdminNavbar";
 import AdminSidePanel from "./AdminSidePanel";
 import RegisteredStaff from './RegisteredStaff';
 import ProviderDetails from "./ProvidersDetails";
+import { BlogLibrary } from "./AdminBlogLibrary";
+import AddBlog from "./AddBlog";
+
 
 const AdminDashboard = () => {
   const storedActiveSection = localStorage.getItem("activeSection");
@@ -92,7 +95,8 @@ const AdminDashboard = () => {
           setIsSidePanelOpen={setIsSidePanelOpen}
         />
 
-        <div className={`transition-all duration-300 ${isSidePanelOpen ? "w-3/4" : "w-full"} bg-gray-100 overflow-auto hide-scrollbar`}>
+        {/* <div className={`transition-all duration-300 ${isSidePanelOpen ? "w-3/4" : "w-full"} bg-gray-100 overflow-auto hide-scrollbar`}> */}
+        <div className="transition-all duration-300 flex-1 bg-gray-100 overflow-auto hide-scrollbar">
           <Routes>
             <Route path="/requests/clinic" element={<PendingClinicRequests />} />
             <Route path="/requests/clinic/:clinicName" element={<ClinicDetails />} />
@@ -102,6 +106,8 @@ const AdminDashboard = () => {
             <Route path="/requests/sitter/:sitterId" element={<SitterDetails />} />
             <Route path="/users" element={<RegisteredUsers />} />
             <Route path="/service-providers" element={<RegisteredStaff />} />
+            <Route path="/blogs" element={<BlogLibrary />} />
+            <Route path="/blogs/new" element={<AddBlog />} />
           </Routes>
         </div>
       </div>
