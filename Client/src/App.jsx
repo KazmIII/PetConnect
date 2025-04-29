@@ -251,7 +251,6 @@ const AppContent = () => {
       <Modal />
       <ToastContainer />
       {!noFooterPaths.some(path => location.pathname.startsWith(path)) && <Footer />}
-      {!isAdminRoute && !isClinicRoute && <Footer />}
       </div>
     </>
   );
