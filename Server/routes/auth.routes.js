@@ -27,8 +27,12 @@ import {SubmitAdoptionAd, GetAllAdoptionAds, GetAdoptionAdById, SubmitAdoptionAp
 } from '../controllers/AdoptionController.js';
 
 import {GetVerifiedVets, GetVetById } from '../controllers/VetController.js';
+import {CreateAppointment} from '../controllers/AppointmentController.js';
 
 const AuthRoutes = express.Router();
+
+//Appointment Routes
+AuthRoutes.post('/appointments/:vetId', CreateAppointment);
 
 //Vet Routes
 AuthRoutes.get('/vets', GetVerifiedVets);
