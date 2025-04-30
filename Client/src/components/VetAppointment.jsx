@@ -140,9 +140,12 @@ const VetAppointment = () => {
   };
 
   const handleBooking = async () => {
+    console.log("handleBooking called");
+
     if (!selectedIsoDate || !selectedSlot) {
-      return alert('Please select both a date and a time slot');
+      return alert("Please select both a date and a time slot");
     }
+  
     try {
       // --- NEW: include evening in the lookup too ---
       const all = [...morningSlots, ...afternoonSlots, ...eveningSlots];
@@ -164,6 +167,31 @@ const VetAppointment = () => {
     } catch (e) {
       console.error(e);
       alert('Failed to book appointment');
+      // 1) Build your payload
+      const slotObj = [...morningSlots, ...afternoonSlots].find(
+        (s) => s.startTime === selectedSlot
+      );
+      const payload = {
+        date: selectedIsoDate,
+        startTime: slotObj.startTime,
+        endTime: slotObj.endTime,
+        fee: vet.services?.[0]?.price,
+        consultationType: "video",
+      };
+  
+      // 2) Hit your backend which creates the Stripe session
+      const { data } = await axios.post(
+        `http://localhost:5000/auth/appointments/${vetId}`,
+        payload,
+        { withCredentials: true }
+      );
+  
+      // 3) Redirect into Stripe Checkout
+      console.log("Stripe session response:", data);
+      window.location.href = data.url;
+    } catch (err) {
+      console.error("Booking error:", err);
+      alert("Failed to start payment");
     }
   };
 

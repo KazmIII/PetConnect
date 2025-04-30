@@ -58,6 +58,8 @@ import Faqpage from './components/Faqpage';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import ContactUs from './components/ContactUs';
 import TermsAndConditions from './components/TermsAndConditions';
+import PaymentSuccess from './components/PaymentSuccess';
+import PaymentCancel from './components/PaymentCancel';
 const Modal = () => {
   const { activeComponent, update, checkLoginStatus, handleHideComponents, otpType, otpCode, userEmail, role, handleShowComponent } = useNavbar();
   const [showModal, setShowModal] = useState(false);
@@ -244,6 +246,8 @@ const AppContent = () => {
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/contact"     element={<ContactUs/>}    />
         <Route path="/terms-and-conditions"     element={<TermsAndConditions/>}    />
+        <Route path="/appointments/success" element={<PaymentSuccess />} />
+        <Route path="/appointments/cancel" element={<PaymentCancel />} />
 
       </Routes>
       </div>
