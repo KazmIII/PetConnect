@@ -27,12 +27,18 @@ import {SubmitAdoptionAd, GetAllAdoptionAds, GetAdoptionAdById, SubmitAdoptionAp
 } from '../controllers/AdoptionController.js';
 
 import {GetVerifiedVets, GetVetById } from '../controllers/VetController.js';
-import {CreateAppointment} from '../controllers/AppointmentController.js';
+import {CreateAppointment, ConfirmAppointment, StripeWebhook} from '../controllers/AppointmentController.js';
 
 const AuthRoutes = express.Router();
 
 //Appointment Routes
+// 2) After redirect, confirm payment
+
+AuthRoutes.post('/appointments/confirm', ConfirmAppointment); // move this ABOVE
 AuthRoutes.post('/appointments/:vetId', CreateAppointment);
+
+
+
 
 //Vet Routes
 AuthRoutes.get('/vets', GetVerifiedVets);

@@ -14,6 +14,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import http from 'http';
 import { Server } from 'socket.io';
+import { StripeWebhook } from "./controllers/AppointmentController.js";
 
 dotenv.config();
 const PORT = process.env.PORT || 5000;
@@ -41,6 +42,13 @@ app.use(session({
   saveUninitialized: true,
   cookie: { httpOnly: true, secure: false, maxAge: 3600000 }
 }));
+
+app.post(
+  "/webhook",
+  express.raw({ type: "application/json" }),
+  StripeWebhook
+);
+
 
 // API routes
 app.use('/auth', AuthRoutes);
