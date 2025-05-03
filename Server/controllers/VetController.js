@@ -1,9 +1,6 @@
 import { VetModel } from "../models/Vet.js";
-import { GroomerModel } from "../models/Groomer.js";
-import { PetGroomerService } from "../models/GroomerService.js";
-import { PetSitterService } from "../models/SitterService.js";
+import { Appointment} from "../models/Appointment.js";
 import { VeterinarianService } from "../models/VetService.js";
-import { SitterModel } from "../models/Sitter.js";
 import jwt from 'jsonwebtoken';
 
 export const GetVerifiedVets = async (req, res) => {
@@ -17,7 +14,7 @@ export const GetVerifiedVets = async (req, res) => {
       .populate('clinicId', 'clinicName address')     // only grab name & location
       .populate({
         path: 'services',
-        select: 'serviceName price availability',
+        select: 'serviceName price availability deliveryMethod',
       });
 
     return res.json({ vets });
@@ -30,45 +27,107 @@ export const GetVerifiedVets = async (req, res) => {
 export const GetVetById = async (req, res) => {
   try {
     const { vetId } = req.params;
+    const { date, serviceType } = req.query;
 
-    // Find the vet and populate their services with availability
+    // 1. Normalize serviceType (URL → human)
+    const serviceTypeMap = {
+      'video-consultation': 'Video Consultation',
+      'in-clinic':          'In-Clinic',
+      'home-visit':         'Home Visit'
+    };
+    let normalizedServiceType;
+    if (serviceType) {
+      normalizedServiceType = serviceTypeMap[serviceType.toLowerCase()];
+      if (!normalizedServiceType) {
+        return res.status(400).json({ message: 'Invalid service type' });
+      }
+    }
+
+    // 2. Fetch Vet profile
     const vet = await VetModel.findById(vetId)
-      .select('-password -__v') // Exclude sensitive fields
-      .populate({
-        path: 'services',
-        match: { isActive: true }, // Only active services
-        select: 'services price availability duration',
-        populate: {
-          path: 'providerId',
-          select: 'name specialization yearsOfExperience qualifications photoUrl'
-        }
-      });
-
+      .select('-password -__v')
+      .lean();
     if (!vet) {
       return res.status(404).json({ message: 'Vet not found' });
     }
 
-    // Format the availability data for easier frontend consumption
-    const formattedVet = {
-      ...vet.toObject(),
-      services: vet.services.map(service => ({
-        ...service.toObject(),
-        availability: service.availability.map(day => ({
-          day: day.day,
-          slots: day.slots.map(slot => ({
-            startTime: slot.startTime,
-            endTime: slot.endTime
-          }))
-        }))
-      }))
-    };
+    // 3. Load the Vet’s services
+    let services = await VeterinarianService.find({
+      _id: { $in: vet.services }
+    })
+      .select('-__v')
+      .lean();
 
-    return res.json({ vet: formattedVet });
+    // 4. Filter by requested serviceType if provided
+    if (normalizedServiceType) {
+      services = services.filter(s =>
+        s.deliveryMethod?.toLowerCase().trim() === normalizedServiceType.toLowerCase().trim()
+      );
+      if (services.length === 0) {
+        return res.status(404).json({
+          message: `Vet doesn’t offer ${normalizedServiceType} services`
+        });
+      }
+    }
+
+    // 5. Build the date & weekday we’re querying (defaults to today)
+    const targetDate = date ? new Date(date) : new Date();
+    const isoDate    = targetDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
+    const weekday    = targetDate.toLocaleDateString('en-US', { weekday: 'long' });
+
+    // 6. For each service, compute available slots
+    const results = await Promise.all(services.map(async svc => {
+      // a) collect all availability blocks for this weekday
+      const matchingBlocks = Array.isArray(svc.availability)
+        ? svc.availability.filter(block =>
+            block.day.toLowerCase() === weekday.toLowerCase()
+          )
+        : [];
+
+      // b) flatten their slots into one array
+      const allSlots = matchingBlocks.reduce(
+        (acc, block) => acc.concat(block.slots || []),
+        []
+      );
+
+      // c) find any taken slots for this service on that date
+      const taken = await Appointment.find({
+        serviceId: svc._id,
+        date:      isoDate,
+        'slot.status': { $in: ['pending','booked'] }
+      })
+      .select('slot.startTime slot.endTime')
+      .lean();
+
+      // d) filter out taken slots
+      const freeSlots = allSlots.filter(slot =>
+        !taken.some(t =>
+          t.slot?.startTime === slot.startTime &&
+          t.slot?.endTime   === slot.endTime
+        )
+      );
+
+      return {
+        ...svc,
+        availability: [{
+          day:   weekday,
+          slots: freeSlots
+        }]
+      };
+    }));
+
+    // 7. Return vet profile + enriched services
+    return res.json({
+      ...vet,
+      services: results
+    });
+
   } catch (err) {
-    console.error('Error fetching vet details:', err);
-    return res.status(500).json({ 
+    console.error('Error in GetVetById:', err);
+    return res.status(500).json({
       message: 'Error fetching vet details',
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      error:   err.stack
     });
   }
 };
+

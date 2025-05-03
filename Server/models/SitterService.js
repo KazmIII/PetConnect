@@ -26,7 +26,7 @@ const PetSitterServiceSchema = new mongoose.Schema({
       ],
     }
   ],
-  deliveryMethods: [{ type: String }]
+  deliveryMethod: { type: String }
 });
 
 export const PetSitterService = mongoose.model('SitterService', PetSitterServiceSchema);

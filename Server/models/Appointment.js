@@ -18,7 +18,12 @@ const appointmentSchema = new mongoose.Schema({
   },
   slot: {
     startTime: { type: String, required: true }, // e.g., "12:00 PM"
-    endTime: { type: String, required: true }   // e.g., "12:15 PM"
+    endTime: { type: String, required: true } ,  // e.g., "12:15 PM"
+    status: { 
+      type: String, 
+      enum: ['pending', 'booked',  'cancelled'],
+      default: 'pending' 
+    },
   },
   fee: { 
     type: Number, 
