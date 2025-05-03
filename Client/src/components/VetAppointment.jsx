@@ -141,36 +141,15 @@ const VetAppointment = () => {
 
   const handleBooking = async () => {
     console.log("handleBooking called");
-
+  
     if (!selectedIsoDate || !selectedSlot) {
       return alert("Please select both a date and a time slot");
     }
   
     try {
-      // --- NEW: include evening in the lookup too ---
       const all = [...morningSlots, ...afternoonSlots, ...eveningSlots];
-      const slotObj = all.find(s => s.startTime === selectedSlot);
-
-      await axios.post(
-        `http://localhost:5000/auth/appointments/${vetId}`,
-        {
-          date: selectedIsoDate,
-          startTime: slotObj.startTime,
-          endTime: slotObj.endTime,
-          fee: vet.services?.[0]?.price,
-          consultationType: 'video'
-        },
-        { withCredentials: true }
-      );
-      alert('Appointment created. Proceed to payment.');
-      // navigate(`/payment/${vetId}`);
-    } catch (e) {
-      console.error(e);
-      alert('Failed to book appointment');
-      // 1) Build your payload
-      const slotObj = [...morningSlots, ...afternoonSlots].find(
-        (s) => s.startTime === selectedSlot
-      );
+      const slotObj = all.find((s) => s.startTime === selectedSlot);
+  
       const payload = {
         date: selectedIsoDate,
         startTime: slotObj.startTime,
@@ -179,21 +158,30 @@ const VetAppointment = () => {
         consultationType: "video",
       };
   
-      // 2) Hit your backend which creates the Stripe session
+      // Send request to backend to create appointment & get Stripe session
       const { data } = await axios.post(
         `http://localhost:5000/auth/appointments/${vetId}`,
         payload,
         { withCredentials: true }
       );
   
-      // 3) Redirect into Stripe Checkout
       console.log("Stripe session response:", data);
-      window.location.href = data.url;
+  
+      if (data?.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        alert("Appointment created. Proceed to payment.");
+        // Optionally navigate to your own payment page
+        navigate(`/payment/${vetId}`);
+      }
+  
     } catch (err) {
       console.error("Booking error:", err);
-      alert("Failed to start payment");
+      alert("Failed to book appointment or start payment");
     }
   };
+  
 
   const getNextAvailability = () => {
     const idx = availableDates.findIndex(d => d.display === selectedDate);
