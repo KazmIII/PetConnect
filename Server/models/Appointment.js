@@ -5,7 +5,7 @@ const appointmentSchema = new mongoose.Schema({
   vetId: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'Vet', 
-    required: true 
+    required: true  
   },
   userId: { 
     type: mongoose.Schema.Types.ObjectId, 
@@ -38,14 +38,13 @@ const appointmentSchema = new mongoose.Schema({
   },
   paymentStatus: { 
     type: String, 
-    enum: ['pending', 'paid', 'refunded', 'failed'], 
+    enum: ['pending', 'paid', 'refunded', 'failed'],  
     default: 'pending' 
   },
 
   // Consultation Details
   consultationType: { 
     type: String, 
-    default: 'video', 
     enum: ['video', 'in-clinic','home'] 
   },
 //   meetingLink: { type: String }, // Zoom/Google Meet URL (auto-generated later)
@@ -53,7 +52,7 @@ const appointmentSchema = new mongoose.Schema({
 
   // Timestamps
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now } 
 });
 
 // Update timestamps on save

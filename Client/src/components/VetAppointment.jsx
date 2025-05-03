@@ -257,12 +257,26 @@ const VetAppointment = () => {
 
       if (!slotObj) return alert("Invalid time slot selected");
 
+      let consultationType;
+
+      if(serviceType === 'video-consultation'){
+        consultationType = 'video';
+        console.log("video");
+      } else if(serviceType === 'in-clinic'){
+        consultationType = 'in-clinic';
+        console.log("cllinic");
+      } else if(serviceType === 'home-visit'){
+        consultationType = 'home';
+        console.log("home");
+
+      }
+
       const payload = {
         date: selectedIsoDate,
         startTime: slotObj.startTime,
         endTime: slotObj.endTime,
         fee: vet.services?.[0]?.price,
-        consultationType: "video"
+        consultationType,
       };
 
       const { data } = await axios.post(
