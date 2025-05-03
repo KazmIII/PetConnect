@@ -27,7 +27,7 @@ export const CreateAppointment = async (req, res) => {
       date: new Date(date),
       slot: { startTime, endTime, status: 'pending' },
       fee,
-      consultationType: consultationType || "video",
+      consultationType: consultationType,
       status: "pending",
       paymentStatus: "pending",
     });
