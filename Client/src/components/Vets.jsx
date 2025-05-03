@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Video } from 'lucide-react';
+import { Video, MapPin, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Vets = () => {
@@ -61,26 +61,28 @@ const Vets = () => {
 
       <div className="space-y-6">
         {vets.map((vet) => (
-          <div key={vet._id} className="bg-gray-100 border border-gray-200 rounded-lg p-6 shadow-sm">
+          <div key={vet._id} className="bg-white border border-gray-200 rounded-lg p-6 shadow-md shadow-gray-300">
             <div className="flex justify-between items-start">
               <div>
-                <h2 className="text-lg font-bold text-gray-800">{vet.name}</h2>
+                <h2 className="text-lg text-gray-800">Dr. {vet.name}</h2>
                 <p className="text-sm text-gray-600">{vet.specialization || 'Veterinarian'}</p>
                 <p className="text-sm text-gray-600 mt-1">{vet.qualifications || 'DVM (Doctor of Veterinary Medicine)'}</p>
                 
-                <div className="mt-2">
-                  <p className="text-sm text-gray-600">
-                    {vet.yearsOfExperience || '5'} Years Experience
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    97% (421) Satisfied Patients
-                  </p>
+                <div className="mt-6 flex gap-8">
+                  <div>
+                    <div className="font-medium text-sm text-gray-900">
+                      {vet.yearsOfExperience || '10'} Years
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">
+                      Experience
+                    </div>
+                  </div>
                 </div>
               </div>
               
               <div className="flex flex-col items-end space-y-2">
                 <Link
-                  to={`/video-consultation/vet/${vet._id}`}
+                  to={`/consultation/video-consultation/vet/${vet._id}`}
                   className="px-4 py-3 w-48 bg-white font-semibold rounded-sm text-teal-800 border border-teal-800 text-xs hover:bg-teal-700 hover:text-white transition flex items-center justify-center gap-2"
                 >
                   <Video className="w-4 h-4" />
@@ -92,20 +94,88 @@ const Vets = () => {
               </div>
             </div>
 
-            <Link
-              to={`/video-consultation/vet/${vet._id}`}
-              className="mt-4 p-3 bg-gray-50 rounded-md border border-gray-200 justify-between items-center hover:bg-gray-100 block"
-            >
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-gray-700">Online Video Consultation</span>
-                <span className="flex items-center text-sm text-green-600">
-                  <span className="w-2 h-2 bg-green-600 rounded-full mr-1"></span>
-                  Online
-                </span>
-                <span className="text-sm text-gray-500">15 - 30 Min Wait Time</span>
-              </div>
-              <span className="font-semibold">Rs. {vet.services?.[0]?.price || '1,400'}</span>
-            </Link>
+            <div className="flex gap-4 overflow-x-auto mt-4 pb-2">
+              {vet.services?.some(s => s.deliveryMethod === 'Video Consultation') && (
+                <Link
+                  to={`/consultation/video-consultation/vet/${vet._id}`}
+                  className="min-w-[20rem] p-2 rounded-md border border-teal-800 hover:bg-gray-100 block"
+                >
+                  <div className="flex flex-col gap-1">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <Video className="w-4 h-4 text-teal-700" />
+                        <span className="font-medium text-gray-700 text-sm">
+                          Online Video Consultation
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="flex items-center text-xs text-green-600">
+                        <span className="w-2 h-2 bg-green-600 rounded-full mr-2 text-xs" />
+                        Available today
+                      </span>
+                      <span className="font-normal text-xs">
+                        Rs. {vet.services.find(s => s.deliveryMethod === 'Video Consultation')?.price || '—'}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              )}
+
+              {vet.services?.some(s => s.deliveryMethod === 'In-Clinic') && (
+                <Link
+                  to={`/consultation/in-clinic/vet/${vet._id}`}
+                  className="min-w-[20rem] p-2 rounded-md border border-blue-800 hover:bg-gray-100 block"
+                >
+                  <div className="flex flex-col gap-1">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-blue-700" />
+                        <span className="font-medium text-gray-700 text-sm">
+                          In-Clinic Visit
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="flex items-center text-xs text-green-600">
+                        <span className="w-2 h-2 bg-green-600 rounded-full mr-2 text-xs" />
+                        Available today
+                      </span>
+                      <span className="font-normal text-xs">
+                        Rs. {vet.services.find(s => s.deliveryMethod === 'In-Clinic')?.price || '—'}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              )}
+
+              {vet.services?.some(s => s.deliveryMethod === 'Home Visit') && (
+                <Link
+                  to={`/consultation/home-visit/vet/${vet._id}`}
+                  className="min-w-[20rem] p-2 rounded-md border border-purple-800 hover:bg-gray-100 block"
+                >
+                  <div className="flex flex-col gap-1">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <Home className="w-4 h-4 text-purple-700" />
+                        <span className="font-medium text-gray-700 text-sm">
+                          Home Visit
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="flex items-center text-xs text-green-600">
+                        <span className="w-2 h-2 bg-green-600 rounded-full mr-2 text-xs" />
+                        Available today
+                      </span>
+                      <span className="font-normal text-xs">
+                        Rs. {vet.services.find(s => s.deliveryMethod === 'Home Visit')?.price || '—'}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              )}
+            </div>
           </div>
         ))}
       </div>

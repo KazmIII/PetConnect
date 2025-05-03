@@ -65,16 +65,14 @@ const Services = () => {
       ) : (
         <>
           <h1 className="text-2xl font-semibold text-center mb-6 text-orange-700">Your Services</h1>
-          {services.length === 0 && (
-            <div className="text-right mb-4">
-              <button
-                onClick={handleAddService}
-                className="px-6 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600"
-              >
-                Add Service
-              </button>
-            </div>
-          )}
+          <div className="text-right mb-4">
+            <button
+              onClick={handleAddService}
+              className="px-6 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600"
+            >
+              Add Service
+            </button>
+          </div>
 
           {services.length === 0 ? (
             <div className="text-center text-lg text-gray-500 mt-10">
@@ -127,19 +125,14 @@ const Services = () => {
 
                   </div>
 
-                  {/* Delivery Methods */}
+                  {/* Delivery Method */}
                   <div className="mb-3">
-                    <p className="text-sm font-medium text-gray-600">Delivery Methods:</p>
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {service.deliveryMethods?.length ? (
-                        service.deliveryMethods.map((method) => (
-                          <span
-                            key={method}
-                            className="text-sm bg-orange-100 text-orange-700 px-3 py-1 rounded-full"
-                          >
-                            {method}
-                          </span>
-                        ))
+                    <p className="text-sm font-medium text-gray-600">Delivery Method:</p>
+                    <div className="mt-1">
+                      {service.deliveryMethod && service.deliveryMethod.trim() !== "" ? (
+                        <span className="text-sm bg-orange-100 text-orange-700 px-3 py-1 rounded-full">
+                          {service.deliveryMethod}
+                        </span>
                       ) : (
                         <span className="text-sm text-gray-500">Not specified</span>
                       )}

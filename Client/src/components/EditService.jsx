@@ -21,6 +21,12 @@ const EditService = () => {
   const [durationError, setDurationError] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
+  const [expandedDays, setExpandedDays] = useState({});
+
+  // Toggle day expansion
+  const toggleDayExpansion = (day) => {
+    setExpandedDays(prev => ({ ...prev, [day]: !prev[day] }));
+  };
 
   // form data
   const [formData, setFormData] = useState({
@@ -32,7 +38,7 @@ const EditService = () => {
     services: [],
     maxPets: 1,
     availability: [],
-    deliveryMethods: [],
+    deliveryMethod: "",
     days: [],
     startTime: "",
     endTime: "",
@@ -83,7 +89,7 @@ const EditService = () => {
           services: svc.services || [],
           maxPets: svc.maxPets || 1,
           availability: svc.availability || [],
-          deliveryMethods: svc.deliveryMethods || [],
+          deliveryMethod: svc.deliveryMethod || "",
           days: [],
           startTime: "",
           endTime: "",
@@ -123,16 +129,6 @@ const EditService = () => {
         customService: !has && service === 'Other' ? '' : prev.customService
       };
     });
-  };
-
-  // toggle delivery methods
-  const toggleDelivery = (method) => {
-    setFormData(prev => ({
-      ...prev,
-      deliveryMethods: prev.deliveryMethods.includes(method)
-        ? prev.deliveryMethods.filter(m => m !== method)
-        : [...prev.deliveryMethods, method]
-    }));
   };
 
   // handle changes
@@ -206,13 +202,24 @@ const EditService = () => {
   };
 
   // delete slot
-  const handleDeleteSlot = (dayIdx, slotIdx) => {
-    const updated = formData.availability.map((item,i) => i===dayIdx
-      ? { ...item, slots: item.slots.filter((_,si)=>si!==slotIdx) }
-      : item
-    ).filter(item=>item.slots.length);
-    setFormData(prev => ({ ...prev, availability: updated }));
+  const handleDeleteSlot = (day, slotIndex) => {
+    const updatedAvailability = formData.availability.map(item => {
+      if (item.day === day) {
+        const updatedSlots = item.slots.filter((_, idx) => idx !== slotIndex);
+        return { ...item, slots: updatedSlots };
+      }
+      return item;
+    }).filter(item => item.slots.length > 0);
+
+    setFormData(prev => ({ ...prev, availability: updatedAvailability }));
   };
+
+  const groupedAvailability = formData.availability.reduce((acc, item) => {
+    if (!acc[item.day]) acc[item.day] = [];
+    acc[item.day].push(...item.slots);
+    return acc;
+  }, {});
+
 
   // submit updated data
   const handleSubmit = async e => {
@@ -221,7 +228,7 @@ const EditService = () => {
       setError('Please add a slot');
       return;
     }
-    if(formData.deliveryMethods.length === 0){
+    if(formData.deliveryMethod.length === 0){
       setError('Please add a delivery method');
       return;
     }
@@ -304,11 +311,17 @@ const EditService = () => {
             <div>
               <label className="block text-gray-700 font-semibold mb-2">How will you deliver these services?</label>
               <div className="flex flex-col space-y-3">
-                {deliveryOptions.map(opt=> (
-                  <label key={opt.value} className="flex items-start px-4 py-2 border bg-white rounded-lg hover:bg-gray-50 cursor-pointer">
-                    <input type="checkbox" className="form-checkbox h-5 w-5 accent-teal-600 mt-1"
-                      checked={formData.deliveryMethods.includes(opt.value)}
-                      onChange={()=>toggleDelivery(opt.value)} />
+                {deliveryOptions.map(opt => (
+                  <label 
+                    key={opt.value} 
+                    className="flex items-start px-4 py-2 border bg-white rounded-lg"
+                  >
+                    <input 
+                      type="radio" 
+                      name="deliveryMethod"
+                      className="form-radio h-5 w-5 accent-gray-500 mt-1"
+                      checked={formData.deliveryMethod === opt.value}
+                    />
                     <div className="ml-3">
                       <span className="font-medium text-teal-700">{opt.label}</span>
                       <p className="text-gray-500 text-sm">{opt.description}</p>
@@ -408,25 +421,131 @@ const EditService = () => {
             </div>
 
             {/* Render availability slots */}
-            {formData.availability.length>0 && (
+            {Object.entries(groupedAvailability).length > 0 && (
               <div className="mt-6">
-                <h4 className="text-lg font-semibold text-orange-600">Availability Slots</h4>
-                {formData.availability.map((item,di)=>(
-                  <div key={di} className="mt-4">
-                    <p className="text-teal-700 font-bold">{item.day}</p>
-                    <ul className="mt-2 space-y-2">
-                      {item.slots.map((slot,si)=>(
-                        <li key={si} className="flex justify-between bg-gray-100 px-4 py-2 rounded-lg shadow-md">
-                          <span className="text-gray-600">{slot.startTime} - {slot.endTime}</span>
-                          <button onClick={e=>{e.preventDefault(); handleDeleteSlot(di,si);} }
-                            className="text-red-500 hover:text-red-700">
-                            Delete
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+                <h4 className="text-lg font-semibold text-orange-600 mb-4">Availability Slots</h4>
+                <div className="space-y-3">
+                  {Object.entries(groupedAvailability).map(([day, slots]) => {
+                    // Parse and sort function
+                    const parseTime = timeStr => {
+                      const [time, modifier] = timeStr.split(' ');
+                      let [h, m] = time.split(':');
+                      h = parseInt(h);
+                      m = parseInt(m || '00');
+                      if (modifier === 'PM' && h !== 12) h += 12;
+                      if (modifier === 'AM' && h === 12) h = 0;
+                      return h * 60 + m;
+                    };
+
+                    // Format function
+                    const formatTime = minutes => {
+                      const h = Math.floor(minutes / 60);
+                      const m = minutes % 60;
+                      const modifier = h >= 12 ? 'PM' : 'AM';
+                      const hr = h % 12 || 12;
+                      return `${hr}:${m.toString().padStart(2, '0')} ${modifier}`;
+                    };
+
+                    // Sort all slots by start time (AM first)
+                    const sortedSlots = [...slots].sort((a, b) => 
+                      parseTime(a.startTime) - parseTime(b.startTime)
+                    );
+
+                    // Merge contiguous slots for collapsed view
+                    const mergedBlocks = (() => {
+                      const timeSlots = sortedSlots.map(s => ({ 
+                        start: parseTime(s.startTime), 
+                        end: parseTime(s.endTime) 
+                      }));
+
+                      let merged = [];
+                      let current = timeSlots[0];
+                      
+                      for (let i = 1; i < timeSlots.length; i++) {
+                        const next = timeSlots[i];
+                        if (next.start <= current.end) {
+                          current.end = Math.max(current.end, next.end);
+                        } else {
+                          merged.push(current);
+                          current = next;
+                        }
+                      }
+                      merged.push(current);
+
+                      return merged.map(b => ({
+                        startTime: formatTime(b.start),
+                        endTime: formatTime(b.end)
+                      }));
+                    })();
+
+                    return (
+                      <div key={day} className="bg-white rounded-lg shadow-sm border border-gray-200">
+                        <button
+                          className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggleDayExpansion(day);
+                          }}
+                        >
+                          <div className="flex items-center gap-x-3">
+                            <span className="text-teal-700 font-semibold">{day}</span>
+                            <div className="flex flex-wrap items-center gap-x-1">
+                              {mergedBlocks.map((block, i) => (
+                                <React.Fragment key={i}>
+                                  <span className="text-gray-500 text-sm">
+                                    {block.startTime} - {block.endTime}
+                                  </span>
+                                  {i < mergedBlocks.length - 1 && (
+                                    <span className="text-sm font-bold text-orange-700 mx-1">
+                                      and
+                                    </span>
+                                  )}
+                                </React.Fragment>
+                              ))}
+                            </div>
+                          </div>
+                          <ChevronDown
+                            className={`w-5 h-5 text-gray-600 transform transition-transform ${
+                              expandedDays[day] ? 'rotate-180 bg-gray-200' : ''
+                            }`}
+                          />
+                        </button>
+                        
+                        {expandedDays[day] && (
+                          <ul className="px-4 pb-3 space-y-2 bg-gray-100">
+                            {sortedSlots.map((slot, slotIndex) => {
+                              // Find original index for delete functionality
+                              const originalIndex = slots.findIndex(s => 
+                                s.startTime === slot.startTime && 
+                                s.endTime === slot.endTime
+                              );
+                              
+                              return (
+                                <li
+                                  key={slotIndex}
+                                  className="flex items-center justify-between border-b border-b-gray-300 bg-gray-100 px-3 py-2"
+                                >
+                                  <span className="text-gray-600 text-sm">
+                                    {slot.startTime} - {slot.endTime}
+                                  </span>
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      handleDeleteSlot(day, originalIndex);
+                                    }}
+                                    className="text-red-500 hover:text-red-600 focus:outline-none text-sm"
+                                  >
+                                    Remove
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
@@ -434,7 +553,7 @@ const EditService = () => {
 
             <div className="flex justify-center">
               <button type="submit"
-                className="w-1/3 px-3 py-2 bg-gradient-to-r from-orange-500 to-orange-700 text-white text-lg font-semibold rounded-lg hover:bg-orange-900 focus:ring-orange-700">
+                className="w-1/3 px-3 py-2 bg-gradient-to-r from-orange-500 to-orange-700 text-white text-lg font-semibold rounded-lg hover:opacity-95">
                 Save Service
               </button>
             </div>

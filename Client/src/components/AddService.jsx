@@ -13,6 +13,7 @@ const AddService = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
   const [durationError, setDurationError] = useState('');
+  const [expandedDays, setExpandedDays] = useState([]);
 
   const [formData, setFormData] = useState({
     description: "",
@@ -23,7 +24,7 @@ const AddService = () => {
     services: [],  
     maxPets: 1, // Sitter only
     availability: [],
-    deliveryMethods: [],
+    deliveryMethod: "",
     startTime: "",
     endTime: "",
   });
@@ -64,6 +65,13 @@ const AddService = () => {
     };
   }, []);
 
+  const toggleDayExpansion = (dayIndex) => {
+    setExpandedDays(prev => ({
+      ...prev,
+      [dayIndex]: !prev[dayIndex]
+    }));
+  };
+
   const toggleService = (service) => {
     setFormData(prev => {
       const has = prev.services.includes(service);
@@ -76,15 +84,6 @@ const AddService = () => {
         customService: !has && service === 'Other' ? '' : prev.customService
       };
     });
-  };
-
-  const toggleDelivery = (method) => {
-    setFormData(prev => ({
-      ...prev,
-      deliveryMethods: prev.deliveryMethods.includes(method)
-        ? prev.deliveryMethods.filter(m => m !== method)
-        : [...prev.deliveryMethods, method],
-    }));
   };
 
   const roleServices = {
@@ -150,7 +149,7 @@ const AddService = () => {
       if(value === '' || isNaN(val)){
         setDurationError('');
       } else if (duration < 15 || duration > 30) {
-        setDurationError("Duration must be between 15 and 30 minutes.");
+        setDurationError("Duration must be between 15 and 45 minutes.");
       } else {
         setDurationError(""); // Clear error when valid
       }
@@ -240,78 +239,89 @@ const AddService = () => {
     }));
   };
 
-  const handleDeleteSlot = (dayIndex, slotIndex) => {
-    const updatedAvailability = formData.availability.map((item, index) => {
-      if (index === dayIndex) {
-        return {
-          ...item,
-          slots: item.slots.filter((_, sIndex) => sIndex !== slotIndex),
-        };
+  const handleDeleteSlot = (dayName, mergedSlotIndex) => {
+    let currentIndex = 0;
+    const updatedAvailability = formData.availability.flatMap((item) => {
+      if (item.day !== dayName) return [item];
+      
+      const slotCount = item.slots.length;
+      const isTarget = mergedSlotIndex >= currentIndex && 
+                       mergedSlotIndex < currentIndex + slotCount;
+      
+      if (isTarget) {
+        const itemSlotIndex = mergedSlotIndex - currentIndex;
+        const newSlots = item.slots.filter((_, i) => i !== itemSlotIndex);
+        currentIndex += slotCount;
+        return newSlots.length > 0 ? [{ ...item, slots: newSlots }] : [];
       }
-      return item;
-    }).filter(item => item.slots.length > 0);
-
-    setFormData((prevData) => ({
-      ...prevData,
-      availability: updatedAvailability,
-    }));
+      
+      currentIndex += slotCount;
+      return [item];
+    });
+  
+    setFormData(prev => ({ ...prev, availability: updatedAvailability }));
   };
 
   // inside your component, where userRole is in scope:
-const deliveryOptions = [
-  // only vets get the video option
-  ...(userRole === 'vet'
-    ? [{
-        value: 'Video Consultation',
-        label: 'Video Consultation',
-        description: 'Connect with clients via secure video calls.',
-      }]
-    : []),
-  {
-    value: 'In-Clinic',
-    label: 'In-Clinic',
-    description: 'Host pets at your clinic for appointments.',
-  },
-  {
-    value: 'Home Visit',
-    label: 'Home Visit',
-    description: 'Provide on-site visits at the pet owner’s home.',
-  },
-];
+  const deliveryOptions = [
+    // only vets get the video option
+    ...(userRole === 'vet'
+      ? [{
+          value: 'Video Consultation',
+          label: 'Video Consultation',
+          description: 'Connect with clients via secure video calls.',
+        }]
+      : []),
+    {
+      value: 'In-Clinic',
+      label: 'In-Clinic',
+      description: 'Host pets at your clinic for appointments.',
+    },
+    {
+      value: 'Home Visit',
+      label: 'Home Visit',
+      description: 'Provide on-site visits at the pet owner’s home.',
+    },
+  ];
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
+    if(formData.availability.length === 0){
+      setError('Please add a slot');
+      return;
+    }
+    if(formData.deliveryMethod.length === 0){
+      setError('Please add a delivery method');
+      return;
+    }
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+    try {
+      const response = await axios.post('http://localhost:5000/auth/add-service', formData, { 
+        params: { userRole },
+        withCredentials: true, 
+      });
 
-  if(formData.availability.length === 0){
-    setError('Please add a slot');
-    return;
-  }
-  if(formData.deliveryMethods.length === 0){
-    setError('Please add a delivery method');
-    return;
-  }
+      navigate('/services');
+    } catch (error) {
+      // Handle errors, e.g., show an error message to the user
+    }
+  };
 
-  try {
-    const response = await axios.post('http://localhost:5000/auth/add-service', formData, { 
-      params: { userRole },
-      withCredentials: true, 
-    });
+  const handleBack = () => {
+    if (location.state?.from) {
+      navigate(location.state.from); 
+    } else {
+      navigate(-1); 
+    }
+  };
 
-    navigate('/services');
-  } catch (error) {
-    // Handle errors, e.g., show an error message to the user
-  }
-};
-
-const handleBack = () => {
-  if (location.state?.from) {
-    navigate(location.state.from); 
-  } else {
-    navigate(-1); 
-  }
-};
+  const setFieldValue = (fieldName, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: value
+    }));
+  };
 
 
   return (
@@ -422,13 +432,14 @@ const handleBack = () => {
               {deliveryOptions.map(opt => (
                 <label
                   key={opt.value}
-                  className="flex items-start px-4 py-2 border  bg-white border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                  className="flex items-start px-4 py-2 border bg-white border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
                 >
                   <input
-                    type="checkbox"
-                    className="form-checkbox h-5 w-5 accent-teal-600 mt-1"
-                    checked={formData.deliveryMethods.includes(opt.value)}
-                    onChange={() => toggleDelivery(opt.value)}
+                    type="radio"
+                    name="delivery-method"
+                    className="form-radio h-5 w-5 accent-teal-600 mt-1"
+                    checked={formData.deliveryMethod === opt.value}
+                    onChange={() => setFieldValue('deliveryMethod', opt.value)}
                   />
                   <div className="ml-3">
                     <span className="font-medium text-teal-700">{opt.label}</span>
@@ -438,7 +449,6 @@ const handleBack = () => {
               ))}
             </div>
           </div>
-
         </div>
 
         <div>
@@ -463,8 +473,8 @@ const handleBack = () => {
                   name="duration"
                   value={formData.duration}
                   onChange={handleInputChange}
-                  min="15"
-                  max="30"
+                  min="10"
+                  max="45"
                   step="5"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-auto" 
               />
@@ -598,33 +608,121 @@ const handleBack = () => {
         </div>
         {formData.availability.length > 0 && (
           <div className="mt-6">
-            <h4 className="text-lg font-semibold text-orange-600">Availability Slots</h4>
-            {formData.availability.map((item, dayIndex) => (
-              <div key={dayIndex} className="mt-4">
-                <p className="text-teal-700 font-bold">{item.day}</p>
-                <ul className="mt-2 space-y-2">
-                  {item.slots.map((slot, slotIndex) => (
-                    <li
-                      key={slotIndex}
-                      className="flex items-center justify-between bg-gray-100 px-4 py-2 rounded-lg shadow-md"
+            <h4 className="text-lg font-semibold text-orange-600 mb-4">Availability Slots</h4>
+            <div className="space-y-3">
+              {Object.entries(
+                formData.availability.reduce((acc, item) => {
+                  if (!acc[item.day]) acc[item.day] = [];
+                  acc[item.day].push(...item.slots);
+                  return acc;
+                }, {})
+              ).map(([day, slots]) => {
+                if (slots.length === 0) return null;
+
+                // Function to merge contiguous slots
+                const mergedBlocks = (() => {
+                  const parseTime = timeStr => {
+                    const [time, modifier] = timeStr.split(' ');
+                    let [h, m] = time.split(':');
+                    h = parseInt(h);
+                    m = parseInt(m);
+                    if (modifier === 'PM' && h !== 12) h += 12;
+                    if (modifier === 'AM' && h === 12) h = 0;
+                    return h * 60 + m;
+                  };
+
+                  const formatTime = minutes => {
+                    const h = Math.floor(minutes / 60);
+                    const m = minutes % 60;
+                    const modifier = h >= 12 ? 'PM' : 'AM';
+                    const hr = h % 12 || 12;
+                    return `${hr}:${m.toString().padStart(2, '0')} ${modifier}`;
+                  };
+
+                  const sorted = [...slots]
+                    .map(s => ({ start: parseTime(s.startTime), end: parseTime(s.endTime) }))
+                    .sort((a, b) => a.start - b.start);
+
+                  let merged = [];
+                  let current = sorted[0];
+                  
+                  for (let i = 1; i < sorted.length; i++) {
+                    const next = sorted[i];
+                    if (next.start <= current.end) {
+                      current.end = Math.max(current.end, next.end);
+                    } else {
+                      merged.push(current);
+                      current = next;
+                    }
+                  }
+                  merged.push(current);
+
+                  return merged.map(b => ({
+                    startTime: formatTime(b.start),
+                    endTime: formatTime(b.end)
+                  }));
+                })();
+
+                return (
+                  <div key={day} className="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <button
+                      className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toggleDayExpansion(day);
+                      }}
                     >
-                      <span className="text-gray-600">
-                        {slot.startTime} - {slot.endTime}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault(); 
-                          handleDeleteSlot(dayIndex, slotIndex);
-                        }}
-                        className="text-red-500 hover:text-red-700 focus:outline-none"
-                      >
-                        Delete
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+                      <div className="flex items-center gap-x-3">
+                        <span className="text-teal-700 font-semibold">{day}</span>
+                        <div className="flex flex-wrap items-center gap-x-1">
+                          {mergedBlocks.map((block, i) => (
+                            <React.Fragment key={i}>
+                              <span className="text-gray-500 text-sm">
+                                {block.startTime} - {block.endTime}
+                              </span>
+                              {i < mergedBlocks.length - 1 && (
+                                <span className="text-sm font-bold text-orange-700 mx-2">
+                                  and
+                                </span>
+                              )}
+                            </React.Fragment>
+                          ))}
+                        </div>
+                      </div>
+                      <ChevronDown
+                        className={`w-5 h-5 text-gray-600 transform transition-transform ${
+                          expandedDays[day] ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+                    
+                    {expandedDays[day] && (
+                      <ul className="px-4 pb-3 space-y-2">
+                        {slots.map((slot, slotIndex) => (
+                          <li
+                            key={slotIndex}
+                            className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md"
+                          >
+                            <span className="text-gray-600 text-sm">
+                              {slot.startTime} - {slot.endTime}
+                            </span>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleDeleteSlot(day, slotIndex);
+                              }}
+                              className="text-red-400 hover:text-red-600 focus:outline-none text-sm"
+                            >
+                              Remove
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
         {error && (

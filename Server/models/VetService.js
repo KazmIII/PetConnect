@@ -25,7 +25,7 @@ const VetServiceSchema = new mongoose.Schema({
       ],
     }
   ],
-  deliveryMethods: [{ type: String }]
+  deliveryMethod: { type: String }
 });
 
 export const VeterinarianService = mongoose.model('VetService', VetServiceSchema);

@@ -39,7 +39,7 @@ export const AddService = async (req, res) => {
       isPackage, 
       maxPets, 
       availability, 
-      deliveryMethods   // New field
+      deliveryMethod   // New field
     } = req.body;
 
     // Validate required fields
@@ -69,7 +69,7 @@ export const AddService = async (req, res) => {
       description,
       price,
       duration,
-      deliveryMethods,    // Now added
+      deliveryMethod,    // Now added
       isActive: true,
       availability,
     };
