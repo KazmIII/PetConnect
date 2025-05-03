@@ -12,7 +12,6 @@ const WINDOW_SIZE = 4;
 const VetAppointment = () => {
   const { vetId, serviceType } = useParams();
 
-  const [error, setError] = useState({});
   const [nextAvailableDate, setNextAvailableDate] = useState(null);
   const [vet, setVet] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -313,25 +312,25 @@ const VetAppointment = () => {
       <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
         <h2 className="text-xl font-bold">{vet.name}</h2>
         <div className="flex items-center gap-2 text-gray-600 mt-2">
-  {serviceType === 'video-consultation' && (
-    <>
-      <Video className="w-4 h-4 text-teal-600" />
-      <span>Video Consultation</span>
-    </>
-  )}
-  {serviceType === 'in-clinic' && (
-    <>
-      <MapPin className="w-4 h-4 text-blue-600" />
-      <span>In-Clinic Visit</span>
-    </>
-  )}
-  {serviceType === 'home-visit' && (
-    <>
-      <Home className="w-4 h-4 text-purple-600" />
-      <span>Home Visit</span>
-    </>
-  )}
-</div>
+          {serviceType === 'video-consultation' && (
+            <>
+              <Video className="w-4 h-4 text-teal-600" />
+              <span>Video Consultation</span>
+            </>
+          )}
+          {serviceType === 'in-clinic' && (
+            <>
+              <MapPin className="w-4 h-4 text-blue-600" />
+              <span>In-Clinic Visit</span>
+            </>
+          )}
+          {serviceType === 'home-visit' && (
+            <>
+              <Home className="w-4 h-4 text-purple-600" />
+              <span>Home Visit</span>
+            </>
+          )}
+        </div>
 
         <p className="mt-2 text-lg font-semibold">Fee: Rs. {vet.services?.[0]?.price}</p>
       </div>
