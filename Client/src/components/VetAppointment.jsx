@@ -265,32 +265,20 @@ const VetAppointment = () => {
         consultationType: "video"
       };
 
-  
-      // Send request to backend to create appointment & get Stripe session
       const { data } = await axios.post(
         `http://localhost:5000/auth/appointments/${vetId}`,
         payload,
         { withCredentials: true }
       );
-  
-      console.log("Stripe session response:", data);
-  
-      if (data?.url) {
-        // Redirect to Stripe Checkout
-        window.location.href = data.url;
-      } else {
-        alert("Appointment created. Proceed to payment.");
-        // Optionally navigate to your own payment page
-        navigate(`/payment/${vetId}`);
-      }
-  
+
+      window.location.href = data.url;
     } catch (err) {
       console.error("Booking error:", err);
-      alert("Failed to book appointment or start payment");
+      alert(err.response?.data?.message || "Booking failed due to a server error");
     }
   };
 
-  if (!vet)    return <p className="text-center py-10">Vet not found.</p>;
+  if (!vet) return <p className="text-center py-10">Vet not found.</p>;
 
   const windowDates = availableDates.slice(windowStart, windowStart + WINDOW_SIZE);
 
