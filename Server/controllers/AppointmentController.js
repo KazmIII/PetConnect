@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import jwt from "jsonwebtoken";
 import { Appointment } from "../models/Appointment.js";
 import { UserModel } from "../models/User.js";
+import { VetModel } from "../models/Vet.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2022-11-15",
@@ -15,6 +16,10 @@ export const CreateAppointment = async (req, res) => {
     const { id: userId } = jwt.verify(token, process.env.JWT_SECRET);
     const { vetId } = req.params;
     const { date, startTime, endTime, fee, consultationType } = req.body;
+    const vet = await VetModel.findById(vetId);
+    if (!vet) {
+      return res.status(404).json({ message: "Vet not found" });
+    }
 
     if (!vetId || !date || !startTime || !endTime || !fee) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -44,7 +49,7 @@ export const CreateAppointment = async (req, res) => {
           price_data: {
             currency: "pkr",
             product_data: {
-              name: `Consultation with Vet ${vetId}`,
+              name: `Consultation with Dr. ${vet.name}`,
               description: `On ${date} at ${startTime}–${endTime}`,
             },
             unit_amount: Math.round(fee * 100), // Stripe expects cents
@@ -94,10 +99,17 @@ export const ConfirmAppointment = async (req, res) => {
       return res.status(400).json({ error: "Missing appointmentId in session metadata" });
     }
 
-    const updatedAppt = await Appointment.findByIdAndUpdate(apptId, {
-      paymentStatus: "paid",
-      status: "booked",
-    });
+    const updatedAppt = await Appointment.findById(apptId);
+    if (!updatedAppt) {
+      console.log("❌ Appointment not found in database:", apptId);
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
+    updatedAppt.status = "booked";
+    updatedAppt.paymentStatus = "paid";
+    updatedAppt.slot.status = "booked";
+    await updatedAppt.save();
+
 
     if (!updatedAppt) {
       console.log("❌ Appointment not found in database:", apptId);
@@ -161,5 +173,56 @@ export const StripeWebhook = async (req, res) => {
 
   // Send response to acknowledge receipt of webhook
   res.json({ received: true });
+};
+
+export const GetUserAppointments = async (req, res) => {
+  const token = req.cookies.pet_ownerToken;
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
+  
+  try {
+    const { id: userId } = jwt.verify(token, process.env.JWT_SECRET);
+    
+    const appointments = await Appointment.find({
+      userId,
+      paymentStatus: "paid",
+      status: "booked"
+    })
+    // populate vet’s name so you don’t have to client‑side fetch it separately
+    .populate("vetId", "name");
+
+    res.json(appointments);
+  } catch (err) {
+    console.error("Error in GetUserAppointments:", err);
+    if (err.name === "JsonWebTokenError") {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+export const GetVetAppointments = async (req, res) => {
+  // 1) Grab the vet’s JWT from cookies
+  const token = req.cookies.vetToken;
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+  try {
+    // 2) Verify & extract vetId
+    const { id: vetId } = jwt.verify(token, process.env.JWT_SECRET);
+
+    // 3) Query appointments for this vet that are paid & booked
+    const appointments = await Appointment.find({
+      vetId,
+      paymentStatus: "paid",
+      status:        "booked",
+    })
+      .populate("userId", "name email")    // bring in the user’s name & email
+      .sort({ date: 1, "slot.startTime": 1 })
+      .lean();
+
+    // 4) Send them back
+    return res.json(appointments);
+  } catch (err) {
+    console.error("Error in GetVetAppointments:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 };
 

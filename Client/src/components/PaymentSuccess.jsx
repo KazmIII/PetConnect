@@ -41,7 +41,7 @@ export default function PaymentSuccess() {
         Thank you! Your appointment has been confirmed and payment received.
       </p>
       <button
-        onClick={() => navigate("/")}
+        onClick={() => navigate("/appointments")}
         className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-6 rounded shadow"
       >
         View Appointment

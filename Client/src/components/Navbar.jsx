@@ -1,5 +1,7 @@
-import { Menu, X, ChevronDown, ChevronUp, User, LogOut, PawPrint, CircleHelp,
-   LayoutDashboard, ClipboardPenLine, Dog, FolderSearch, ListCollapse } from "lucide-react";
+import {
+  Menu, X, ChevronDown, ChevronUp, User, LogOut, PawPrint, CircleHelp,
+  LayoutDashboard, ClipboardPenLine, Dog, FolderSearch, CalendarClock, ListCollapse
+} from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { navItems } from "../constants";
 import { useNavigate } from 'react-router-dom';
@@ -9,7 +11,7 @@ import { Link } from 'react-router-dom';
 
 
 const Navbar = () => {
-  const {isLoggedIn, userRole, setIsLoggedIn, handleShowComponent} = useNavbar();
+  const { isLoggedIn, userRole, setIsLoggedIn, handleShowComponent } = useNavbar();
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [isServicesDropdownOpen, setIsServicesDropdownOpen] = useState(false);
   const [isJoinDropdownOpen, setIsJoinDropdownOpen] = useState(false);
@@ -22,7 +24,7 @@ const Navbar = () => {
   const servicesButtonRef = useRef(null);
   const joinButtonRef = useRef(null);
   const profileButtonRef = useRef(null);
-  
+
   const navigate = useNavigate();
 
   const toggleNavbar = () => {
@@ -39,11 +41,11 @@ const Navbar = () => {
     setIsJoinDropdownOpen((prev) => !prev);
     if (isServicesDropdownOpen) setIsServicesDropdownOpen(false); // Close Services dropdown if open
   };
-  
+
   const toggleProfileDropdown = () => {
     setIsProfileDropdownOpen((prev) => !prev);
   };
-  
+
 
   const handleLogout = async () => {
     try {
@@ -64,19 +66,24 @@ const Navbar = () => {
     navigate('/myPets'); // navigate to '/myPets'
   };
 
+  const handleNavigateToAppointments = () => {
+    setIsProfileDropdownOpen(false);
+    navigate('/appointments'); // navigate to '/myPets'
+  };
+
   const handleNavigateToEnquiries = () => {
     setIsProfileDropdownOpen(false);
-    navigate('/myEnquiries'); 
+    navigate('/myEnquiries');
   };
 
   const handleNavigateToListings = () => {
     setIsProfileDropdownOpen(false);
-    navigate('/myListings'); 
+    navigate('/myListings');
   };
-  
+
   const handleNavigateToAdoption = () => {
     setIsProfileDropdownOpen(false);
-    navigate('/profile/post-adoption'); 
+    navigate('/profile/post-adoption');
   };
 
   const handleDashboardClick = () => {
@@ -84,17 +91,24 @@ const Navbar = () => {
     navigate('./clinic/dashboard');
   };
 
+    // In your Navbar function, after handleServiceClick:
+    const handleNavigateToVetAppointments = () => {
+      setIsProfileDropdownOpen(false);
+      navigate('/vet/appointments');
+    };
+  
+
   const handleProfileClick = () => {
     setIsProfileDropdownOpen(false);
 
-    if(userRole === 'vet'){
+    if (userRole === 'vet') {
       navigate('./profile/vet');
-    } else if(userRole === 'groomer'){
+    } else if (userRole === 'groomer') {
       navigate('./profile/groomer');
-    } else if(userRole === 'sitter'){
+    } else if (userRole === 'sitter') {
       navigate('./profile/sitter');
     }
-    else{
+    else {
       navigate('./profile/clinic');
     }
   };
@@ -103,7 +117,7 @@ const Navbar = () => {
     setIsProfileDropdownOpen(false);
     navigate('./profile/user');
   };
-  
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       // Services Dropdown
@@ -160,8 +174,8 @@ const Navbar = () => {
     navigate('/services');
   };
 
-  if(isLoggedIn === null){return null;}
-  
+  if (isLoggedIn === null) { return null; }
+
   return (
     <nav className="flex justify-between items-center p-6 shadow-md bg-black opacity-75 sticky text-white top-0 z-50 py-3 backdrop-blur-lg border-b border-neutral-700/80">
       <div className="flex items-center sm:items-start">
@@ -173,10 +187,10 @@ const Navbar = () => {
         </div>
         {/* Logo Section */}
         <Link to="/" className="text-2xl mr-4 font-bold bg-gradient-to-r from-orange-500 to-orange-800 bg-clip-text text-transparent">
-  PetConnect
-</Link>
+          PetConnect
+        </Link>
       </div>
-      
+
       {/* Center Section: Desktop Navigation */}
       <ul className="flex-1 justify-center ml-3 xl:ml-8 md:justify-start space-x-6 xl:space-x-8 hidden lg:flex text-sm">
         {navItems.map((item, index) => {
@@ -239,41 +253,41 @@ const Navbar = () => {
           <>
             {userRole === 'pet_owner' && (
               <div className="relative">
-              <button
-                onClick={toggleJoinDropdown }
-                className="hidden md:block py-2 px-2 bg-gradient-to-r from-orange-500 to-orange-800 rounded-md hover:opacity-90"
-                ref={joinButtonRef}
-              >
-                Join PetConnect
-              </button>
-              {isJoinDropdownOpen && (
-                <div className="absolute top-full mt-2 bg-neutral-800 rounded-md shadow-lg w-32"
-                  ref={joinDropdownRef}>
-                  <ul className="flex flex-col">
-                    <li
-                      className="px-4 py-2 hover:bg-neutral-700 hover:text-orange-500 cursor-pointer"
-                      onClick={() => {
-                        setIsJoinDropdownOpen(false);
-                        handleShowComponent("clinicRegister");
-                      }}
-                    >
-                      Clinic
-                    </li>
-                    <li
-                      className="px-4 py-2 hover:bg-neutral-700 hover:text-orange-500 cursor-pointer"
-                      onClick={() => {
-                        setIsJoinDropdownOpen(false);
-                        handleShowComponent("providerRegister");
-                      }}
-                    >
-                      Individual
-                    </li>
-                  </ul>
-                </div>
-              )}
-            </div>
+                <button
+                  onClick={toggleJoinDropdown}
+                  className="hidden md:block py-2 px-2 bg-gradient-to-r from-orange-500 to-orange-800 rounded-md hover:opacity-90"
+                  ref={joinButtonRef}
+                >
+                  Join PetConnect
+                </button>
+                {isJoinDropdownOpen && (
+                  <div className="absolute top-full mt-2 bg-neutral-800 rounded-md shadow-lg w-32"
+                    ref={joinDropdownRef}>
+                    <ul className="flex flex-col">
+                      <li
+                        className="px-4 py-2 hover:bg-neutral-700 hover:text-orange-500 cursor-pointer"
+                        onClick={() => {
+                          setIsJoinDropdownOpen(false);
+                          handleShowComponent("clinicRegister");
+                        }}
+                      >
+                        Clinic
+                      </li>
+                      <li
+                        className="px-4 py-2 hover:bg-neutral-700 hover:text-orange-500 cursor-pointer"
+                        onClick={() => {
+                          setIsJoinDropdownOpen(false);
+                          handleShowComponent("providerRegister");
+                        }}
+                      >
+                        Individual
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </div>
             )}
-            
+
 
             <button
               className="relative py-2 px-2 space-x-2"
@@ -298,6 +312,13 @@ const Navbar = () => {
                     <PawPrint className="w-5 h-5 mr-4 text-lime-400" />
                     <button onClick={handleNavigateToPets}>My Pets</button>
                   </li>
+
+                  <li className="flex items-center hover:text-orange-500">
+                        <CalendarClock className="w-5 h-5 mr-2 text-lime-400" />
+                        <button onClick={handleNavigateToAppointments}>
+                          Appointments
+                        </button>
+                      </li>
                   <li className="flex items-center hover:text-orange-500">
                     <FolderSearch className="w-5 h-5 mr-4 text-lime-400" />
                     <button onClick={handleNavigateToEnquiries}>My Enquiries</button>
@@ -328,7 +349,7 @@ const Navbar = () => {
                 </ul>
               </div>
             )}
-             {isProfileDropdownOpen && userRole !== 'pet_owner' && (
+            {isProfileDropdownOpen && userRole !== 'pet_owner' && (
               <div
                 className="absolute right-0 top-12 z-30 shadow-lg bg-neutral-800 w-48 p-4 rounded-lg"
                 ref={profileDropdownRef}
@@ -338,18 +359,27 @@ const Navbar = () => {
                     <User className="w-5 h-5 mr-3 text-orange-500" />
                     <button onClick={handleProfileClick}>Profile</button>
                   </li>
-                  {userRole === 'clinic' && 
+                  {userRole === 'clinic' &&
                     <li className="flex items-center hover:text-orange-500">
                       <LayoutDashboard className="w-5 h-5 mr-3 text-orange-500" />
                       <button onClick={handleDashboardClick}>Dashboard</button>
                     </li>
                   }
-                  {userRole !== 'clinic' && 
-                    <li className="flex items-center hover:text-orange-500">
-                      <ClipboardPenLine className="w-5 h-5 mr-3 text-orange-500" />
-                      <button onClick={handleServiceClick}>My Services</button>
-                    </li>
-                  }
+                  {userRole !== 'clinic' && (
+                    <>
+                      <li className="flex items-center hover:text-orange-500">
+                        <ClipboardPenLine className="w-5 h-5 mr-3 text-orange-500" />
+                        <button onClick={handleServiceClick}>My Services</button>
+                      </li>
+                      <li className="flex items-center hover:text-orange-500">
+                        <CalendarClock className="w-5 h-5 mr-3 text-orange-500" />
+                        <button onClick={handleNavigateToVetAppointments}>
+                          Appointments
+                        </button>
+                      </li>
+                    </>
+                  )}
+
                   <li className="flex items-center hover:text-orange-500">
                     <CircleHelp className="w-5 h-5 mr-3 text-orange-500" />
                     <button>Help</button>
@@ -386,7 +416,7 @@ const Navbar = () => {
                 ref={joinButtonRef}
               >
                 Join PetConnect
-              </button> 
+              </button>
               {isJoinDropdownOpen && (
                 <div className="absolute top-full mt-2 bg-neutral-800 rounded-md shadow-lg w-32"
                   ref={joinDropdownRef}>
