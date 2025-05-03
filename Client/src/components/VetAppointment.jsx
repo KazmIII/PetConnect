@@ -289,20 +289,7 @@ const VetAppointment = () => {
       alert("Failed to book appointment or start payment");
     }
   };
-  
 
-  const getNextAvailability = () => {
-    const idx = availableDates.findIndex(d => d.display === selectedDate);
-    for (let i = idx + 1; i < availableDates.length; i++) {
-      if (availableDates[i].slots.length) {
-        const d = new Date(availableDates[i].isoDate);
-        return `${d.toLocaleString('default',{month:'short'})}, ${d.getDate()}`;
-      }
-    }
-    return null;
-  };
-
-  if (loading) return <p className="text-center py-10">Loading…</p>;
   if (!vet)    return <p className="text-center py-10">Vet not found.</p>;
 
   const windowDates = availableDates.slice(windowStart, windowStart + WINDOW_SIZE);
