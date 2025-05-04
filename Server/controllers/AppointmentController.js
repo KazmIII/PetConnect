@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import jwt from "jsonwebtoken";
+import { v4 as uuidv4 } from "uuid";  
 import { Appointment } from "../models/Appointment.js";
 import { UserModel } from "../models/User.js";
 import { VetModel } from "../models/Vet.js";
@@ -25,6 +26,12 @@ export const CreateAppointment = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
+     // only video slots get a roomID
+     let roomID = null;
+     if (consultationType === "video") {
+       roomID = uuidv4();
+     }
+
     // 1) Create appointment in Mongo with pending payment
     const appointment = await Appointment.create({
       vetId,
@@ -33,6 +40,7 @@ export const CreateAppointment = async (req, res) => {
       slot: { startTime, endTime, status: 'pending' },
       fee,
       consultationType: consultationType,
+      roomID,  
       status: "pending",
       paymentStatus: "pending",
     });
@@ -175,54 +183,122 @@ export const StripeWebhook = async (req, res) => {
   res.json({ received: true });
 };
 
+// export const GetUserAppointments = async (req, res) => {
+//   const token = req.cookies.pet_ownerToken;
+//   if (!token) return res.status(401).json({ message: "Unauthorized" });
+  
+//   try {
+//     const { id: userId } = jwt.verify(token, process.env.JWT_SECRET);
+    
+//     const appointments = await Appointment.find({
+//       userId,
+//       paymentStatus: "paid",
+//       status: "booked"
+//     })
+//     // populate vet’s name so you don’t have to client‑side fetch it separately
+//     .populate("vetId", "name");
+
+//     res.json(appointments);
+//   } catch (err) {
+//     console.error("Error in GetUserAppointments:", err);
+//     if (err.name === "JsonWebTokenError") {
+//       return res.status(401).json({ message: "Invalid token" });
+//     }
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+// export const GetVetAppointments = async (req, res) => {
+//   // 1) Grab the vet’s JWT from cookies
+//   const token = req.cookies.vetToken;
+//   if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+//   try {
+//     // 2) Verify & extract vetId
+//     const { id: vetId } = jwt.verify(token, process.env.JWT_SECRET);
+
+//     // 3) Query appointments for this vet that are paid & booked
+//     const appointments = await Appointment.find({
+//       vetId,
+//       paymentStatus: "paid",
+//       status:        "booked",
+//     })
+//       .populate("userId", "name email")    // bring in the user’s name & email
+//       .sort({ date: 1, "slot.startTime": 1 })
+//       .lean();
+
+//     // 4) Send them back
+//     return res.json(appointments);
+//   } catch (err) {
+//     console.error("Error in GetVetAppointments:", err);
+//     return res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+
+// in the same controller file…
+
 export const GetUserAppointments = async (req, res) => {
   const token = req.cookies.pet_ownerToken;
   if (!token) return res.status(401).json({ message: "Unauthorized" });
-  
+
   try {
     const { id: userId } = jwt.verify(token, process.env.JWT_SECRET);
-    
     const appointments = await Appointment.find({
       userId,
       paymentStatus: "paid",
-      status: "booked"
+      status:        { $in: ["booked","in-progress"] }
     })
-    // populate vet’s name so you don’t have to client‑side fetch it separately
-    .populate("vetId", "name");
+    .populate("vetId", "name roomID")
+    .lean();
 
     res.json(appointments);
   } catch (err) {
     console.error("Error in GetUserAppointments:", err);
-    if (err.name === "JsonWebTokenError") {
-      return res.status(401).json({ message: "Invalid token" });
-    }
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 export const GetVetAppointments = async (req, res) => {
-  // 1) Grab the vet’s JWT from cookies
   const token = req.cookies.vetToken;
   if (!token) return res.status(401).json({ message: "Unauthorized" });
 
   try {
-    // 2) Verify & extract vetId
     const { id: vetId } = jwt.verify(token, process.env.JWT_SECRET);
-
-    // 3) Query appointments for this vet that are paid & booked
     const appointments = await Appointment.find({
       vetId,
       paymentStatus: "paid",
-      status:        "booked",
+      status:        { $in: ["booked","in-progress"] }
     })
-      .populate("userId", "name email")    // bring in the user’s name & email
-      .sort({ date: 1, "slot.startTime": 1 })
-      .lean();
+    .populate("userId", "name email")
+    .sort({ date: 1, "slot.startTime": 1 })
+    .lean();
 
-    // 4) Send them back
-    return res.json(appointments);
+    res.json(appointments);
   } catch (err) {
     console.error("Error in GetVetAppointments:", err);
-    return res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+export const StartAppointment = async (req, res) => {
+  const token = req.cookies.vetToken;
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+  try {
+    const { id: vetId } = jwt.verify(token, process.env.JWT_SECRET);
+    const { appointmentId } = req.params;
+
+    const appt = await Appointment.findById(appointmentId);
+    if (!appt) return res.status(404).json({ message: "Appointment not found" });
+    if (appt.vetId.toString() !== vetId)
+      return res.status(403).json({ message: "Not allowed" });
+
+    appt.status = 'in-progress';
+    await appt.save();
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error in StartAppointment:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 

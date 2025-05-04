@@ -27,7 +27,7 @@ import {SubmitAdoptionAd, GetAllAdoptionAds, GetAdoptionAdById, SubmitAdoptionAp
 } from '../controllers/AdoptionController.js';
 
 import {GetVerifiedVets, GetVetById } from '../controllers/VetController.js';
-import {CreateAppointment, ConfirmAppointment, StripeWebhook, GetUserAppointments, GetVetAppointments} from '../controllers/AppointmentController.js';
+import {CreateAppointment, ConfirmAppointment, StripeWebhook, GetUserAppointments, GetVetAppointments, StartAppointment} from '../controllers/AppointmentController.js';
 
 const AuthRoutes = express.Router();
 
@@ -37,6 +37,7 @@ AuthRoutes.get('/appointments', GetUserAppointments);
 AuthRoutes.get('/appointments/vet', GetVetAppointments);
 AuthRoutes.post('/appointments/confirm', ConfirmAppointment); // move this ABOVE
 AuthRoutes.post('/appointments/:vetId', CreateAppointment); 
+AuthRoutes.post("/appointments/:appointmentId/start", StartAppointment);
 
 
 

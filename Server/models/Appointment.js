@@ -33,7 +33,7 @@ const appointmentSchema = new mongoose.Schema({
   // Status Tracking
   status: { 
     type: String, 
-    enum: ['pending', 'booked', 'completed', 'cancelled'],
+    enum: ['pending', 'booked', 'in-progress','completed', 'cancelled'],
     default: 'pending' 
   },
   paymentStatus: { 
@@ -47,6 +47,8 @@ const appointmentSchema = new mongoose.Schema({
     type: String, 
     enum: ['video', 'in-clinic','home'] 
   },
+
+  roomID:          { type: String, default: null },
 //   meetingLink: { type: String }, // Zoom/Google Meet URL (auto-generated later)
 //   notes: { type: String }, // Patient concerns/symptoms
 
@@ -62,3 +64,4 @@ appointmentSchema.pre('save', function(next) {
 });
 
 export const Appointment = mongoose.model('Appointment', appointmentSchema);
+
