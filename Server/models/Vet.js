@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
+const { Schema } = mongoose;
 
-const VetSchema = new mongoose.Schema({
+const VetSchema = new Schema({
     clinicId: { 
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'Clinic', 
@@ -31,15 +32,15 @@ const VetSchema = new mongoose.Schema({
         required: true 
     },
     vetResume: { 
-        type: Buffer, 
+        type: Schema.Types.Buffer,
         required: true 
     },
     vetLicenseFile: { 
-        type: Buffer, 
+        type: Schema.Types.Buffer, 
         required: true 
     },
     vetDegree: { 
-        type: Buffer, 
+        type: Schema.Types.Buffer, 
         required: true 
     },
     emailVerified:{

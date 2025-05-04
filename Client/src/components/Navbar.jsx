@@ -55,6 +55,7 @@ const Navbar = () => {
 
       if (response.status === 200) {
         setIsLoggedIn(false); // Update login state globally
+        <Link to="/"></Link>
       }
     } catch (error) {
       console.error('Error logging out:', error.response ? error.response.data : error.message);
@@ -314,7 +315,7 @@ const Navbar = () => {
                   </li>
 
                   <li className="flex items-center hover:text-orange-500">
-                        <CalendarClock className="w-5 h-5 mr-2 text-lime-400" />
+                        <CalendarClock className="w-5 h-5 mr-3 text-lime-400" />
                         <button onClick={handleNavigateToAppointments}>
                           Appointments
                         </button>

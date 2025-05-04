@@ -300,11 +300,11 @@ const VetAppointment = () => {
     <div className="min-h-screen bg-gray-50 pt-10">
       <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
         <h2 className="text-xl font-bold">{vet.name}</h2>
-        <div className="flex items-center gap-2 text-gray-600 mt-2">
+        <div className="flex items-center gap-2 text-gray-600 mt-2 text-sm">
           {serviceType === 'video-consultation' && (
             <>
               <Video className="w-4 h-4 text-teal-600" />
-              <span>Video Consultation</span>
+              <span>Online Video Consultation</span>
             </>
           )}
           {serviceType === 'in-clinic' && (
