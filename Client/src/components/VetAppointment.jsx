@@ -292,14 +292,14 @@ const VetAppointment = () => {
     }
   };
 
-  if (!vet) return <p className="text-center py-10">Vet not found.</p>;
+  if (!vet) return <Spinner className="text-center py-4" />;
 
   const windowDates = availableDates.slice(windowStart, windowStart + WINDOW_SIZE);
 
   return (
     <div className="min-h-screen bg-gray-50 pt-10">
       <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-bold">{vet.name}</h2>
+        <h2 className="text-xl font-bold">Dr. {vet.name}</h2>
         <div className="flex items-center gap-2 text-gray-600 mt-2 text-sm">
           {serviceType === 'video-consultation' && (
             <>

@@ -1,16 +1,29 @@
-import React from "react";
+import React, { useState } from 'react';
 import { Link } from "react-router-dom";
 import vetMobile from '../assets/vetMobile.jpg';
 import vetPicture from '../assets/vetPicture.webp';
 import petSitting from '../assets/pet sitting.avif';
 import petGrooming from '../assets/pet grooming.jpg';
+import SearchNearbyServices from './SearchNearbyServices';
+
 
 const ServiceCards = () => {
+    const [searchOverlay, setSearchOverlay] = useState({
+      isOpen: false,
+      serviceCard: false,  // <-- this flag will control the prop
+    });
+    
+    const openSearch = (forInClinic) => {
+      setSearchOverlay({ isOpen: true, serviceCard: forInClinic });
+    };
+    const closeSearch = () => {
+      setSearchOverlay({ isOpen: false, serviceCard: false });
+    };
     return (
         <div className="container grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 w-full mx-auto lg:max-w-6xl mb-8
         custom-lg:max-w-4xl max-w-xs custom-xs:max-w-md sm:max-w-xl md:max-w-2xl rounded-3xl mt-4 md:mt-7">
             {/* Online Now Card */}
-            <Link to="consultation/vet" className="custom-lg:w-full cursor-pointer">
+            <Link to="/vets/video-consultation" className="custom-lg:w-full cursor-pointer">
                 <div className="relative bg-blue-50 rounded-lg shadow-md h-full sm:h-64">
                     <div className="relative h-2/3 flex items-center justify-center">
                     <img
@@ -39,7 +52,7 @@ const ServiceCards = () => {
             </Link>
 
             {/* In-Clinic Appointments Card */}
-            <div className="custom-lg:w-full   cursor-pointer">
+            <div onClick={() => openSearch(true)} className="custom-lg:w-full cursor-pointer">
                 <div className="bg-orange-100 rounded-lg shadow-md overflow-hidden h-full sm:h-64">
                 <div className="h-2/3 flex items-center justify-center">
                     <img
@@ -94,8 +107,24 @@ const ServiceCards = () => {
                 </div>
                 </div>
             </div>
+            {searchOverlay.isOpen && (
+                <>
+                    {/* Darken background */}
+                    <div
+                    className="fixed inset-0 bg-black bg-opacity-40 z-40"
+                    onClick={closeSearch}
+                    />
+        
+                    {/* SearchNearbyServices Modal */}
+                    <div>
+                    <SearchNearbyServices 
+                        onClose={closeSearch} 
+                        serviceCard={searchOverlay.serviceCard} 
+                    />
+                    </div>
+                </>
+            )}
         </div>
-
     );
 };
 
