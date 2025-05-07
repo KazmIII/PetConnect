@@ -200,8 +200,9 @@ const AppContent = () => {
       <div className="flex-grow">
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="consultation/vet" element={<Vets />} />
-        <Route path="consultation/:serviceType/vet/:vetId" element={<VetAppointment />} />
+        <Route path="/vets/:serviceType" element={<Vets />} />
+        <Route path="/vets" element={<Vets />} />
+        <Route path="/consultation/:serviceType/vet/:vetId" element={<VetAppointment />} />
         <Route path="/find-a-pet" element={<PetAdoption />} />
         <Route path="/pet-listing/:id" element={<PetAdoptionDetail />} />
         <Route path="/pet-listing/:id/adoption-application" element={<ProtectedRoute requiredRole="pet_owner"> <AdoptionForm /> </ProtectedRoute>} />

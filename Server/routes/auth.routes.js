@@ -32,7 +32,6 @@ import {CreateAppointment, ConfirmAppointment, StripeWebhook, GetUserAppointment
 const AuthRoutes = express.Router();
 
 //Appointment Routes
-// 2) After redirect, confirm payment
 AuthRoutes.get('/appointments', GetUserAppointments);
 AuthRoutes.get('/appointments/vet', GetVetAppointments);
 AuthRoutes.post('/appointments/confirm', ConfirmAppointment); // move this ABOVE
@@ -40,14 +39,11 @@ AuthRoutes.post('/appointments/:vetId', CreateAppointment);
 AuthRoutes.post("/appointments/:appointmentId/start", StartAppointment);
 AuthRoutes.post("/appointments/:appointmentId/complete", CompleteAppointment);
 
-
-
-
 //Vet Routes
 AuthRoutes.get('/vets', GetVerifiedVets);
 AuthRoutes.get('/vets/:vetId', GetVetById);
 
-// PetConnect Routes
+// Adoption Routes
 AuthRoutes.post('/addAdoptionAd', UploadMultiple([{ name: 'photos', maxCount: 5 }]), SubmitAdoptionAd);
 AuthRoutes.put("/update-adoption-ad/:id", UploadMultiple([{ name: 'photos', maxCount: 5 }]), UpdateAdoptionAd);
 AuthRoutes.get('/get-adoption-ads', GetAllAdoptionAds);
@@ -62,6 +58,14 @@ AuthRoutes.get("/adoption-applications/:applicationId", GetAdoptionApplicationDe
 
  
 // service providers route
+const uploadFields = [
+  { name: 'vetResume', maxCount: 1 },
+  { name: 'vetLicenseFile', maxCount: 1 },
+  { name: 'vetDegree', maxCount: 1 },
+  { name: 'groomerCertificate', maxCount: 1 },
+  { name: 'sitterCertificate', maxCount: 1 }
+];
+AuthRoutes.post('/provider-register', UploadMultiple(uploadFields), verifyEmailDomain, RegisterProvider);
 AuthRoutes.post('/add-service', AddService);
 AuthRoutes.get('/get-services', GetServicesByProvider);
 AuthRoutes.get('/service/:serviceId', GetServiceDetails);
@@ -86,10 +90,6 @@ AuthRoutes.put('/user/update-detail-profile', UpdateDetailUserInfo);
 AuthRoutes.get('/sitter/profile', GetSitterInfo);
 AuthRoutes.put('/sitter/update-profile', verifyEmailDomain, UpdateSitterInfo);
 
-// Clinic specific routes
-AuthRoutes.get('/clinic/profile', GetClinicInfo);
-AuthRoutes.put('/clinic/update-profile', verifyEmailDomain, UpdateClinicProfile);
-
 // Pet Owner specific routes
 AuthRoutes.post('/create-pet', uploadSingle, CreatePetProfile);
 AuthRoutes.get('/get-user-pets', GetUserPets);
@@ -103,15 +103,6 @@ AuthRoutes.get('/clinic/vets-groomers', GetVetsAndGroomersByClinic);
 AuthRoutes.get('/clinic/providers-details/:role/:provider_id', GetProviderDetails);
 AuthRoutes.post('/clinic/update-provider-status', UpdateProviderVerificationStatus);
 AuthRoutes.get('/clinic/staff', GetRegisteredStaffByClinic);
-
-const uploadFields = [
-  { name: 'vetResume', maxCount: 1 },
-  { name: 'vetLicenseFile', maxCount: 1 },
-  { name: 'vetDegree', maxCount: 1 },
-  { name: 'groomerCertificate', maxCount: 1 },
-  { name: 'sitterCertificate', maxCount: 1 }
-];
-AuthRoutes.post('/provider-register', UploadMultiple(uploadFields), verifyEmailDomain, RegisterProvider);
 
 // Admin specific routes
 AuthRoutes.post('/admin/login', AdminLogin); 
@@ -128,7 +119,7 @@ AuthRoutes.get("/admin/get-groomers", GetRegisteredGroomers);
 AuthRoutes.get("/admin/get-sitters", GetRegisteredSitters);
 AuthRoutes.post("/admin/restrict-user/:id", RestrictUser);
 
-
+//Clinic Specific Route
 const clinicUploadFields = [
   { name: 'clinicRegistrationFile', maxCount: 1 },
   { name: 'NICFile', maxCount: 1 },
@@ -136,6 +127,8 @@ const clinicUploadFields = [
   { name: 'proofOfAddressFile', maxCount: 1 }
 ];
 AuthRoutes.post('/clinic-register', UploadMultiple(clinicUploadFields), verifyEmailDomain, RegisterClinic );
+AuthRoutes.get('/clinic/profile', GetClinicInfo);
+AuthRoutes.put('/clinic/update-profile', verifyEmailDomain, UpdateClinicProfile);
 
 
 export default AuthRoutes;

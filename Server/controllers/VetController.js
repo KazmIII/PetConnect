@@ -145,10 +145,10 @@ export const GetVerifiedVets = async (req, res) => {
     const vets = await VetModel
       .find({
         emailVerified: true,
-        verificationStatus: "verified",
+        verificationStatus: "verified", 
         restricted: false
       })
-      .populate("clinicId", "clinicName address")
+      .populate("clinicId", "clinicName city")
       .populate({
         path: "services",
         select: "serviceName price availability deliveryMethod",

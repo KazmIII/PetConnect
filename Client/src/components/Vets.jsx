@@ -1,20 +1,39 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import { Video, MapPin, Home, ChevronRight } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { VetModel } from '../../../Server/models/Vet';
+import { Link, useNavigate, useSearchParams, useParams } from 'react-router-dom';
+import Spinner from "./Spinner.jsx";
 
 const Vets = () => {
   const [vets, setVets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { serviceType: routeServiceType } = useParams();
+  const [searchParams] = useSearchParams();
+  const initialServiceTypes = useMemo(() => {
+    const queryTypes = searchParams.getAll('serviceType');
+    // Combine route param with query params, removing duplicates
+    return routeServiceType 
+      ? [...new Set([routeServiceType, ...queryTypes])]
+      : queryTypes;
+  }, [routeServiceType, searchParams]);
+  const [selectedServiceTypes, setSelectedServiceTypes] = useState(initialServiceTypes);
+  const [city, setCity] = useState(searchParams.get('city') || '');
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalServices, setModalServices] = useState([]);
   const [modalVetId, setModalVetId] = useState(null);
   const [modalVetName, setModalVetName] = useState('');
+  const [modalClinicName, setModalClinicName] = useState('');
+  const [modalClinicCity, setModalClinicCity] = useState('');
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const queryTypes = searchParams.getAll('serviceType').filter(Boolean);
+    const newTypes = [...new Set([routeServiceType, ...queryTypes].filter(Boolean))];
+    setSelectedServiceTypes(newTypes);
+  }, [routeServiceType, searchParams]);
 
   useEffect(() => {
     const fetchVets = async () => {
@@ -32,11 +51,76 @@ const Vets = () => {
     fetchVets();
   }, []);
 
+  const getDeliveryMethod = (serviceType) => {
+    switch (serviceType) {
+      case 'video-consultation':
+        return 'Video Consultation';
+      case 'in-clinic':
+        return 'In-Clinic';
+      case 'home-visit':
+        return 'Home Visit';
+      default:
+        return '';
+    }
+  };
+
+  const filteredVets = useMemo(() => {
+    const activeTypes = selectedServiceTypes.length > 0 
+      ? selectedServiceTypes 
+      : ['video-consultation']; // Default to video consultation
+
+    return vets.filter(vet => {
+      const hasService = activeTypes.some(type => {
+        const method = getDeliveryMethod(type);
+        return vet.services?.some(s => s.deliveryMethod === method);
+      });
+
+      const needsCityCheck = activeTypes.includes('in-clinic') && city;
+      const cityMatch = needsCityCheck
+        ? vet.clinicId?.city?.toLowerCase() === city.toLowerCase()
+        : true;
+
+      return hasService && cityMatch;
+    });
+  }, [vets, selectedServiceTypes, city]);
+
+
+  const handleFilter = (type) => {
+    const currentTypes = [...selectedServiceTypes];
+    const newTypes = currentTypes.includes(type)
+      ? currentTypes.filter(t => t !== type)
+      : [...currentTypes, type];
+
+    // Determine URL structure
+    let path = '';
+    const params = new URLSearchParams();
+    
+    // Handle service types
+    const hasRouteParam = newTypes.length === 1 && !routeServiceType;
+    if (newTypes.length === 1) {
+      path = `/vets/${newTypes[0]}`;
+    } else if (newTypes.length > 1) {
+      newTypes.forEach(t => params.append('serviceType', t));
+    }
+
+    // Handle city parameter
+    if (city) params.set('city', city);
+
+    // Clean up empty parameters
+    Array.from(params.entries()).forEach(([key, value]) => {
+      if (!value) params.delete(key);
+    });
+
+    navigate(`${path}${params.toString() ? `?${params.toString()}` : ''}`);
+  };
+  
+  const isActive = (type) => {
+    return selectedServiceTypes.includes(type);
+  };
+
   const handleBookClick = (vet) => {
     const services = vet.services || [];
-
     if (services.length === 1) {
-      // Only one service → go straight there
       const svc = services[0];
       let path = '';
       if (svc.deliveryMethod === 'Video Consultation') {
@@ -48,10 +132,11 @@ const Vets = () => {
       }
       navigate(path);
     } else {
-      // Multiple → open selection modal
       setModalServices(services);
       setModalVetId(vet._id);
       setModalVetName(vet.name);
+      setModalClinicName(vet.clinicId.clinicName);
+      setModalClinicCity(vet.clinicId.city);
       setIsModalOpen(true);
     }
   };
@@ -59,41 +144,49 @@ const Vets = () => {
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
       <h1 className="text-xl font-medium text-gray-800 mb-2">
-        {vets.length} Best Veterinarians available for video consultation
+        {filteredVets.length} Best Veterinarians available for video consultation
       </h1>
       <p className="text-gray-700 mb-6 text-xs">
         Also known as Animal Specialist, Pet Doctor, and Veterinary Physician
       </p>
 
-      <div className="max-w-[58rem] flex gap-4 mb-6 overflow-x-auto pb-2">
-        <button className="px-4 py-2 bg-white border border-gray-300 rounded-full text-sm">
+      <div className="max-w-[58rem] flex gap-2 mb-6 text-xs font-medium text-lime-700 overflow-x-auto pb-2">
+        <button className="px-3 bg-white border border-lime-700 rounded-full whitespace-nowrap">
           Doctors Near Me
         </button>
-        <button className="px-4 py-2 bg-white border border-gray-300 rounded-full text-sm">
+        <button className="px-3 py-2 bg-white border border-lime-700 rounded-full whitespace-nowrap">
           Most Experienced
         </button>
-        <button className="px-4 py-2 bg-white border border-gray-300 rounded-full text-sm">
+        <button className="px-3 bg-white border border-lime-700 rounded-full whitespace-nowrap">
           Lowest Fee
         </button>
-        <button className="px-4 py-2 bg-white border border-gray-300 rounded-full text-sm">
+        <button className="px-3 bg-white border border-lime-700 rounded-full whitespace-nowrap">
           Highest Rated
         </button>
-        <button className="px-4 py-2 bg-white border border-gray-300 rounded-full text-sm">
+        <button className="px-3 bg-white border border-lime-700 rounded-full whitespace-nowrap">
           Available Today
         </button>
-        <button className="px-4 py-2 bg-white border border-gray-300 rounded-full text-sm">
-          Discounts
+        <button 
+          className={`px-3 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
+            ${isActive('video-consultation')
+              ? 'bg-lime-200 '
+              : 'bg-white'
+            }`}
+          onClick={() => handleFilter('video-consultation')}
+        >
+          Video Consultation
         </button>
-        <button className="px-4 py-2 bg-white border border-gray-300 rounded-full text-sm">
-          Video Consultative
+
+        <button className="px-3 bg-white border border-lime-700 rounded-full whitespace-nowrap">
+          Online Now
         </button>
       </div>
 
       {loading ? (
-        <p>Loading vets…</p>
+        <Spinner className="text-center py-4" />
       ) : (
         <div className="space-y-6">
-          {vets.map((vet) => (
+          {filteredVets.map((vet) => (
             <div
               key={vet._id}
               className="max-w-[58rem] bg-white border border-gray-200 rounded-lg p-6 shadow-md shadow-gray-300"
@@ -182,7 +275,7 @@ const Vets = () => {
                         <div className="flex items-center gap-2">
                           <MapPin className="w-4 h-4 text-blue-700" />
                           <span className="font-medium text-gray-700 text-sm">
-                            In-Clinic Visit
+                            {vet.clinicId?.clinicName} ({vet.clinicId?.city})
                           </span>
                         </div>
                       </div>
@@ -272,7 +365,7 @@ const Vets = () => {
                   serviceName = 'Online Video Consultation';
                 } else if (s.deliveryMethod === 'In-Clinic') {
                   Icon = MapPin;
-                  serviceName = s.clinicName || 'In-Clinic Visit';
+                  serviceName = modalClinicName;
                 } else if (s.deliveryMethod === 'Home Visit') {
                   Icon = Home;
                   serviceName = 'Home Visit';
@@ -292,6 +385,11 @@ const Vets = () => {
                           <h3 className="font-semibold text-gray-800 text-sm">
                             {serviceName}
                           </h3>
+                          {s.deliveryMethod === 'In-Clinic' && modalClinicCity && (
+                            <p className="text-xs text-orange-700 mt-1">
+                              Location: {modalClinicCity}
+                            </p>
+                          )}
                           <div className="mt-2 text-xs text-gray-600">
                             {s.location && (
                               <div className="flex items-center gap-1">

@@ -1,86 +1,202 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import axios from 'axios';
+import { MapPin, Search, X, LocateFixed } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-const SearchNearbyServices = () => {
-  const [cityOpen, setCityOpen] = useState(false);
-  const [serviceOpen, setServiceOpen] = useState(false);
-  const [selectedCity, setSelectedCity] = useState('Enter locality or city');
-  const [selectedService, setSelectedService] = useState('Search for doctors, hospitals, specialties, services, diseases');
+const SearchNearbyServices = ({ onClose, serviceCard = false }) => {
+  // Pre-select in-clinic vet & start in city if serviceCard is true
+  const defaultService = serviceCard
+    ? 'Veterinary In-Clinic Consultation'
+    : '';
+  const defaultField = serviceCard ? 'city' : 'service';
 
-  const cities = ['Lahore', 'Lahore Road Pindi Bhattian, Hafizabad', 'Lahore Cantt, Lahore'];
-  const services = ['Consultation', 'Grooming', 'Sitting', 'Pet Care'];
+  const [activeField, setActiveField] = useState(defaultField);
+  const [selectedCity, setSelectedCity] = useState('Islamabad');
+  const [selectedService, setSelectedService] = useState(defaultService);
+  const [locationError, setLocationError] = useState('');
+
+  const cityInputRef = useRef(null);
+  const serviceInputRef = useRef(null);
+  const navigate = useNavigate();
+
+  const cities = [
+    'Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad',
+    'Peshawar', 'Quetta', 'Multan', 'Hyderabad', 'Sialkot',
+    'Gujranwala', 'Sargodha', 'Bahawalpur'
+  ];
+  const services = [
+    'Veterinary Online Consultation',
+    'Veterinary In-Clinic Consultation',
+    'Pet Grooming',
+    'Pet Sitting',
+    'Home Services'
+  ];
+
+  // On mount: just focus the correct input (no IP lookup)
+  useEffect(() => {
+    if (defaultField === 'city') {
+      cityInputRef.current?.focus();
+    } else {
+      serviceInputRef.current?.focus();
+    }
+  }, [defaultField]);
+
+  // Browser geolocation + reverse-geocode
+  const detectByGeo = () =>
+    new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        return resolve(null);
+      }
+      navigator.geolocation.getCurrentPosition(
+        async ({ coords: { latitude, longitude } }) => {
+          try {
+            const res = await axios.get(
+              `https://nominatim.openstreetmap.org/reverse`,
+              { params: { lat: latitude, lon: longitude, format: 'json', addressdetails: 1 } }
+            );
+            const data = res.data;
+            const addressStr = Object.values(data.address || {}).join(' ');
+            const geoCity = cities.find(c =>
+              addressStr.toLowerCase().includes(c.toLowerCase())
+            );
+            resolve(geoCity || null);
+          } catch {
+            resolve(null);
+          }
+        },
+        () => resolve(null)
+      );
+    });
+
+  // On “Detect” click
+  const handleDetect = async () => {
+    setLocationError('');
+    const geoCity = await detectByGeo();
+    if (geoCity && cities.includes(geoCity)) {
+      setSelectedCity(geoCity);
+    } else if (geoCity) {
+      setLocationError(`${geoCity} is not in our service area.`);
+    } else {
+      setLocationError('Unable to detect your city.');
+    }
+  };
+
+  const handleServiceSelect = (service) => {
+    setSelectedService(service);
+
+    if (service === 'Veterinary Online Consultation') {
+      navigate('/vets/video-consultation');
+      onClose();
+    } else if (service === 'Veterinary In-Clinic Consultation') {
+      navigate(`/vets/in-clinic?city=${encodeURIComponent(selectedCity)}`);
+      onClose();
+    }
+  };
 
   return (
-    <div className="relative w-full max-w-xl mx-auto mt-8">
-      {/* Main Search Container */}
-      <div className="bg-white p-4 rounded-md shadow-lg">
-        {/* City Search */}
-        <div className="mb-4">
-          <label className="block text-sm font-semibold text-gray-600">Enter locality or city</label>
-          <div
-            className="flex justify-between items-center border border-gray-300 rounded-md p-2 cursor-pointer"
-            onClick={() => setCityOpen(!cityOpen)}
-          >
-            <span>{selectedCity}</span>
-            <span className="text-blue-500">▼</span>
-          </div>
-
-          {/* City Dropdown */}
-          {cityOpen && (
-            <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md shadow-md mt-1 z-10">
-              <ul className="max-h-40 overflow-y-auto">
-                {cities.map((city, index) => (
-                  <li
-                    key={index}
-                    className="p-2 hover:bg-gray-100 cursor-pointer"
-                    onClick={() => {
-                      setSelectedCity(city);
-                      setCityOpen(false);
-                    }}
-                  >
-                    {city}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
-        {/* Service Search */}
-        <div className="mb-4">
-          <label className="block text-sm font-semibold text-gray-600">Search for services</label>
-          <div
-            className="flex justify-between items-center border border-gray-300 rounded-md p-2 cursor-pointer"
-            onClick={() => setServiceOpen(!serviceOpen)}
-          >
-            <span>{selectedService}</span>
-            <span className="text-blue-500">▼</span>
-          </div>
-
-          {/* Service Dropdown */}
-          {serviceOpen && (
-            <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md shadow-md mt-1 z-10">
-              <ul className="max-h-40 overflow-y-auto">
-                {services.map((service, index) => (
-                  <li
-                    key={index}
-                    className="p-2 hover:bg-gray-100 cursor-pointer"
-                    onClick={() => {
-                      setSelectedService(service);
-                      setServiceOpen(false);
-                    }}
-                  >
-                    {service}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
-        {/* Search Button */}
-        <button className="bg-blue-500 text-white w-full py-2 rounded-md mt-4">
-          Search
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-start justify-center pt-16 z-50">
+      <div className="relative w-full max-w-lg">
+        {/* Close */}
+        <button
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-50"
+          onClick={onClose}
+        >
+          <X size={15} />
         </button>
+
+        {/* Inputs */}
+        <div className="bg-white rounded-sm p-3 shadow-xl">
+          <h2 className="text-center text-base font-medium text-gray-700 mb-2.5">
+            Search for vets/services
+          </h2>
+          <div className="space-y-2">
+            {/* City Field */}
+            <div
+              className="flex items-center gap-2 px-2 py-2 border border-gray-300 rounded-md"
+              onClick={() => setActiveField('city')}
+            >
+              <MapPin className="text-red-600" size={16} />
+              <input
+                ref={cityInputRef}
+                type="text"
+                placeholder="Enter locality or city"
+                value={selectedCity}
+                onChange={e => setSelectedCity(e.target.value)}
+                onFocus={() => setActiveField('city')}
+                className="flex-1 text-sm text-gray-700 placeholder-gray-400 bg-transparent focus:outline-none"
+              />
+              <button
+                onClick={handleDetect}
+                className="flex items-center gap-1"
+                type="button"
+              >
+                <LocateFixed className="text-teal-800 h-4 w-4" />
+                <span className="text-teal-800 font-medium text-sm">Detect</span>
+              </button>
+            </div>
+            {locationError && (
+              <p className="text-xs text-red-600 px-2">{locationError}</p>
+            )}
+
+            {/* Service Field */}
+            <div
+              className="flex items-center gap-2 px-2 py-2 border border-gray-300 rounded-md"
+              onClick={() => setActiveField('service')}
+            >
+              <Search className="text-lime-600" size={16} />
+              <input
+                ref={serviceInputRef}
+                type="text"
+                placeholder="Search for pet services"
+                value={selectedService}
+                onChange={e => setSelectedService(e.target.value)}
+                onFocus={() => setActiveField('service')}
+                className="flex-1 text-sm text-gray-700 placeholder-gray-400 bg-transparent focus:outline-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Spacer */}
+        <div className="h-[6px] bg-transparent" />
+
+        {/* Results panel */}
+        <div className="bg-white shadow-xl h-[14.5rem] overflow-auto">
+          <div className="p-1 pt-2">
+            {activeField === 'city' && (
+              <ul className="space-y-2">
+                {cities.map((city, i) => (
+                  <li
+                    key={i}
+                    className={`flex items-center gap-2 px-3 py-2 border-b border-gray-300 cursor-pointer hover:bg-gray-100 ${
+                      selectedCity === city ? 'bg-indigo-100' : ''
+                    }`}
+                    onClick={() => setSelectedCity(city)}
+                  >
+                    <MapPin size={14} className="text-gray-500" />
+                    <span className="text-sm text-gray-700">{city}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {activeField === 'service' && (
+              <ul className="space-y-2">
+                {services.map((service, i) => (
+                  <li
+                    key={i}
+                    className="flex justify-between items-center px-3 py-2 border-b border-gray-300 cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleServiceSelect(service)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Search size={14} className="text-gray-500" />
+                      <span className="text-sm text-gray-700">{service}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
