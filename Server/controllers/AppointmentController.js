@@ -236,6 +236,34 @@ export const StripeWebhook = async (req, res) => {
 
 // in the same controller file…
 
+export const CompleteAppointment = async (req, res) => {
+  const token = req.cookies.vetToken;
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+  try {
+    const { id: vetId } = jwt.verify(token, process.env.JWT_SECRET);
+    const { appointmentId } = req.params;
+
+    const appt = await Appointment.findById(appointmentId);
+    if (!appt) return res.status(404).json({ message: "Appointment not found" });
+
+    if (appt.vetId.toString() !== vetId)
+      return res.status(403).json({ message: "Not allowed to complete this appointment" });
+
+    if (appt.status !== "in-progress")
+      return res.status(400).json({ message: "Only in-progress appointments can be completed" });
+
+    appt.status = "completed";
+    await appt.save();
+
+    res.json({ success: true, message: "Appointment marked as completed." });
+  } catch (err) {
+    console.error("Error in CompleteAppointment:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
 export const GetUserAppointments = async (req, res) => {
   const token = req.cookies.pet_ownerToken;
   if (!token) return res.status(401).json({ message: "Unauthorized" });
@@ -245,7 +273,7 @@ export const GetUserAppointments = async (req, res) => {
     const appointments = await Appointment.find({
       userId,
       paymentStatus: "paid",
-      status:        { $in: ["booked","in-progress"] }
+      status:        { $in: ["booked","in-progress", "completed"] }
     })
     .populate("vetId", "name roomID")
     .lean();
@@ -266,7 +294,7 @@ export const GetVetAppointments = async (req, res) => {
     const appointments = await Appointment.find({
       vetId,
       paymentStatus: "paid",
-      status:        { $in: ["booked","in-progress"] }
+      status:        { $in: ["booked","in-progress", "completed"] }
     })
     .populate("userId", "name email")
     .sort({ date: 1, "slot.startTime": 1 })

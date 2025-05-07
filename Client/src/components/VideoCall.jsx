@@ -206,24 +206,39 @@ export default function VideoCall({ roomID, mode, scheduledEnd, onEnd }) {
   }, [roomID, mode]);
 
   // 2) Auto‑end on scheduled end
+  // useEffect(() => {
+  //   if (!scheduledEnd) return;
+  //   const endDate = new Date(scheduledEnd).getTime();
+  //   const nowMs   = Date.now();
+  //   const delay   = endDate - nowMs;
+
+  //   if (delay <= 0) {
+  //     // Already past end
+  //     handleEnd();
+  //     return;
+  //   }
+
+  //   const timer = setTimeout(() => {
+  //     handleEnd();
+  //   }, delay);
+
+  //   return () => clearTimeout(timer);
+  // }, [scheduledEnd]);
+
   useEffect(() => {
-    if (!scheduledEnd) return;
-    const endDate = new Date(scheduledEnd).getTime();
-    const nowMs   = Date.now();
-    const delay   = endDate - nowMs;
-
-    if (delay <= 0) {
-      // Already past end
-      handleEnd();
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      handleEnd();
-    }, delay);
-
-    return () => clearTimeout(timer);
-  }, [scheduledEnd]);
+        if (!scheduledEnd) return;
+        const endTs  = new Date(scheduledEnd).getTime();
+        const nowTs  = Date.now();
+        const delay  = endTs - nowTs;
+    
+        if (delay <= 0) {
+          handleAutoEnd();
+          return;
+        }
+    
+        const timer = setTimeout(handleAutoEnd, delay);
+        return () => clearTimeout(timer);
+      }, [scheduledEnd]);
 
   const toggleMic = () => {
     const track = VideoService.localStream.getAudioTracks()[0];
@@ -237,11 +252,23 @@ export default function VideoCall({ roomID, mode, scheduledEnd, onEnd }) {
     setCameraOn(track.enabled);
   };
 
-  // 3) Unified end handler
-  const handleEnd = () => {
-    VideoService.endCall();
-    if (onEnd) onEnd();
-  };
+  // // 3) Unified end handler
+  // const handleEnd = () => {
+  //   VideoService.endCall();
+  //   if (onEnd) onEnd();
+  // };
+
+  // 3a) Manual "End Call" (button) → onEnd(true)
+  const handleManualEnd = () => {
+      VideoService.endCall();
+      if (onEnd) onEnd(true);
+    };
+  
+    // 3b) Scheduled auto‑end → onEnd(false)
+    const handleAutoEnd = () => {
+      VideoService.endCall();
+      if (onEnd) onEnd(false);
+    };
 
   return (
     <div className="h-screen max-w-full flex flex-col bg-gray-900 text-white">
@@ -307,7 +334,7 @@ export default function VideoCall({ roomID, mode, scheduledEnd, onEnd }) {
         {/* End Call */}
         <div className="flex flex-col items-center">
           <button
-            onClick={handleEnd}
+            onClick={handleManualEnd}
             className="bg-red-600 p-4 rounded-full hover:bg-red-500 transition"
           >
             <FaPhone size={24}/>

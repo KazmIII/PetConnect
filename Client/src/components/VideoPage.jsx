@@ -38,7 +38,18 @@ export default function VideoPage() {
 
   const roomID       = searchParams.get("roomID");
   const mode         = searchParams.get("mode");            // "start" or "join"
-  const scheduledEnd = searchParams.get("scheduledEnd");    // ISO timestamp
+  const scheduledEnd = searchParams.get("scheduledEnd"); 
+  
+  const role   = searchParams.get("role"); // "vet" or "client"
+  const onEndNav = (manual) => {
+    if (!manual) {
+      // auto‑ended
+      return navigate("/leave");
+    }
+    // manual end → go back to your appointments
+    if (role === "vet") return navigate("/vet/appointments");
+    return navigate("/appointments");
+  };// ISO timestamp
 
   // If any required param is missing, show an error
   if (!roomID || !mode || !scheduledEnd) {
@@ -55,7 +66,7 @@ export default function VideoPage() {
       roomID={roomID}
       mode={mode}
       scheduledEnd={scheduledEnd}
-      onEnd={() => navigate("/leave")}
+      onEnd={onEndNav}
     />
   );
 }

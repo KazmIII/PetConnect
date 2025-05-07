@@ -78,6 +78,11 @@ const EmotionPrediction = () => {
   };
 
   const handleFileChange = (e) => {
+    setErrorMessage("");
+     setPredictionResult(null);
+     setShowActivityPrompt(false);
+     setActivitySubmitted(false);
+     setRecommendations([]);
     const file = e.target.files[0];
     if (file) {
       setPredictionResult(null);

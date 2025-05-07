@@ -30,35 +30,7 @@ class VideoService {
     if (videoEl) videoEl.srcObject = this.localStream;
   }
 
-  // 3️⃣ Build RTCPeerConnection & wire ICE callbacks
-  // async createPeerConnection(onRemoteStream) {
-  //   console.log("🚀 Creating RTCPeerConnection");
-  //   this.pc = new RTCPeerConnection({
-  //     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-  //   });
 
-  //   // send our tracks
-  //   this.localStream.getTracks().forEach(track =>
-  //     this.pc.addTrack(track, this.localStream)
-  //   );
-
-  //   // receive remote tracks
-  //   this.pc.ontrack = e => {
-  //     console.log("🎥 ontrack – remote stream arrived");
-  //     onRemoteStream(e.streams[0]);
-  //   };
-
-  //   // ICE candidates from us → over socket
-  //   this.pc.onicecandidate = e => {
-  //     if (e.candidate) {
-  //       console.log("📡 onicecandidate – sending candidate", e.candidate);
-  //       this.socket.emit("ice-candidate", {
-  //         roomID:    this.roomID,
-  //         candidate: e.candidate
-  //       });
-  //     }
-  //   };
-  // }
 
   async createPeerConnection(onRemoteStream) {
     console.log("🚀 Creating RTCPeerConnection");
@@ -124,13 +96,6 @@ class VideoService {
     this.roomID = roomID;
     this.initSocket();
   
-    // ✅ 1. Listen when you receive an offer
-    // this.socket.on("offer", async ({ sdp }) => {
-    //   await this.pc.setRemoteDescription(sdp);
-    //   const answer = await this.pc.createAnswer();
-    //   await this.pc.setLocalDescription(answer);
-    //   this.socket.emit("answer", { roomID: this.roomID, sdp: answer });
-    // });
 
     this.socket.on("offer", async ({ sdp }) => {
       console.log("📩 Received OFFER");
