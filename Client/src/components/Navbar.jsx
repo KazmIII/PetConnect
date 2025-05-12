@@ -1,6 +1,6 @@
 import {
   Menu, X, ChevronDown, ChevronUp, User, LogOut, PawPrint, CircleHelp,
-  LayoutDashboard, ClipboardPenLine, Dog, FolderSearch, CalendarClock, ListCollapse
+  LayoutDashboard, ClipboardPenLine, Dog, FolderSearch, CalendarClock, ListCollapse, Bell
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { navItems } from "../constants";
@@ -16,6 +16,7 @@ const Navbar = () => {
   const [isServicesDropdownOpen, setIsServicesDropdownOpen] = useState(false);
   const [isJoinDropdownOpen, setIsJoinDropdownOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const servicesDropdownRef = useRef(null);
   const joinDropdownRef = useRef(null);
@@ -92,12 +93,12 @@ const Navbar = () => {
     navigate('./clinic/dashboard');
   };
 
-    // In your Navbar function, after handleServiceClick:
-    const handleNavigateToVetAppointments = () => {
-      setIsProfileDropdownOpen(false);
-      navigate('/vet/appointments');
-    };
-  
+  // In your Navbar function, after handleServiceClick:
+  const handleNavigateToVetAppointments = () => {
+    setIsProfileDropdownOpen(false);
+    navigate('/vet/appointments');
+  };
+
 
   const handleProfileClick = () => {
     setIsProfileDropdownOpen(false);
@@ -118,6 +119,17 @@ const Navbar = () => {
     setIsProfileDropdownOpen(false);
     navigate('./profile/user');
   };
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      axios.get('http://localhost:5000/auth/notifications', { withCredentials: true })
+        .then(res => {
+          const notifications = Array.isArray(res.data) ? res.data : [];
+          setUnreadNotifications(notifications.length);
+        })
+        .catch(err => console.error('Notifications check error:', err));
+    }
+  }, [isLoggedIn]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -331,11 +343,11 @@ const Navbar = () => {
                   </li>
 
                   <li className="flex items-center hover:text-orange-500">
-                        <CalendarClock className="w-5 h-5 mr-3 text-lime-400" />
-                        <button onClick={handleNavigateToAppointments}>
-                          Appointments
-                        </button>
-                      </li>
+                    <CalendarClock className="w-5 h-5 mr-3 text-lime-400" />
+                    <button onClick={handleNavigateToAppointments}>
+                      Appointments
+                    </button>
+                  </li>
                   <li className="flex items-center hover:text-orange-500">
                     <FolderSearch className="w-5 h-5 mr-4 text-lime-400" />
                     <button onClick={handleNavigateToEnquiries}>My Enquiries</button>
@@ -348,6 +360,24 @@ const Navbar = () => {
                     <Dog className="w-5 h-5 mr-3 text-lime-400" />
                     <button onClick={handleNavigateToListings}>My Listings</button>
                   </li>
+                  {/* For pet_owner */}
+<li className="flex items-center hover:text-orange-500">
+  <div className="relative mr-3">
+    <Bell className="w-5 h-5 text-lime-400" />
+    {unreadNotifications > 0 && (
+      <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full transform translate-x-1/2 -translate-y-1/2 animate-pulse"></div>
+    )}
+  </div>
+  <button 
+    onClick={() => { 
+      setIsProfileDropdownOpen(false); 
+      navigate('/notifications');
+      setUnreadNotifications(0);
+    }}
+  >
+    Notifications
+  </button>
+</li>
                   <li className="flex items-center hover:text-orange-500">
                     <CircleHelp className="w-5 h-5 mr-4 text-lime-400" />
                     <button>Help</button>
@@ -394,6 +424,24 @@ const Navbar = () => {
                           Appointments
                         </button>
                       </li>
+                      {/* For other roles */}
+<li className="flex items-center hover:text-orange-500">
+  <div className="relative mr-3">
+    <Bell className="w-5 h-5 text-orange-500" />
+    {unreadNotifications > 0 && (
+      <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full transform translate-x-1/2 -translate-y-1/2 animate-pulse"></div>
+    )}
+  </div>
+  <button 
+    onClick={() => { 
+      setIsProfileDropdownOpen(false); 
+      navigate('/notifications');
+      setUnreadNotifications(0);
+    }}
+  >
+    Notifications
+  </button>
+</li>
                     </>
                   )}
 

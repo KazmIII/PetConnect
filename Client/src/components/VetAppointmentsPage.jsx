@@ -350,6 +350,17 @@ export default function VetAppointmentsPage() {
         {},
         { withCredentials: true }
       );
+
+      // 2) Send notification to user
+    await axios.post(
+      'http://localhost:5000/auth/notifications',
+      {
+        userId: appt.userId._id, // Assuming appt.userId contains user reference
+        message: `Your ${appt.consultationType} consultation with Dr. ${appt.vetId.name} has started!`,
+        type: 'appointment'
+      },
+      { withCredentials: true }
+    );
       navigate(
         `/video?roomID=${appt.roomID}` +
         `&mode=start` +
@@ -452,12 +463,23 @@ export default function VetAppointmentsPage() {
 
                   {now >= startDT && now < endDT && (
                     appt.status === "booked" ? (
-                      <button
-                        onClick={() => handleStart(appt, endDT)}
-                        className="mt-2 sm:mt-0 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                      >
-                        Start Consultation
-                      </button>
+                      // Update the consultation button styling
+<button
+  onClick={() => handleStart(appt, endDT)}
+  className="mt-2 sm:mt-0 inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-md"
+>
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className="h-5 w-5 mr-2" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2"
+  >
+    <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V5a2 2 0 1 0-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 0 1-6 0v-1m6 0H9"/>
+  </svg>
+  Start Consultation
+</button>
                     ) : appt.status === "in-progress" ? (
                       <button
                         onClick={() =>

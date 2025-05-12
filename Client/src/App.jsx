@@ -68,7 +68,7 @@ import PaymentSuccess from './components/PaymentSuccess';
 import PaymentCancel from './components/PaymentCancel';
 import AppointmentsPage from './components/AppointmentsPage';
 import VetAppointmentsPage from './components/VetAppointmentsPage';
-
+import NotificationPage from './components/NotificationPage';
 const Modal = () => {
   const { activeComponent, update, checkLoginStatus, handleHideComponents, otpType, otpCode, userEmail, role, handleShowComponent } = useNavbar();
   const [showModal, setShowModal] = useState(false);
@@ -270,6 +270,8 @@ const AppContent = () => {
         <Route path="/vet/appointments" element={<VetAppointmentsPage />} />
         <Route path="/appointments/success" element={<PaymentSuccess />} />
         <Route path="/appointments/cancel" element={<PaymentCancel />} />
+        <Route path="/notifications" element={<NotificationPage />} />
+
 
       </Routes>
       </div>
