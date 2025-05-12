@@ -29,6 +29,17 @@ import {SubmitAdoptionAd, GetAllAdoptionAds, GetAdoptionAdById, SubmitAdoptionAp
 import {GetVerifiedVets, GetVetById } from '../controllers/VetController.js';
 import {CreateAppointment, ConfirmAppointment, StripeWebhook, GetUserAppointments, GetVetAppointments, StartAppointment, CompleteAppointment} from '../controllers/AppointmentController.js';
 
+import {
+  GetNotifications,
+  DeleteNotification,
+  CreateNotification
+} from '../controllers/notificationController.js';
+
+import {
+  getNotificationSettings,
+  updateNotificationSetting
+} from '../controllers/NotificationSettingsController.js';
+
 const AuthRoutes = express.Router();
 
 //Appointment Routes
@@ -40,6 +51,12 @@ AuthRoutes.post('/appointments/:vetId', CreateAppointment);
 AuthRoutes.post("/appointments/:appointmentId/start", StartAppointment);
 AuthRoutes.post("/appointments/:appointmentId/complete", CompleteAppointment);
 
+//NotificationRoutes
+AuthRoutes.get('/notifications', GetNotifications);
+AuthRoutes.post('/notifications', CreateNotification);
+AuthRoutes.get('/notifications/settings',getNotificationSettings);
+AuthRoutes.put('/notifications/settings', updateNotificationSetting);
+AuthRoutes.delete('/notifications/:id', DeleteNotification);
 
 
 

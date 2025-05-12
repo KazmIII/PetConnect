@@ -398,8 +398,8 @@ const BlogDetail = () => {
           <nav className="text-sm mb-4">
             <ol className="list-reset flex items-center">
               <li>
-                <Link to="/" className="text-teal-600 hover:underline">
-                  Home
+                <Link to="/blogs" className="text-teal-600 hover:underline">
+                  Blogs
                 </Link>
               </li>
               <li className="mx-2">&gt;&gt;</li>
