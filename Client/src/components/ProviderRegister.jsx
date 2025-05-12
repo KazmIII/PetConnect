@@ -2,6 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, ChevronDown} from "lucide-react";
 import axios from 'axios';
 
+const majorCitiesPakistan = [
+  "Karachi",
+  "Lahore",
+  "Islamabad",
+  "Rawalpindi",
+  "Faisalabad",
+  "Peshawar",
+  "Quetta",
+  "Multan",
+  "Hyderabad",
+  "Sialkot",
+  "Gujranwala",
+  "Sargodha",
+  "Bahawalpur"
+];
+
 export default function ProviderRegister({onRegisterSuccess, onClose}) {
   const [step, setStep] = useState(1);
   const [errorMessage, setErrorMessage] = useState('');
@@ -233,10 +249,11 @@ export default function ProviderRegister({onRegisterSuccess, onClose}) {
                       required
                     >
                       <option value="" disabled>Select City</option>
-                      <option value="Islamabad">Islamabad</option>
-                      <option value="Rawalpindi">Rawalpindi</option>
-                      <option value="Karachi">Karachi</option>
-                      <option value="Lahore">Lahore</option>
+                      {majorCitiesPakistan.map((city) => (
+                        <option key={city} value={city}>
+                          {city}
+                        </option>
+                      ))}
                     </select>
                     <span className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-600">
                       <ChevronDown />

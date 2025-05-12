@@ -13,7 +13,7 @@ export default function Home() {
         <div className="w-full">
           <ServiceCards />
         </div>
-      <AdoptionOrRehome />
+        <AdoptionOrRehome />
         
       </div>
     </div>

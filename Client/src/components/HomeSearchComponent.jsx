@@ -4,7 +4,10 @@ import vetPic from '../assets/Veterinary-Specialties.jpg';
 import SearchNearbyServices from './SearchNearbyServices';
 
 const HomeSearchComponent = () => {
-  const [location, setLocation] = useState("Islamabad");
+  const [location, setLocation] = useState(() => {
+    return localStorage.getItem('userCity') || 'Islamabad';
+  });
+  
   const [showSearchOverlay, setShowSearchOverlay] = useState(false);
 
   const openSearch = () => setShowSearchOverlay(true);
@@ -31,18 +34,20 @@ const HomeSearchComponent = () => {
           </div>
 
           {/* Search Bar */}
-          <div className="flex flex-col custom-lg:flex-row items-center mt-2 lg:mt-6 bg-gray-200 shadow-md rounded-md w-full max-w-5xl custom-lg:max-w-2xl p-1">
+          <div 
+            className="flex flex-col custom-lg:flex-row items-center mt-2 lg:mt-6 bg-gray-200 shadow-md 
+            rounded-md w-full max-w-5xl custom-lg:max-w-2xl p-1 cursor-pointer"
+            onClick={openSearch}
+          >
             
             {/* City & Detect (desktop only) */}
             <div className="hidden lg:flex bg-white items-center p-2 mr-0.5">
               <span
-                className="cursor-pointer text-gray-500"
-                onClick={openSearch}
+                className="text-gray-500"
               >
                 {location}
               </span>
               <button
-                onClick={openSearch}
                 className="ml-16 mr-2 text-teal-900 flex items-center font-medium"
               >
                 <LocateFixed className="h-5 w-5 mr-1" />
@@ -53,14 +58,12 @@ const HomeSearchComponent = () => {
             {/* Category & Search */}
             <div className="w-full flex-1 flex items-center bg-white pl-1 md:pl-4">
               <span
-                onClick={openSearch}
-                className="text-gray-400 flex-grow text-xs md:text-base cursor-pointer"
+                className="text-gray-400 flex-grow text-xs md:text-base"
               >
                 Consultation, Grooming, Sitting
               </span>
               <button
                 className="bg-orange-400 hover:bg-orange-500 text-xs md:text-base text-white py-2 px-2 md:px-6 rounded-md"
-                onClick={openSearch}
               >
                 Search
               </button>

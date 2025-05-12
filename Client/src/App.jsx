@@ -32,6 +32,12 @@ import PetEmotion from './components/PetEmotion';
 import Vets from './components/Vets';
 import VetAppointment from './components/VetAppointment';
 
+import Groomers from './components/Groomers';
+import GroomerAppointment from './components/GroomerAppointment';
+
+import Sitters from './components/Sitters';
+import SitterAppointment from './components/SitterAppointment';
+
 import ListPetAdoption from './components/ListPetAdoption';
 import EditPetAdoption from './components/EditPetAdoption';
 import PetAdoption from './components/PetAdoption';
@@ -62,6 +68,7 @@ import PaymentSuccess from './components/PaymentSuccess';
 import PaymentCancel from './components/PaymentCancel';
 import AppointmentsPage from './components/AppointmentsPage';
 import VetAppointmentsPage from './components/VetAppointmentsPage';
+
 const Modal = () => {
   const { activeComponent, update, checkLoginStatus, handleHideComponents, otpType, otpCode, userEmail, role, handleShowComponent } = useNavbar();
   const [showModal, setShowModal] = useState(false);
@@ -200,21 +207,29 @@ const AppContent = () => {
       <div className="flex-grow">
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/vets/:serviceType" element={<Vets />} />
         <Route path="/vets" element={<Vets />} />
+        <Route path="/vets/:serviceType" element={<Vets />} />
         <Route path="/consultation/:serviceType/vet/:vetId" element={<VetAppointment />} />
+
+        <Route path="/groomers" element={<Groomers />} />
+        <Route path="/appointment/:serviceType/groomer/:groomerId" element={<GroomerAppointment />} />
+
+        <Route path="/sitters" element={<Sitters />} />
+        <Route path="/appointment/:serviceType/sitter/:sitterId" element={<SitterAppointment />} />
+
         <Route path="/find-a-pet" element={<PetAdoption />} />
         <Route path="/pet-listing/:id" element={<PetAdoptionDetail />} />
         <Route path="/pet-listing/:id/adoption-application" element={<ProtectedRoute requiredRole="pet_owner"> <AdoptionForm /> </ProtectedRoute>} />
+        <Route path="/profile/post-adoption" element={<ProtectedRoute requiredRole="pet_owner"> <ListPetAdoption /> </ProtectedRoute>} />
+        <Route path="/profile/view-applications/:id" element={<ProtectedRoute requiredRole="pet_owner"> <ApplicationsForAd /> </ProtectedRoute>} />
+        <Route path="/profile/edit-adoption/:id" element={<ProtectedRoute requiredRole="pet_owner"> <EditPetAdoption /> </ProtectedRoute>} />
+        <Route path="/profile/applications/:applicationId" element={<ProtectedRoute requiredRole="pet_owner"> <AdoptionApplicationDetail /> </ProtectedRoute>} />
+
         <Route path="/myPets" element={<ProtectedRoute requiredRole="pet_owner"> <MyPets /> </ProtectedRoute>} />
         <Route path="/myEnquiries" element={<ProtectedRoute requiredRole="pet_owner"> <MyApplications /> </ProtectedRoute>} />
         <Route path="/myListings" element={<ProtectedRoute requiredRole="pet_owner"> <MyListings /> </ProtectedRoute>} />
         <Route path="/myPets/:petId" element={<ProtectedRoute requiredRole="pet_owner"> <MyPets /> </ProtectedRoute>} />
         <Route path="/profile/user" element={<ProtectedRoute requiredRole="pet_owner"> <UserProfile /> </ProtectedRoute>} />
-        <Route path="/profile/post-adoption" element={<ProtectedRoute requiredRole="pet_owner"> <ListPetAdoption /> </ProtectedRoute>} />
-        <Route path="/profile/view-applications/:id" element={<ProtectedRoute requiredRole="pet_owner"> <ApplicationsForAd /> </ProtectedRoute>} />
-        <Route path="/profile/edit-adoption/:id" element={<ProtectedRoute requiredRole="pet_owner"> <EditPetAdoption /> </ProtectedRoute>} />
-        <Route path="/profile/applications/:applicationId" element={<ProtectedRoute requiredRole="pet_owner"> <AdoptionApplicationDetail /> </ProtectedRoute>} />
         <Route path="/profile/vet" element={<ProtectedRoute requiredRole="vet"> <UserProfile /> </ProtectedRoute>} />
 
         <Route path="/profile/groomer" element={<ProtectedRoute requiredRole="groomer"> <UserProfile /> </ProtectedRoute>} />
@@ -237,8 +252,10 @@ const AppContent = () => {
         <Route path="/memory-books/:petId/:bookId/memories/:memoryId" element={<ProtectedRoute requiredRole="pet_owner"><MemoryDetail /> </ProtectedRoute>} />
         <Route path="/pet/:petName/emotions" element={<ProtectedRoute requiredRole="pet_owner"><PetEmotion /> </ProtectedRoute>} />
         <Route path="/predict-emotion" element={<EmotionPrediction />} />
+
         <Route path="/blogs" element={<BlogSection />} />
         <Route path="/blog/:id" element={<BlogDetail />} />
+
         <Route path="/lost" element={<ReportPet />} />
 
         <Route path="/video" element={<VideoPage />} />

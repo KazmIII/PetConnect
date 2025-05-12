@@ -1,36 +1,8 @@
-// import { VetModel } from "../models/Vet.js";
-// import { Appointment} from "../models/Appointment.js";
-// import { VeterinarianService } from "../models/VetService.js";
-// import jwt from 'jsonwebtoken';
-
-// export const GetVerifiedVets = async (req, res) => {
-//   try {
-//     const vets = await VetModel
-//       .find({
-//         emailVerified: true,
-//         verificationStatus: 'verified',
-//         restricted: false
-//       })
-//       .populate('clinicId', 'clinicName address')     // only grab name & location
-//       .populate({
-//         path: 'services',
-//         select: 'serviceName price availability deliveryMethod',
-//       });
-
-//     return res.json({ vets });
-//   } catch (err) {
-//     console.error(err);
-//     return res.status(500).json({ message: 'Error fetching vets' });
-//   }
-// };
-
-
 
 // controllers/vetController.js
 import { VetModel } from "../models/Vet.js";
 import { Appointment } from "../models/Appointment.js";
-import { VeterinarianService } from "../models/VetService.js";
-import jwt from "jsonwebtoken";
+import { VeterinarianService } from "../models/Services.js";
 
 export const GetVetById = async (req, res) => {
   try {
@@ -78,10 +50,21 @@ export const GetVetById = async (req, res) => {
       }
     }
 
-    // 5. Build the date & weekday we’re querying (defaults to today)
-    const targetDate = date ? new Date(date) : new Date();
-    const isoDate    = targetDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
-    const weekday    = targetDate.toLocaleDateString('en-US', { weekday: 'long' });
+    // 5. Build the date & weekday we’re querying (UTC)
+    // 5. Build the date & weekday we’re querying (UTC)
+const targetDate = date ? new Date(date + 'T00:00:00Z') : new Date();
+const isoDate = targetDate.toISOString().split('T')[0];
+const weekdayIndex = targetDate.getUTCDay();
+const weekdays = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const weekday = weekdays[weekdayIndex];
+
+console.log('Server processing:', {
+  receivedDate: date,
+  parsedUTC: targetDate.toISOString(),
+  isoDate,
+  weekday,
+  utcHours: targetDate.getUTCHours()
+});
 
     // 6. For each service, compute available slots
     const results = await Promise.all(services.map(async svc => {
@@ -153,6 +136,8 @@ export const GetVerifiedVets = async (req, res) => {
         path: "services",
         select: "serviceName price availability deliveryMethod",
       });
+
+      console.log("vets ni server; ", vets);
 
     return res.json({ vets });
   } catch (err) {

@@ -47,20 +47,34 @@ const VetAppointment = () => {
 
         if (!data) throw new Error('No data received from server');
         setVet(data);
+        console.log("vet in fronetend: ", data);
 
         // build next 30 days
-        const today = new Date();
-        const nextDates = Array.from({ length: 30 }).map((_, i) => {
-          const dt = new Date(today);
-          dt.setDate(today.getDate() + i);
-          return {
-            display: i === 0
-              ? 'Today'
-              : dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            isoDate: dt.toISOString().split('T')[0],
-            dayName: dt.toLocaleDateString('en-US', { weekday: 'long' })
-          };
-        });
+         const today = new Date();
+          const nextDates = Array.from({ length: 30 }).map((_, i) => {
+            // Create date in LOCAL time
+            const localDate = new Date(today);
+            localDate.setDate(today.getDate() + i);
+            localDate.setHours(0, 0, 0, 0); // Local midnight
+            
+            // Convert to UTC equivalent
+            const utcDate = new Date(
+              Date.UTC(
+                localDate.getFullYear(),
+                localDate.getMonth(),
+                localDate.getDate()
+              )
+            );
+        return {
+          display: i === 0 ? 'Today' : 
+            localDate.toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric'
+            }),
+          isoDate: utcDate.toISOString().split('T')[0],
+          dayName: localDate.toLocaleDateString('en-US', { weekday: 'long' })
+        };
+      });
 
         setAvailableDates(nextDates);
 
@@ -150,19 +164,33 @@ const VetAppointment = () => {
     try {
       let slots = await fetchSlotsForDate(iso, dayName);
 
-      if (display === 'Today') {
-        const now = new Date();
-        slots = slots.filter(s => {
-          let [t, mer] = s.startTime.split(' ');
-          mer = normalizeMeridiem(mer);
-          let [h, m] = t.split(':').map(Number);
-          if (mer === 'PM' && h !== 12) h += 12;
-          if (mer === 'AM' && h === 12) h = 0;
-          const slotDate = new Date(now);
-          slotDate.setHours(h, m, 0, 0);
-          return slotDate > now;
-        });
-      }
+     if (display === 'Today') {
+      const now = new Date();
+  const userOffset = now.getTimezoneOffset() * 60 * 1000; // Get local timezone offset
+  const nowUTC = Date.now();
+
+  slots = slots.filter(s => {
+    const [t, mer] = s.startTime.split(' ');
+    const normalizedMer = normalizeMeridiem(mer);
+    let [h, m] = t.split(':').map(Number);
+
+    // Convert to 24-hour format
+    if (normalizedMer === 'PM' && h !== 12) h += 12;
+    if (normalizedMer === 'AM' && h === 12) h = 0;
+
+    // Create slot date in UTC
+    const slotDate = new Date(iso);
+    const slotUTCTime = Date.UTC(
+      slotDate.getUTCFullYear(),
+      slotDate.getUTCMonth(),
+      slotDate.getUTCDate(),
+      h,
+      m
+    );
+
+    return slotUTCTime > nowUTC;
+  });
+}
 
       const uniqueSlots = Array.from(new Set(slots.map(s => s.startTime)))
         .map(startTime => slots.find(s => s.startTime === startTime));

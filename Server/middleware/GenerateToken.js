@@ -36,7 +36,6 @@ export const cookieJwtAuth = async (req, res, next) => {
         }
 
         const user = await Model.findById(decoded.id);
-        console.log("user found:", user);
         if (!user) {
           throw new Error('User not found');
         }

@@ -167,6 +167,7 @@ const Navbar = () => {
   const handleNavigation = (path) => {
     if (path !== "#") {  // Prevent navigation if path is "#"
       navigate(path);  // Use navigate to go to the path
+      setIsServicesDropdownOpen(false);
     }
   };
 
@@ -198,41 +199,56 @@ const Navbar = () => {
           if (item.label === "Services") {
             return (
               <li key={index} className="relative">
+                {/* Toggle button with ARIA */}
                 <button
                   onClick={toggleDropdown}
-                  className="flex items-center text-center justify-center hover:text-orange-500"
                   ref={servicesButtonRef}
+                  aria-haspopup="menu"
+                  aria-expanded={isServicesDropdownOpen}
+                  className="flex items-center hover:text-orange-500 text-center "
                 >
                   {item.label}
-                  {isServicesDropdownOpen ? (
-                    <ChevronUp />
-                  ) : (
-                    <ChevronDown />
-                  )}
+                  {isServicesDropdownOpen ? <ChevronUp className="text-xs text-gray-200" /> : <ChevronDown />}
                 </button>
+
                 {isServicesDropdownOpen && (
                   <div
-                    className="absolute top-full mt-2 bg-neutral-800 rounded-md shadow-lg w-48"
                     ref={servicesDropdownRef}
+                    role="menu"
+                    aria-label="Services"
+                    className="absolute top-full left-0 mt-1 w-64 bg-black backdrop-blur-none opacity-100 text-white rounded-md"
                   >
-                    <ul className="flex flex-col">
-                      {item.subItems.map((subItem, subIndex) => (
-                        <li
-                          key={subIndex}
-                          className="hover:bg-neutral-700"
-                        >
-                          <button
-                            onClick={() => handleNavigation(subItem.path)}  // Use handleNavigation here
-                            className="block px-4 py-2 text-center hover:text-orange-500"
-                          >
-                            {subItem.label}
-                          </button>
-                        </li>
-                      ))}
+                    <ul className="divide-y divide-gray-200">
+                      {item.subItems.map((sub, i) => {
+                        const Icon = sub.icon
+                        return (
+                          <li key={i} role="none ">
+                            <button
+                              role="menuitem"
+                              onClick={() => handleNavigation(sub.path)}
+                              className="flex items-center gap-3 w-full px-4 py-3 hover:bg-gray-900"
+                            >
+                              <Icon 
+                                className="h-6 w-6 text-lime-400 flex-shrink-0" 
+                                aria-hidden="true" 
+                              />
+                              <div className="text-left">
+                                <p className="text-sm font-semibold text-white">
+                                  {sub.label}
+                                </p>
+                                <p className="text-xs text-white mt-0.5">
+                                  {sub.description}
+                                </p>
+                              </div>
+                            </button>
+                          </li>
+                        )
+                      })}
                     </ul>
                   </div>
                 )}
               </li>
+
             );
           }
           return (

@@ -10,14 +10,14 @@ import SearchNearbyServices from './SearchNearbyServices';
 const ServiceCards = () => {
     const [searchOverlay, setSearchOverlay] = useState({
       isOpen: false,
-      serviceCard: false,  // <-- this flag will control the prop
+      cardName: '' 
     });
     
-    const openSearch = (forInClinic) => {
-      setSearchOverlay({ isOpen: true, serviceCard: forInClinic });
+    const openSearch = (cardName) => {
+      setSearchOverlay({ isOpen: true, cardName });
     };
     const closeSearch = () => {
-      setSearchOverlay({ isOpen: false, serviceCard: false });
+      setSearchOverlay({ isOpen: false, cardName: '' });
     };
     return (
         <div className="container grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 w-full mx-auto lg:max-w-6xl mb-8
@@ -52,7 +52,7 @@ const ServiceCards = () => {
             </Link>
 
             {/* In-Clinic Appointments Card */}
-            <div onClick={() => openSearch(true)} className="custom-lg:w-full cursor-pointer">
+            <div onClick={() => openSearch('Veterinary In-Clinic Consultation')} className="custom-lg:w-full cursor-pointer">
                 <div className="bg-orange-100 rounded-lg shadow-md overflow-hidden h-full sm:h-64">
                 <div className="h-2/3 flex items-center justify-center">
                     <img
@@ -71,7 +71,7 @@ const ServiceCards = () => {
             </div>
 
             {/* Pet Grooming Card */}
-            <div className="custom-lg:w-full  cursor-pointer ">
+            <div onClick={() => openSearch('Pet Grooming')} className="custom-lg:w-full  cursor-pointer ">
                 <div className="bg-blue-100 rounded-lg shadow-md overflow-hidden h-full sm:h-64">
                 <div className="h-2/3 flex items-center justify-center">
                     <img
@@ -90,7 +90,7 @@ const ServiceCards = () => {
             </div>
 
             {/* Pet Sitting Card */}
-            <div className="custom-lg:w-full  cursor-pointer">
+            <div onClick={() => openSearch('Pet Sitting')} className="custom-lg:w-full  cursor-pointer">
                 <div className="bg-red-100 rounded-lg shadow-md overflow-hidden h-full sm:h-64">
                 <div className="h-2/3 flex items-center justify-center">
                     <img
@@ -119,7 +119,7 @@ const ServiceCards = () => {
                     <div>
                     <SearchNearbyServices 
                         onClose={closeSearch} 
-                        serviceCard={searchOverlay.serviceCard} 
+                        initialService={searchOverlay.cardName}
                     />
                     </div>
                 </>

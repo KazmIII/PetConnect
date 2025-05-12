@@ -265,6 +265,7 @@ export const GetUserInfo = async (req, res) => {
       pet_owner: "pet_ownerToken",
       vet: "vetToken",
       groomer: "groomerToken",
+      sitter: "sitterToken"
     };
 
     const role = userRole && tokenMappings[userRole] ? userRole : 'pet_owner';
@@ -299,6 +300,7 @@ export const GetUserInfo = async (req, res) => {
       pet_owner: UserModel,
       vet: VetModel,
       groomer: GroomerModel,
+      sitter: SitterModel,
     };
 
     const Model = modelMappings[role];
@@ -375,7 +377,7 @@ export const UpdateUserInfo = async (req, res) => {
       });
     }
 
-    const { name, email, phone, password } = req.body;
+    const { name, email, phone, city,  password } = req.body;
 
     if (email && email !== user.email) {
       const existingUser = await Model.findOne({ email });
@@ -407,6 +409,9 @@ export const UpdateUserInfo = async (req, res) => {
     }
     if(name){
       user.name = name;
+    }
+    if(city){
+      user.city = city;
     }
     if (password) {
       const hashedPassword = bcryptjs.hashSync(password, 10);

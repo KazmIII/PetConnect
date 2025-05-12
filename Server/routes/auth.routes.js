@@ -27,7 +27,13 @@ import {SubmitAdoptionAd, GetAllAdoptionAds, GetAdoptionAdById, SubmitAdoptionAp
 } from '../controllers/AdoptionController.js';
 
 import {GetVerifiedVets, GetVetById } from '../controllers/VetController.js';
-import {CreateAppointment, ConfirmAppointment, StripeWebhook, GetUserAppointments, GetVetAppointments, StartAppointment, CompleteAppointment} from '../controllers/AppointmentController.js';
+
+import {GetVerifiedGroomers, GetGroomerById } from '../controllers/GroomerController.js';
+
+import {GetVerifiedSitters, GetSitterById } from '../controllers/SitterController.js';
+
+import {CreateAppointment, ConfirmAppointment, StripeWebhook, GetUserAppointments, GetVetAppointments, StartAppointment,
+   CompleteAppointment} from '../controllers/AppointmentController.js';
 
 const AuthRoutes = express.Router();
 
@@ -38,6 +44,14 @@ AuthRoutes.post('/appointments/confirm', ConfirmAppointment); // move this ABOVE
 AuthRoutes.post('/appointments/:vetId', CreateAppointment); 
 AuthRoutes.post("/appointments/:appointmentId/start", StartAppointment);
 AuthRoutes.post("/appointments/:appointmentId/complete", CompleteAppointment);
+
+//Groomer Routes
+AuthRoutes.get('/groomers', GetVerifiedGroomers);
+AuthRoutes.get('/groomers/:groomerId', GetGroomerById);
+
+//Sitter Routes
+AuthRoutes.get('/sitters', GetVerifiedSitters);
+AuthRoutes.get('/sitters/:sitterId', GetSitterById);
 
 //Vet Routes
 AuthRoutes.get('/vets', GetVerifiedVets);

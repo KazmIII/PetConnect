@@ -2,17 +2,20 @@ import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { MapPin, Search, X, LocateFixed } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { detectCityByGeo } from '../utils/geolocation';
 
-const SearchNearbyServices = ({ onClose, serviceCard = false }) => {
+const SearchNearbyServices = ({ onClose, initialService = '' }) => {
   // Pre-select in-clinic vet & start in city if serviceCard is true
-  const defaultService = serviceCard
-    ? 'Veterinary In-Clinic Consultation'
-    : '';
-  const defaultField = serviceCard ? 'city' : 'service';
+  const [selectedService, setSelectedService] = useState(initialService);
+
+  const defaultField = initialService === 'Veterinary In-Clinic Consultation' || 'Pet Grooming' || 'Pet Sitting'
+    ? 'city'
+    : 'service';
 
   const [activeField, setActiveField] = useState(defaultField);
-  const [selectedCity, setSelectedCity] = useState('Islamabad');
-  const [selectedService, setSelectedService] = useState(defaultService);
+  const [selectedCity, setSelectedCity] = useState(() => {
+    return localStorage.getItem('userCity') || 'Islamabad'
+  });
   const [locationError, setLocationError] = useState('');
 
   const cityInputRef = useRef(null);
@@ -41,56 +44,61 @@ const SearchNearbyServices = ({ onClose, serviceCard = false }) => {
     }
   }, [defaultField]);
 
-  // Browser geolocation + reverse-geocode
-  const detectByGeo = () =>
-    new Promise((resolve) => {
-      if (!navigator.geolocation) {
-        return resolve(null);
-      }
-      navigator.geolocation.getCurrentPosition(
-        async ({ coords: { latitude, longitude } }) => {
-          try {
-            const res = await axios.get(
-              `https://nominatim.openstreetmap.org/reverse`,
-              { params: { lat: latitude, lon: longitude, format: 'json', addressdetails: 1 } }
-            );
-            const data = res.data;
-            const addressStr = Object.values(data.address || {}).join(' ');
-            const geoCity = cities.find(c =>
-              addressStr.toLowerCase().includes(c.toLowerCase())
-            );
-            resolve(geoCity || null);
-          } catch {
-            resolve(null);
-          }
-        },
-        () => resolve(null)
-      );
-    });
-
-  // On “Detect” click
   const handleDetect = async () => {
     setLocationError('');
-    const geoCity = await detectByGeo();
-    if (geoCity && cities.includes(geoCity)) {
-      setSelectedCity(geoCity);
-    } else if (geoCity) {
-      setLocationError(`${geoCity} is not in our service area.`);
-    } else {
-      setLocationError('Unable to detect your city.');
+  
+    try {
+      const detectedCity = await detectCityByGeo();
+      
+      if (detectedCity) {
+        setSelectedCity(detectedCity);
+        localStorage.setItem('userCity', detectedCity);
+        return;
+      }
+      
+      setLocationError('Detected location not in service area');
+    } catch (error) {
+      handleGeolocationError(error);
+    }
+  };
+  
+  // Separate error handler
+  const handleGeolocationError = (error) => {
+    switch(error.message) {
+      case 'PERMISSION_DENIED':
+        setLocationError('Please enable location permissions in browser settings');
+        break;
+      case 'POSITION_UNAVAILABLE':
+        setLocationError('Location information unavailable - check network connection');
+        break;
+      case 'TIMEOUT':
+        setLocationError('Location detection timed out - please try again');
+        break;
+      case 'GEOLOCATION_NOT_SUPPORTED':
+        setLocationError('Geolocation not supported by your browser');
+        break;
+      case 'GEOCODING_FAILED':
+        setLocationError('Failed to interpret location data');
+        break;
+      default:
+        setLocationError('Unable to detect location - please enter manually');
     }
   };
 
-  const handleServiceSelect = (service) => {
-    setSelectedService(service);
-
-    if (service === 'Veterinary Online Consultation') {
+  const goToSelected = () => {
+    if (!selectedService || !selectedCity) return;
+  
+    const cityParam = encodeURIComponent(selectedCity);
+    if (selectedService === 'Veterinary Online Consultation') {
       navigate('/vets/video-consultation');
-      onClose();
-    } else if (service === 'Veterinary In-Clinic Consultation') {
-      navigate(`/vets/in-clinic?city=${encodeURIComponent(selectedCity)}`);
-      onClose();
+    } else if (selectedService === 'Veterinary In-Clinic Consultation') {
+      navigate(`/vets/in-clinic?city=${cityParam}`);
+    } else if (selectedService === 'Pet Grooming') {
+      navigate(`/groomers?city=${cityParam}`);
+    } else if (selectedService === 'Pet Sitting') {
+      navigate(`/sitters?city=${cityParam}`);
     }
+    onClose();
   };
 
   return (
@@ -171,7 +179,10 @@ const SearchNearbyServices = ({ onClose, serviceCard = false }) => {
                     className={`flex items-center gap-2 px-3 py-2 border-b border-gray-300 cursor-pointer hover:bg-gray-100 ${
                       selectedCity === city ? 'bg-indigo-100' : ''
                     }`}
-                    onClick={() => setSelectedCity(city)}
+                    onClick={() => {
+                      setSelectedCity(city);
+                      goToSelected();
+                    }}
                   >
                     <MapPin size={14} className="text-gray-500" />
                     <span className="text-sm text-gray-700">{city}</span>
@@ -185,7 +196,10 @@ const SearchNearbyServices = ({ onClose, serviceCard = false }) => {
                   <li
                     key={i}
                     className="flex justify-between items-center px-3 py-2 border-b border-gray-300 cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleServiceSelect(service)}
+                    onMouseDown={() => {
+                      setSelectedService(service);
+                      goToSelected();
+                    }}
                   >
                     <div className="flex items-center gap-2">
                       <Search size={14} className="text-gray-500" />

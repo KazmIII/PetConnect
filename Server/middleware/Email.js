@@ -59,10 +59,10 @@ export const sendVerificationStatusEmail = async (email, status, entityType) => 
     let actionDetails = '';
 
     if (status === 'verified') {
-      statusMessage = `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} has been approved`;
+      statusMessage = `Your application as ${entityType.charAt(0).toUpperCase() + entityType.slice(1)} has been approved`;
       actionDetails = `You can now start offering your services. If you need assistance, feel free to contact us.`;
     } else if (status === 'rejected') {
-      statusMessage = `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} has been rejected`;
+      statusMessage = `Your application as ${entityType.charAt(0).toUpperCase() + entityType.slice(1)} has been rejected`;
       actionDetails = `Unfortunately, your application has not been approved. Please contact support for more details.`;
     }
 

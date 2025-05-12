@@ -14,7 +14,15 @@ const AddService = () => {
   const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
   const [durationError, setDurationError] = useState('');
   const [expandedDays, setExpandedDays] = useState([]);
+  const [subareas, setSubareas] = useState([]);
+  const [loadingSubareas, setLoadingSubareas] = useState(false);
+  const [subareasError, setSubareasError] = useState('');
 
+  const ref = useRef();
+  const areasRef = useRef(null);
+  const [areasDropdownOpen, setAreasDropdownOpen] = useState(false);
+
+  const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     description: "",
     price: "",
@@ -27,8 +35,68 @@ const AddService = () => {
     deliveryMethod: "",
     startTime: "",
     endTime: "",
+    address: "",
+    city: "",
+    coverageType: 'radius',
+    areas: [],
+    serviceRadius: 5,  // Default radius in km
+    commuteBuffer: 30, 
   });
   const navigate = useNavigate();
+
+useEffect(() => {
+  const loadCityAndAreas = async () => {
+    try {
+      // 1) Fetch profile to get city
+      const profileRes = await axios.get('http://localhost:5000/auth/user/profile', {
+        params: { userRole },
+        withCredentials: true,
+      });
+      if (!profileRes.data.success || !profileRes.data.user?.city) {
+        throw new Error('No city in profile');
+      }
+      const city = profileRes.data.user.city;
+      setFormData(f => ({ ...f, city }));
+
+      // 2) Fetch the local JSON
+      setLoadingSubareas(true);
+      setSubareasError('');
+
+      const resp = await fetch('/subareas.json');
+      if (!resp.ok) {
+        throw new Error(`Could not fetch subareas.json (status ${resp.status})`);
+      }
+
+      const txt = await resp.text();
+      if (!txt) {
+        throw new Error('subareas.json is empty');
+      }
+
+      let allAreas;
+      try {
+        allAreas = JSON.parse(txt);
+      } catch {
+        throw new Error('subareas.json is malformed');
+      }
+
+      // 3) Lookup the city
+      const cityAreas = allAreas[city];
+      if (!Array.isArray(cityAreas)) {
+        throw new Error(`No listing for city "${city}" in subareas.json`);
+      }
+
+      setSubareas(cityAreas);
+    } catch (err) {
+      console.error('Error loading subareas:', err);
+      setSubareas([]);
+      setSubareasError(err.message);
+    } finally {
+      setLoadingSubareas(false);
+    }
+  };
+
+  loadCityAndAreas();
+}, [userRole]);
 
   useEffect(() => {
     // Reset form data or adjust based on userRole
@@ -65,6 +133,18 @@ const AddService = () => {
     };
   }, []);
 
+   useEffect(() => {
+    const onClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+      } else if (areasRef.current && !areasRef.current.contains(e.target)) {
+        setAreasDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, []);
+
   const toggleDayExpansion = (dayIndex) => {
     setExpandedDays(prev => ({
       ...prev,
@@ -83,6 +163,15 @@ const AddService = () => {
         // if user just selected “Other”, reset customService
         customService: !has && service === 'Other' ? '' : prev.customService
       };
+    });
+  };
+
+   const toggleArea = (area, checked) => {
+    setFormData(f => {
+      const next = checked
+        ? [...f.areas, area]
+        : f.areas.filter(a => a !== area);
+      return { ...f, areas: next };
     });
   };
 
@@ -155,6 +244,12 @@ const AddService = () => {
       }
     }
 
+    if (name === "areas") {
+      const areasArray = value.split(',').map(area => area.trim());
+      setFormData(prev => ({ ...prev, areas: areasArray }));
+      return;
+    }
+
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
@@ -190,6 +285,21 @@ const AddService = () => {
       return;
     }
   
+    // Home visit specific validations
+    if (formData.deliveryMethod === 'Home Visit') {
+      if(formData.coverageType === 'areas'){
+        if (!formData.address || !formData.city || formData.areas.length === 0) {
+          setError("Please fill in address, city, and areas served for home visits.");
+          return;
+        } 
+      } else if(formData.coverageType === 'radius'){
+        if (formData.serviceRadius < 1 || formData.serviceRadius > 50) {
+          setError("Service radius must be between 1-50 km.");
+          return;
+        }
+      }
+    }
+  
     const start = new Date(`1970-01-01T${startTime}:00`);
     let end = new Date(`1970-01-01T${endTime}:00`);
     if (end <= start) {
@@ -204,6 +314,11 @@ const AddService = () => {
       return;
     }
   
+    // Calculate buffer time if home visit
+    const bufferMs = formData.deliveryMethod === 'Home Visit' 
+      ? formData.commuteBuffer * 60000 
+      : 0;
+  
     const fmt = (time) => {
       const h = time.getHours();
       const m = time.getMinutes().toString().padStart(2, "0");
@@ -212,21 +327,41 @@ const AddService = () => {
       return `${hr}:${m} ${ap}`;
     };
   
-    // build the common slots array once
+    // Generate slots with buffer consideration
     const slots = [];
-    let cur = start;
-    while (cur < end) {
-      const s = fmt(cur);
-      cur = new Date(cur.getTime() + slotMs);
-      if (cur > end) break;
-      const e = fmt(cur);
-      slots.push({ startTime: s, endTime: e });
+    let current = start;
+    
+    while (current < end) {
+      const slotEnd = new Date(current.getTime() + slotMs);
+      
+      // Stop if this slot would exceed end time
+      if (slotEnd > end) break;
+      
+      // Add the slot
+      slots.push({
+        startTime: fmt(current),
+        endTime: fmt(slotEnd),
+        // Flag for UI display if needed
+        hasBuffer: bufferMs > 0 && (slotEnd.getTime() + bufferMs) < end
+      });
+  
+      // Move to next possible start time (current slot end + buffer)
+      current = new Date(slotEnd.getTime() + bufferMs);
     }
   
-    // map each selected day to its own availability object
+    // Map days to availability entries
     const newAvailEntries = days.map((day) => ({
       day,
-      slots,
+      slots: [...slots], // Clone slots for each day
+      // Add location info for home visits
+      ...(formData.deliveryMethod === 'Home Visit' && {
+        locationInfo: {
+          address: formData.address,
+          city: formData.city,
+          areas: formData.areas,
+          serviceRadius: formData.serviceRadius
+        }
+      })
     }));
   
     setFormData((prev) => ({
@@ -262,27 +397,51 @@ const AddService = () => {
     setFormData(prev => ({ ...prev, availability: updatedAvailability }));
   };
 
+  const handleCoverageTypeChange = (e) => {
+    setFormData(f => ({
+      ...f,
+      coverageType: e.target.value,
+      // reset the other field:
+      serviceRadius: e.target.value === 'radius' ? f.serviceRadius : '',
+      areas: e.target.value === 'areas' ? f.areas : [],
+    }));
+  };
+
   // inside your component, where userRole is in scope:
+  const inPerson = userRole === 'groomer'
+  ? {
+      value: 'In-Clinic',
+      label: 'At Salon',
+      description: 'Welcome pets into your grooming salon for professional care.',
+    }
+  : userRole === 'sitter'
+    ? {
+        value: 'In-Clinic',
+        label: 'Drop-Off',
+        description: 'Bring pets to your home for boarding and daytime care.',
+      }
+    : {
+        value: 'In-Clinic',
+        label: 'In-Clinic',
+        description: 'Host pets at your clinic for appointments.',
+      };
+
   const deliveryOptions = [
-    // only vets get the video option
     ...(userRole === 'vet'
       ? [{
-          value: 'Video Consultation',
-          label: 'Video Consultation',
-          description: 'Connect with clients via secure video calls.',
-        }]
-      : []),
-    {
-      value: 'In-Clinic',
-      label: 'In-Clinic',
-      description: 'Host pets at your clinic for appointments.',
-    },
+        value: 'Video Consultation',
+        label: 'Video Consultation',
+        description: 'Connect with clients via secure video calls.',
+      }]
+    : []),
+    inPerson,
     {
       value: 'Home Visit',
       label: 'Home Visit',
       description: 'Provide on-site visits at the pet owner’s home.',
     },
   ];
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -365,7 +524,7 @@ const AddService = () => {
                   >
                     <input
                       type="checkbox"
-                      className="form-checkbox h-4 w-4 text-teal-600 mr-2"
+                      className="form-checkbox h-4 w-4 text-teal-600 accent-teal-600 mr-2"
                       checked={formData.services.includes(service)}
                       onChange={() => toggleService(service)}
                     />
@@ -397,6 +556,18 @@ const AddService = () => {
                     className="inline-flex items-center px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-sm"
                   >
                     {s}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormData(f => ({
+                          ...f,
+                          services: f.services.filter(service => service !== s)
+                        }))
+                      }
+                      className="ml-2 focus:outline-none"
+                    >
+                      <span className="font-bold">×</span>
+                    </button>
                   </span>
                 ))}
               </div>
@@ -465,6 +636,227 @@ const AddService = () => {
             Briefly explain benefits or what’s covered.
           </small>
         </div>
+        {formData.deliveryMethod === 'Home Visit' && (
+          <div className="mt-6 space-y-6">
+            <h3 className="text-lg font-semibold text-teal-600">
+              Service Area Details
+            </h3>
+
+            {/* Address */}
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">
+                Address
+              </label>
+              <input
+                type="text"
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                placeholder="123 Main St, Apt 4B"
+                required
+              />
+              <small className="text-gray-500">
+                 Enter the starting address of your clinic or home base for calculating your commute.
+              </small>
+            </div>
+
+            {/* City (read-only) */}
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">
+                City
+              </label>
+              <input
+                type="text"
+                name="city"
+                value={formData.city}
+                readOnly
+                className="w-full px-4 py-2 border border-gray-200 bg-gray-100 rounded-lg cursor-not-allowed"
+              />
+            </div>
+
+            {/* Coverage type: Radius or Areas */}
+            <div className="mt-6">
+              <label className="block text-gray-700 font-semibold mb-2">
+                Coverage Method
+              </label>
+              <div className="flex flex-col space-y-3">
+                {/* By Radius */}
+                <label className="flex items-start px-4 py-2 w-[30rem] border bg-white border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="coverageType"
+                    value="radius"
+                    checked={formData.coverageType === 'radius'}
+                    onChange={handleCoverageTypeChange}
+                    className="form-radio h-5 w-5 accent-teal-600 mt-1"
+                  />
+                  <div className="ml-3">
+                    <span className="font-medium text-teal-700">By Radius</span>
+                    <p className="text-gray-500 text-sm">
+                      Specify a straight-line distance you’re willing to travel.
+                    </p>
+                  </div>
+                </label>
+
+                {/* By Specific Areas */}
+                <label className="flex items-start px-4 py-2 border w-[30rem] bg-white border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="coverageType"
+                    value="areas"
+                    checked={formData.coverageType === 'areas'}
+                    onChange={handleCoverageTypeChange}
+                    className="form-radio h-5 w-5 accent-teal-600 mt-1"
+                  />
+                  <div className="ml-3">
+                    <span className="font-medium text-teal-700">By Specific Areas</span>
+                    <p className="text-gray-500 text-sm">
+                      Pick the neighbourhoods or sectors you serve.
+                    </p>
+                  </div>
+                </label>
+              </div>
+              <small className="text-gray-500">
+                Choose whether to specify a travel radius or select exact areas.
+              </small>
+            </div>
+
+            {/* If Radius chosen */}
+            {formData.coverageType === 'radius' && (
+              <div className="grid grid-cols-2 gap-6">
+                {/* Service Radius */}
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">
+                    Service Radius (km)
+                  </label>
+                  <input
+                    type="number"
+                    name="serviceRadius"
+                    min="1"
+                    max="50"
+                    value={formData.serviceRadius}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    placeholder="e.g. 10"
+                    required
+                  />
+                  <small className="text-gray-500">
+                    Maximum straight-line distance you’re willing to travel.
+                  </small>
+                </div>
+
+                {/* Commute Buffer */}
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">
+                    Commute Time (minutes)
+                  </label>
+                  <input
+                    type="number"
+                    name="commuteBuffer"
+                    min="15"
+                    max="120"
+                    value={formData.commuteBuffer}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    placeholder="e.g. 30"
+                    required
+                  />
+                  <small className="text-gray-500">
+                    Add buffer time between visits for travel delays.
+                  </small>
+                </div>
+              </div>
+            )}
+
+            {/* If Areas chosen */}
+            {formData.coverageType === 'areas' && (
+              <div className="relative" ref={areasRef}>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Areas Served
+                </label>
+                {subareasError && (
+                  <p className="text-red-500 text-sm mb-1">{subareasError}</p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setAreasDropdownOpen(o => !o)}
+                  className="w-full flex justify-between items-center px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  {formData.areas.length > 0
+                    ? `${formData.areas.length} selected`
+                    : loadingSubareas
+                      ? 'Loading areas…'
+                      : `Select areas in ${formData.city}`}
+                  <svg
+                    className={`h-5 w-5 transform transition-transform ${
+                      areasDropdownOpen ? 'rotate-180' : ''
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+
+                {areasDropdownOpen && (
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                    {loadingSubareas ? (
+                      <p className="p-4 text-gray-500">Loading areas…</p>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2 p-2">
+                        {subareas.map(area => (
+                          <label
+                            key={area}
+                            className="flex items-center space-x-2 px-2 py-1 hover:bg-gray-50 rounded cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.areas.includes(area)}
+                              onChange={e => toggleArea(area, e.target.checked)}
+                              className="form-checkbox h-4 w-4 text-teal-600 accent-teal-600"
+                            />
+                            <span className="text-gray-700">{area}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <small className="text-gray-500">
+                  Pick one or more neighbourhoods or sectors you’ll cover.
+                </small>
+
+                {formData.areas.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {formData.areas.map(area => (
+                      <span
+                        key={area}
+                        className="inline-flex items-center bg-teal-100 text-teal-800 text-sm rounded-full px-3 py-1"
+                      >
+                        {area}
+                        <button
+                          type="button"
+                          onClick={() => toggleArea(area, false)}
+                          className="ml-2 focus:outline-none"
+                        >
+                          <span className="font-bold text-teal-600">&times;</span>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             <div>
               <label className="block text-gray-700 font-semibold mb-2">Duration (minutes)</label>

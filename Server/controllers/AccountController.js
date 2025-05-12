@@ -138,7 +138,6 @@ export const RegisterProvider = async (req, res) => {
 
 export const Profile = async (req, res) => {
   try {
-    console.log("user in profile:", req.user);
     if (!req.user) {
       return res.status(200).json({
         success: false,

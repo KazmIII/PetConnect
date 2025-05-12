@@ -51,6 +51,10 @@ app.post(
 
 
 // API routes
+app.use((req, res, next) => {
+  console.log(`☞ ${req.method} ${req.url}`);
+  next();
+});
 app.use('/auth', AuthRoutes);
 app.use('/api/blogs', blogRoutes);
 app.use('/api/memory-books', memoryBookRoutes);

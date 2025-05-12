@@ -3,12 +3,18 @@ import axios from 'axios';
 import { Video, MapPin, Home, ChevronRight } from 'lucide-react';
 import { Link, useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import Spinner from "./Spinner.jsx";
+import { detectCityByGeo } from '../utils/geolocation';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const Vets = () => {
   const [vets, setVets] = useState([]);
   const [loading, setLoading] = useState(true);
   const { serviceType: routeServiceType } = useParams();
   const [searchParams] = useSearchParams();
+  const [sortOptions, setSortOptions] = useState([]);
+  
+  const [isNearMeActive, setIsNearMeActive] = useState(false);
   const initialServiceTypes = useMemo(() => {
     const queryTypes = searchParams.getAll('serviceType');
     // Combine route param with query params, removing duplicates
@@ -29,10 +35,22 @@ const Vets = () => {
 
   const navigate = useNavigate();
 
+  const [vetInfo, setVetInfo] = useState('');
+
   useEffect(() => {
-    const queryTypes = searchParams.getAll('serviceType').filter(Boolean);
-    const newTypes = [...new Set([routeServiceType, ...queryTypes].filter(Boolean))];
-    setSelectedServiceTypes(newTypes);
+    fetch('/vet_info.md')
+      .then((res) => res.text())
+      .then((data) => setVetInfo(data))
+      .catch((err) => console.error('Failed to load vet info:', err));
+  }, []);
+
+  useEffect(() => {
+    const queryTypes = searchParams.getAll('serviceType');
+    const initialTypes = routeServiceType 
+      ? [...new Set([routeServiceType, ...queryTypes])]
+      : queryTypes;
+    setSelectedServiceTypes(initialTypes);
+    setCity(searchParams.get('city') || '');
   }, [routeServiceType, searchParams]);
 
   useEffect(() => {
@@ -51,6 +69,14 @@ const Vets = () => {
     fetchVets();
   }, []);
 
+  const toggleSortOption = (option) => {
+    setSortOptions(prev => 
+      prev.includes(option)
+        ? prev.filter(opt => opt !== option)
+        : [...prev, option]
+    );
+  };  
+
   const getDeliveryMethod = (serviceType) => {
     switch (serviceType) {
       case 'video-consultation':
@@ -64,59 +90,128 @@ const Vets = () => {
     }
   };
 
+
   const filteredVets = useMemo(() => {
-    const activeTypes = selectedServiceTypes.length > 0 
-      ? selectedServiceTypes 
-      : ['video-consultation']; // Default to video consultation
+  const cityKey = city?.trim().toLowerCase();
+  const hasCityFilter = Boolean(cityKey);
+  const hasServiceFilter = selectedServiceTypes.length > 0;
 
-    return vets.filter(vet => {
-      const hasService = activeTypes.some(type => {
-        const method = getDeliveryMethod(type);
-        return vet.services?.some(s => s.deliveryMethod === method);
-      });
-
-      const needsCityCheck = activeTypes.includes('in-clinic') && city;
-      const cityMatch = needsCityCheck
-        ? vet.clinicId?.city?.toLowerCase() === city.toLowerCase()
+  return vets
+    .filter(vet => {
+      // 1) Service filtering (only if you picked any)
+      const serviceMatch = hasServiceFilter
+        ? selectedServiceTypes.some(type => {
+            const method = getDeliveryMethod(type);
+            return vet.services?.some(s => s.deliveryMethod === method);
+          })
         : true;
 
-      return hasService && cityMatch;
+      // 2) City filtering (only if city param exists)
+      const locationMatch = hasCityFilter
+        ? vet.clinicId?.city?.toLowerCase() === cityKey
+        : true;
+
+      return serviceMatch && locationMatch;
+    })
+    // 3) Sorting as before
+    .sort((a, b) => {
+      for (const opt of sortOptions) {
+        let diff = 0;
+        switch (opt) {
+          case 'experience':
+            diff = b.experience - a.experience; break;
+          case 'fee':
+            diff = a.fee - b.fee; break;
+          case 'rating':
+            diff = b.rating - a.rating; break;
+          case 'availability':
+            diff = (b.availableToday ? 1 : 0) - (a.availableToday ? 1 : 0);
+            break;
+        }
+        if (diff) return diff;
+      }
+      return 0;
     });
-  }, [vets, selectedServiceTypes, city]);
+}, [vets, selectedServiceTypes, city, sortOptions]);
 
-
-  const handleFilter = (type) => {
-    const currentTypes = [...selectedServiceTypes];
-    const newTypes = currentTypes.includes(type)
-      ? currentTypes.filter(t => t !== type)
-      : [...currentTypes, type];
-
-    // Determine URL structure
-    let path = '';
-    const params = new URLSearchParams();
+  
     
-    // Handle service types
-    const hasRouteParam = newTypes.length === 1 && !routeServiceType;
-    if (newTypes.length === 1) {
-      path = `/vets/${newTypes[0]}`;
-    } else if (newTypes.length > 1) {
-      newTypes.forEach(t => params.append('serviceType', t));
+  useEffect(() => {
+    const storedCity = localStorage.getItem('userCity');
+    if (storedCity) {
+      setCity(storedCity);
+    } else {
+      setCity(searchParams.get('city') || '');
+    }
+  }, [searchParams]);
+
+  const handleFilter = async (type) => {
+    let newTypes = [...selectedServiceTypes];
+    
+    // Handle exclusive filters
+    if (type === 'video-consultation') {
+      newTypes = newTypes.includes(type) ? [] : [type];
+      setIsNearMeActive(false);
+    } else {
+      // Remove video-consultation if adding other service
+      newTypes = newTypes.filter(t => t !== 'video-consultation');
+      if (newTypes.includes(type)) {
+        newTypes = newTypes.filter(t => t !== type);
+      } else {
+        newTypes.push(type);
+      }
     }
 
-    // Handle city parameter
-    if (city) params.set('city', city);
+    // Handle location requirements
+    if (['home-visit','in-clinic'].includes(type)) {
+      let cityToUse = city;
+    
+      if (!cityToUse) {
+        const detected = await detectCityByGeo();
+        if (!detected) {
+          alert('Could not detect a nearby service city');
+          return;
+        }
+        cityToUse = detected;
+        setCity(cityToUse);
+        localStorage.setItem('userCity', cityToUse);
+      }
+    }
+    setSelectedServiceTypes(newTypes);
+    
+    // Update URL except for home-visit
+    if (type !== 'home-visit') {
+      const params = new URLSearchParams();
+      newTypes.forEach(t => t !== 'home-visit' && params.append('serviceType', t));
+      if (city) params.set('city', city);
+      
+      navigate(newTypes.length === 1 ? 
+        `/vets/${newTypes[0]}?${params}` : 
+        `/vets?${params}`
+      );
+    }
+  };
 
-    // Clean up empty parameters
-    Array.from(params.entries()).forEach(([key, value]) => {
-      if (!value) params.delete(key);
+  const handleDoctorsNearMe = async () => {
+    setIsNearMeActive(prev => !prev);
+  
+    // Always clear out any video-consultation filter when doctors-near-me toggles on
+    setSelectedServiceTypes(prev => {
+      const withoutVideo = prev.filter(t => t !== 'video-consultation');
+      return withoutVideo;
     });
-
-    navigate(`${path}${params.toString() ? `?${params.toString()}` : ''}`);
+  
+    if (!city) {
+      const detected = await detectCityByGeo();
+      if (detected) {
+        setCity(detected);
+        localStorage.setItem('userCity', detected);
+      }
+    }
   };
   
-  const isActive = (type) => {
-    return selectedServiceTypes.includes(type);
-  };
+  
+  const isActive = (type) => selectedServiceTypes.includes(type);
 
   const handleBookClick = (vet) => {
     const services = vet.services || [];
@@ -144,26 +239,51 @@ const Vets = () => {
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
       <h1 className="text-xl font-medium text-gray-800 mb-2">
-        {filteredVets.length} Best Veterinarians available for video consultation
+        {filteredVets.length}{' '}
+        Best Veterinarian{filteredVets.length !== 1 ? 's' : ''}{' '}
+        {selectedServiceTypes.length === 1 && selectedServiceTypes[0] === 'video-consultation'
+          ? 'available for video consultation'
+          : `in ${city}`}
       </h1>
       <p className="text-gray-700 mb-6 text-xs">
         Also known as Animal Specialist, Pet Doctor, and Veterinary Physician
       </p>
 
       <div className="max-w-[58rem] flex gap-2 mb-6 text-xs font-medium text-lime-700 overflow-x-auto pb-2">
-        <button className="px-3 bg-white border border-lime-700 rounded-full whitespace-nowrap">
+        <button 
+          className={`px-3 py-2 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
+            ${isNearMeActive ? 'bg-lime-200' : 'bg-white'
+          }`}
+          onClick={handleDoctorsNearMe}
+        >
           Doctors Near Me
         </button>
-        <button className="px-3 py-2 bg-white border border-lime-700 rounded-full whitespace-nowrap">
+        <button 
+          className={`px-3 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
+            ${sortOptions.includes('experience') ? 'bg-lime-200' : 'bg-white'}`}
+            onClick={() => toggleSortOption('experience')}
+        >
           Most Experienced
         </button>
-        <button className="px-3 bg-white border border-lime-700 rounded-full whitespace-nowrap">
+        <button 
+          className={`px-3 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
+            ${sortOptions.includes('fee') ? 'bg-lime-200' : 'bg-white'}`}
+            onClick={() => toggleSortOption('fee')}
+        >
           Lowest Fee
         </button>
-        <button className="px-3 bg-white border border-lime-700 rounded-full whitespace-nowrap">
+        <button 
+          className={`px-3 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
+            ${sortOptions.includes('rating') ? 'bg-lime-200' : 'bg-white'}`}
+            onClick={() => toggleSortOption('rating')}
+        >
           Highest Rated
         </button>
-        <button className="px-3 bg-white border border-lime-700 rounded-full whitespace-nowrap">
+        <button 
+          className={`px-3 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
+            ${sortOptions.includes('availability') ? 'bg-lime-200' : 'bg-white'}`}
+            onClick={() => toggleSortOption('availability')}
+        >
           Available Today
         </button>
         <button 
@@ -175,6 +295,16 @@ const Vets = () => {
           onClick={() => handleFilter('video-consultation')}
         >
           Video Consultation
+        </button>
+        <button 
+          className={`px-3 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
+            ${isActive('home-visit')
+              ? 'bg-lime-200 '
+              : 'bg-white'
+            }`}
+          onClick={() => handleFilter('home-visit')}
+        >
+          Home Visit
         </button>
 
         <button className="px-3 bg-white border border-lime-700 rounded-full whitespace-nowrap">
@@ -331,6 +461,26 @@ const Vets = () => {
               </div>
             </div>
           ))}
+          {vetInfo && (
+            <div className="prose lg:prose-lg mx-auto px-4 py-20 text-[#1a1a1a]">
+              <ReactMarkdown
+                children={vetInfo}
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h1: ({ node, ...props }) => <h2 className="text-base font-medium text-teal-800 my-6" {...props} />,
+                  h2: ({ node, ...props }) => <h3 className="text-base font-normal text-teal-700 mt-6 mb-4" {...props} />,
+                  p: ({ node, ...props }) => <p className="mb-4 leading-relaxed text-justify text-sm text-gray-600" {...props} />,
+                  ul: ({ node, ...props }) => <ul className="list-disc ml-6 space-y-2 text-sm text-gray-700" {...props} />,
+                  ol: ({ node, ...props }) => <ol className="list-decimal ml-5 space-y-2 text-sm text-gray-700" {...props} />, 
+                  li: ({ node, ...props }) => <li className="leading-snug" {...props} />,
+                  blockquote: ({ node, ...props }) => (
+                    <blockquote className="border-l-4 border-blue-400 italic pl-4 text-teal-700 bg-blue-50 py-2 my-4" {...props} />
+                  ),
+                  strong: ({ node, ...props }) => <strong className="font-semibold text-gray-800" {...props} />
+                }}              
+              />
+            </div>
+          )}
         </div>
       )}
 
