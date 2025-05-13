@@ -3,7 +3,6 @@ import ServiceCards from './ServiceCards';
 import AdoptionOrRehome from './AdoptionOrRehome';
 import EmotionFeatureCard from './EmotionFeatureCard';
 import HomeBlogs from './HomeBlogs'; // Add this import
-import EmotionFeatureCard from './EmotionFeatureCard';
 
 export default function Home() {
   return (
@@ -15,7 +14,6 @@ export default function Home() {
           <ServiceCards />
         </div>
         <AdoptionOrRehome />
-        <EmotionFeatureCard />
         <EmotionFeatureCard />
         <HomeBlogs /> {/* Add this line */}
       </div>

@@ -11,6 +11,11 @@ const availabilitySchema = new mongoose.Schema({
     {
       startTime: { type: String, required: true },
       endTime:   { type: String, required: true },
+      status: { 
+        type: String, 
+        enum: ['pending', 'booked',  'cancelled'],
+        default: 'pending' 
+      },
     }
   ],
 }, { _id: false });

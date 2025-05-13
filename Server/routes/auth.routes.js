@@ -30,7 +30,7 @@ import {GetVerifiedVets, GetVetById } from '../controllers/VetController.js';
 import {CreateAppointment, ConfirmAppointment, StripeWebhook, GetUserAppointments, GetVetAppointments, StartAppointment, CompleteAppointment} from '../controllers/AppointmentController.js';
 import {CreateReview} from '../controllers/ReviewController.js';
 
-import {CreateGroomerAppointment, GetAppointmentById, ConfirmGroomerAppointment, GetUserGroomerAppointments, GetGroomerAppointments, CompleteGroomerAppointment} from '../controllers/GroomerAppointmentController.js';
+import {CreateGroomerAppointment, ConfirmGroomerAppointment, GetUserGroomerAppointments, GetGroomerAppointments, CompleteGroomerAppointment} from '../controllers/GroomerAppointmentController.js';
 
 import {
   GetNotifications,
@@ -59,7 +59,7 @@ AuthRoutes.get('/appointments', GetUserAppointments);
 AuthRoutes.get('/appointments/vet', GetVetAppointments);
 AuthRoutes.post('/appointments/confirm', ConfirmAppointment); // move this ABOVE
 AuthRoutes.post('/appointments/:vetId', CreateAppointment);
-AuthRoutes.get('/appointments/:appointmentId', GetAppointmentById); 
+// AuthRoutes.get('/appointments/:appointmentId', GetAppointmentById); 
 AuthRoutes.post("/appointments/:appointmentId/start", StartAppointment);
 AuthRoutes.post("/appointments/:appointmentId/complete", CompleteAppointment);
 // ── Groomer Appointments ─────────────────────────────────────────────────────
@@ -72,10 +72,7 @@ AuthRoutes.post('/appointments/groomer/confirm',  ConfirmGroomerAppointment);
 AuthRoutes.post('/appointments/groomer/:groomerId', CreateGroomerAppointment);
 
 // Mark as completed
-AuthRoutes.post(
-  '/appointments/groomer/:appointmentId/complete',
-  CompleteGroomerAppointment
-);
+AuthRoutes.post('/appointments/groomer/:appointmentId/complete',CompleteGroomerAppointment);
 
 
 

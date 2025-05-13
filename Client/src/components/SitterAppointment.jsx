@@ -160,33 +160,56 @@ const SitterAppointment = () => {
 
     try {
       let slots = await fetchSlotsForDate(iso, dayName);
+      // In your handleDateSelect function, update the slot filtering logic:
+if (display === 'Today') {
+  const now = new Date();
+  
+  // Create date in local timezone for comparison
+  const localDateStr = now.toISOString().split('T')[0];
+  
+  slots = slots.filter(s => {
+    const [t, mer] = s.startTime.split(' ');
+    const normalizedMer = normalizeMeridiem(mer);
+    let [h, m] = t.split(':').map(Number);
 
-      if (display === 'Today') {
-      const now = new Date();
-      const localMidnight = new Date(now);
-      localMidnight.setHours(0, 0, 0, 0); // Local midnight
-      const localMidnightUTC = Date.UTC(
-        localMidnight.getFullYear(),
-        localMidnight.getMonth(),
-        localMidnight.getDate()
-      );
+    // Convert to 24h format
+    if (normalizedMer === 'PM' && h !== 12) h += 12;
+    if (normalizedMer === 'AM' && h === 12) h = 0;
 
-      slots = slots.filter(s => {
-        const [t, mer] = s.startTime.split(' ');
-        const normalizedMer = normalizeMeridiem(mer);
-        let [h, m] = t.split(':').map(Number);
+    // Create slot date in LOCAL timezone
+    const slotDate = new Date(`${localDateStr}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`);
+    
+    // Compare against current local time
+    return slotDate > now;
+  });
+}
 
-        if (normalizedMer === 'PM' && h !== 12) h += 12;
-        if (normalizedMer === 'AM' && h === 12) h = 0;
+    //   if (display === 'Today') {
+    //   const now = new Date();
+    //   const localMidnight = new Date(now);
+    //   localMidnight.setHours(0, 0, 0, 0); // Local midnight
+    //   const localMidnightUTC = Date.UTC(
+    //     localMidnight.getFullYear(),
+    //     localMidnight.getMonth(),
+    //     localMidnight.getDate()
+    //   );
 
-        // Create slot date in UTC
-        const slotUTCDate = new Date(`${iso}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00Z`);
+    //   slots = slots.filter(s => {
+    //     const [t, mer] = s.startTime.split(' ');
+    //     const normalizedMer = normalizeMeridiem(mer);
+    //     let [h, m] = t.split(':').map(Number);
+
+    //     if (normalizedMer === 'PM' && h !== 12) h += 12;
+    //     if (normalizedMer === 'AM' && h === 12) h = 0;
+
+    //     // Create slot date in UTC
+    //     const slotUTCDate = new Date(`${iso}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00Z`);
         
-        // Compare against local day in UTC
-        return slotUTCDate.getTime() >= localMidnightUTC && 
-               slotUTCDate.getTime() > Date.now();
-      });
-    }
+    //     // Compare against local day in UTC
+    //     return slotUTCDate.getTime() >= localMidnightUTC && 
+    //            slotUTCDate.getTime() > Date.now();
+    //   });
+    // }
       const uniqueSlots = Array.from(new Set(slots.map(s => s.startTime)))
         .map(startTime => slots.find(s => s.startTime === startTime));
 

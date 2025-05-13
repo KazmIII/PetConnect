@@ -309,10 +309,10 @@ const Groomers = () => {
                         </div>
                         <span className="font-normal text-xs">Rs. {s.price}</span>
                       </div>
-                      <div className="mt-1 text-xs text-green-600 flex items-center gap-1">
+                      {/* <div className="mt-1 text-xs text-green-600 flex items-center gap-1">
                         <span className="w-2 h-2 bg-green-600 rounded-full" />
                         {s.availableToday ? 'Available today' : `Next: ${s.nextAvailable}`}
-                      </div>
+                      </div> */}
                     </Link>
                   );
                 })}

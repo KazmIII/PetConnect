@@ -6,6 +6,8 @@ import { UserModel } from "../models/User.js";
 import { VetModel } from "../models/Vet.js";
 import Notification from '../models/Notifications.js';
 import schedule from 'node-schedule';
+import { VeterinarianService } from "../models/Services.js";
+
 
 export const GetAppointmentById = async (req, res) => {
   // Try both cookie names
@@ -159,46 +161,65 @@ schedule.scheduleJob(remindAt, async () => {
 
 export const ConfirmAppointment = async (req, res) => {
   const { session_id } = req.body;
-
   if (!session_id) {
-    console.log("❌ Missing session_id");
     return res.status(400).json({ error: "session_id is required" });
   }
 
   try {
+    // 1) Retrieve the Stripe session
     const session = await stripe.checkout.sessions.retrieve(session_id);
-    console.log("✅ Retrieved session:", session);
 
+    // 2) Get appointment ID from metadata
     const apptId = session.metadata?.appointmentId;
-
     if (!apptId) {
-      console.log("❌ No appointmentId found in session metadata");
       return res.status(400).json({ error: "Missing appointmentId in session metadata" });
     }
 
+    // 3) Load and update the appointment record
     const updatedAppt = await Appointment.findById(apptId);
     if (!updatedAppt) {
-      console.log("❌ Appointment not found in database:", apptId);
       return res.status(404).json({ error: "Appointment not found" });
     }
-
-    updatedAppt.status = "booked";
+    updatedAppt.status        = "booked";
     updatedAppt.paymentStatus = "paid";
-    updatedAppt.slot.status = "booked";
+    updatedAppt.slot.status   = "booked";
     await updatedAppt.save();
 
-
-    if (!updatedAppt) {
-      console.log("❌ Appointment not found in database:", apptId);
-      return res.status(404).json({ error: "Appointment not found" });
+    // 4) Choose the correct service model
+    let ServiceModel;
+    if (updatedAppt.consultationType === "video") {
+      ServiceModel = VeterinarianService;
+    } else if (updatedAppt.consultationType === "home") {
+      // for example, if home visits for sitters
+      ServiceModel = SitterService;
+    } else {
+      ServiceModel = GroomerService;
     }
 
-    console.log("✅ Appointment updated successfully");
-    res.json({ success: true });
+    // 5) Derive the day and time to match your schema
+    const dayName = updatedAppt.date.toLocaleDateString("en-US", { weekday: "long" });
+    const start   = updatedAppt.slot.startTime; // e.g. "2:00 PM"
 
+    // 6) Update the service availability slot to "booked"
+    await ServiceModel.updateOne(
+      { providerId: updatedAppt.vetId }, // or .providerId for other types
+      {
+        $set: {
+          "availability.$[dayElem].slots.$[slotElem].status": "booked"
+        }
+      },
+      {
+        arrayFilters: [
+          { "dayElem.day": dayName },
+          { "slotElem.startTime": start }
+        ]
+      }
+    );
+
+    return res.json({ success: true });
   } catch (err) {
-    console.error("🔥 Error in ConfirmAppointment:", err.message);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("Error in ConfirmAppointment:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 

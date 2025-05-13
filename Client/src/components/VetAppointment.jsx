@@ -134,8 +134,12 @@ const VetAppointment = () => {
         []
       );
   
-      console.log(`Slots for ${dayName} (${isoDate}):`, allSlots);
-      return allSlots;
+      const freeSlots = allSlots.filter(
+        slot => slot.status !== "booked" && slot.status !== "pending"
+      );
+  
+      console.log(`Free slots for ${dayName} (${isoDate}):`, freeSlots);
+      return freeSlots;
   
     } catch (err) {
       console.error('Error fetching slots:', err);
@@ -164,33 +168,24 @@ const VetAppointment = () => {
     try {
       let slots = await fetchSlotsForDate(iso, dayName);
 
-     if (display === 'Today') {
-      const now = new Date();
-  const userOffset = now.getTimezoneOffset() * 60 * 1000; // Get local timezone offset
-  const nowUTC = Date.now();
+    if (display === "Today") {
+       const now = new Date();
+       slots = slots.filter((s) => {
+         // parse “9:30 AM” or “2:00 PM”
+         const [t, mer] = s.startTime.split(" ");
+         const norm = mer.trim().toUpperCase();
+         let [h, m] = t.split(":").map(Number);
+         if (norm === "PM" && h !== 12) h += 12;
+         if (norm === "AM" && h === 12) h = 0;
 
-  slots = slots.filter(s => {
-    const [t, mer] = s.startTime.split(' ');
-    const normalizedMer = normalizeMeridiem(mer);
-    let [h, m] = t.split(':').map(Number);
+         // build a local Date for that slot today
+         const [year, month, day] = iso.split("-").map(Number);
+         const slotLocal = new Date(year, month - 1, day, h, m);
 
-    // Convert to 24-hour format
-    if (normalizedMer === 'PM' && h !== 12) h += 12;
-    if (normalizedMer === 'AM' && h === 12) h = 0;
-
-    // Create slot date in UTC
-    const slotDate = new Date(iso);
-    const slotUTCTime = Date.UTC(
-      slotDate.getUTCFullYear(),
-      slotDate.getUTCMonth(),
-      slotDate.getUTCDate(),
-      h,
-      m
-    );
-
-    return slotUTCTime > nowUTC;
-  });
-}
+         // only keep if strictly in the future
+         return slotLocal.getTime() > now.getTime();
+       });
+     }
 
       const uniqueSlots = Array.from(new Set(slots.map(s => s.startTime)))
         .map(startTime => slots.find(s => s.startTime === startTime));
