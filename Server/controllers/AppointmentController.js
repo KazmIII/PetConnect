@@ -2,12 +2,16 @@ import Stripe from "stripe";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import { Appointment } from "../models/Appointment.js";
+// rename the GroomerAppointment export to avoid collision with the other Appointment model
+import { Appointment as GroomerAppointment } from "../models/GroomerAppointment.js";
+import { SitterAppointment }  from "../models/SitterAppointment.js";
+
 import { UserModel } from "../models/User.js";
 import { VetModel } from "../models/Vet.js";
 import Notification from '../models/Notifications.js';
 import schedule from 'node-schedule';
-import { VeterinarianService } from "../models/Services.js";
-import Review  from '../models/Review.js';
+import { VeterinarianService,PetSitterService,
+  PetGroomerService } from "../models/Services.js"; import Review  from '../models/Review.js';
 
 export const GetAppointmentById = async (req, res) => {
   // Try both cookie names
@@ -157,7 +161,7 @@ schedule.scheduleJob(remindAt, async () => {
   }
 };
 
-// After your CreateAppointment…
+
 
 export const ConfirmAppointment = async (req, res) => {
   const { session_id } = req.body;
@@ -169,40 +173,62 @@ export const ConfirmAppointment = async (req, res) => {
     // 1) Retrieve the Stripe session
     const session = await stripe.checkout.sessions.retrieve(session_id);
 
-    // 2) Get appointment ID from metadata
-    const apptId = session.metadata?.appointmentId;
-    if (!apptId) {
-      return res.status(400).json({ error: "Missing appointmentId in session metadata" });
+    // 2) Destructure our metadata
+    const {
+      appointmentId,
+      providerType,   // "vet" | "groomer" | "sitter"
+      providerId
+    } = session.metadata || {};
+
+    if (!appointmentId || !providerType || !providerId) {
+      return res
+        .status(400)
+        .json({ error: "Missing appointmentId/providerType/providerId in session metadata" });
     }
 
-    // 3) Load and update the appointment record
-    const updatedAppt = await Appointment.findById(apptId);
-    if (!updatedAppt) {
+    // 3) Load the right Appointment document
+    let apptModel;
+    if (providerType === "groomer") {
+      apptModel = GroomerAppointment;
+    } else if (providerType === "sitter") {
+      apptModel = SitterAppointment;
+    } else {
+      apptModel = Appointment; // vet or default
+    }
+    const appt      = await apptModel.findById(appointmentId);
+    if (!appt) {
       return res.status(404).json({ error: "Appointment not found" });
     }
-    updatedAppt.status        = "booked";
-    updatedAppt.paymentStatus = "paid";
-    updatedAppt.slot.status   = "booked";
-    await updatedAppt.save();
 
-    // 4) Choose the correct service model
-    let ServiceModel;
-    if (updatedAppt.consultationType === "video") {
-      ServiceModel = VeterinarianService;
-    } else if (updatedAppt.consultationType === "home") {
-      // for example, if home visits for sitters
-      ServiceModel = SitterService;
-    } else {
-      ServiceModel = GroomerService;
-    }
+    // 4) Mark the appointment & payment as booked/paid
+    appt.status        = "booked";
+    appt.paymentStatus = "paid";
+    appt.slot.status   = "booked";
+    await appt.save();
 
-    // 5) Derive the day and time to match your schema
-    const dayName = updatedAppt.date.toLocaleDateString("en-US", { weekday: "long" });
-    const start   = updatedAppt.slot.startTime; // e.g. "2:00 PM"
+    // 5) Pick service model & ID field for availability update
+    // pick service model based on providerType
+let ServiceModel;
+switch (providerType) {
+  case "vet":
+    ServiceModel = VeterinarianService;
+    break;
+  case "sitter":
+    ServiceModel = PetSitterService;
+    break;
+  case "groomer":
+  default:
+    ServiceModel = PetGroomerService;
+    break;
+}
 
-    // 6) Update the service availability slot to "booked"
+    // 6) Build dayName and slotStart to match your availability schema
+    const dayName   = appt.date.toLocaleDateString("en-US", { weekday: "long" });
+    const slotStart = appt.slot.startTime; // e.g. "2:00 PM"
+
+    // 7) Update that provider’s availability slot to “booked”
     await ServiceModel.updateOne(
-      { providerId: updatedAppt.vetId }, // or .providerId for other types
+      { providerId: providerId },
       {
         $set: {
           "availability.$[dayElem].slots.$[slotElem].status": "booked"
@@ -211,7 +237,7 @@ export const ConfirmAppointment = async (req, res) => {
       {
         arrayFilters: [
           { "dayElem.day": dayName },
-          { "slotElem.startTime": start }
+          { "slotElem.startTime": slotStart }
         ]
       }
     );
@@ -222,8 +248,6 @@ export const ConfirmAppointment = async (req, res) => {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
-
 export const StripeWebhook = async (req, res) => {
   const sig = req.headers["stripe-signature"];
   let event;
@@ -384,3 +408,132 @@ export const StartAppointment = async (req, res) => {
   }
 };
 
+// 1. Check-In for Home Consultations
+export const CheckInHomeAppointment = async (req, res) => {
+  const token = req.cookies.vetToken;
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+  try {
+    const { id: vetId } = jwt.verify(token, process.env.JWT_SECRET);
+    const { appointmentId } = req.params;
+
+    const appt = await Appointment.findById(appointmentId);
+    if (!appt) return res.status(404).json({ message: "Appointment not found" });
+
+    if (appt.vetId.toString() !== vetId) {
+      return res.status(403).json({ message: "Not authorized for this appointment" });
+    }
+
+    if (appt.consultationType !== "home") {
+      return res.status(400).json({ message: "Check-in only available for home consultations" });
+    }
+
+    if (appt.status !== "booked") {
+      return res.status(400).json({ message: "Only booked appointments can be checked in" });
+    }
+
+    appt.status = "in-progress";
+    await appt.save();
+
+    // Send notification
+    const vet = await VetModel.findById(vetId);
+    await Notification.create({
+      userId: appt.userId,
+      appointmentId: appt._id,
+      type: 'appointment',
+      message: `${vet.name} has checked in for your home consultation`,
+      date: new Date()
+    });
+
+    res.json({ success: true, message: "Checked in successfully" });
+  } catch (err) {
+    console.error("Error in CheckInHomeAppointment:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// 2. Check-Out for Home Consultations
+export const CheckOutHomeAppointment = async (req, res) => {
+  const token = req.cookies.vetToken;
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+  try {
+    const { id: vetId } = jwt.verify(token, process.env.JWT_SECRET);
+    const { appointmentId } = req.params;
+
+    const appt = await Appointment.findById(appointmentId);
+    if (!appt) return res.status(404).json({ message: "Appointment not found" });
+
+    if (appt.vetId.toString() !== vetId) {
+      return res.status(403).json({ message: "Not authorized for this appointment" });
+    }
+
+    if (appt.consultationType !== "home") {
+      return res.status(400).json({ message: "Check-out only available for home consultations" });
+    }
+
+    if (appt.status !== "in-progress") {
+      return res.status(400).json({ message: "Only in-progress appointments can be checked out" });
+    }
+
+    appt.status = "completed";
+    await appt.save();
+
+    // Send notification
+    const vet = await VetModel.findById(vetId);
+    await Notification.create({
+      userId: appt.userId,
+      appointmentId: appt._id,
+      type: 'appointment',
+      message: `${vet.name} has completed your home consultation`,
+      date: new Date()
+    });
+
+    res.json({ success: true, message: "Checked out successfully" });
+  } catch (err) {
+    console.error("Error in CheckOutHomeAppointment:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// 3. Cancel Appointment
+export const CancelAppointment = async (req, res) => {
+  const token = req.cookies.pet_ownerToken || req.cookies.vetToken;
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { appointmentId } = req.params;
+
+    const appt = await Appointment.findById(appointmentId);
+    if (!appt) return res.status(404).json({ message: "Appointment not found" });
+
+    // Authorization check
+    if (decoded.role === 'vet' && appt.vetId.toString() !== decoded.id) {
+      return res.status(403).json({ message: "Not authorized to cancel this appointment" });
+    }
+
+    if (decoded.role === 'user' && appt.userId.toString() !== decoded.id) {
+      return res.status(403).json({ message: "Not authorized to cancel this appointment" });
+    }
+
+    // Update status
+    appt.status = "cancelled";
+    appt.paymentStatus = "refunded"; // or keep as paid depending on policy
+    await appt.save();
+
+    // Send notification
+    await Notification.create({
+      userId: appt.userId,
+      appointmentId: appt._id,
+      type: 'appointment',
+      message: `Appointment with ${appt.vetId.name} has been cancelled`,
+      date: new Date()
+    });
+
+    res.json({ success: true, message: "Appointment cancelled" });
+  } catch (err) {
+    console.error("Error in CancelAppointment:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
