@@ -7,7 +7,7 @@ import { VetModel } from "../models/Vet.js";
 import Notification from '../models/Notifications.js';
 import schedule from 'node-schedule';
 import { VeterinarianService } from "../models/Services.js";
-
+import Review  from '../models/Review.js';
 
 export const GetAppointmentById = async (req, res) => {
   // Try both cookie names
@@ -309,13 +309,27 @@ export const GetUserAppointments = async (req, res) => {
 
   try {
     const { id: userId } = jwt.verify(token, process.env.JWT_SECRET);
-    const appointments = await Appointment.find({
+
+    // 1) load all appointments for this user
+    let appointments = await Appointment.find({
       userId,
       paymentStatus: "paid",
       status: { $in: ["booked", "in-progress", "completed"] }
     })
-      .populate("vetId", "name roomID")
-      .lean();
+    .populate("vetId", "name roomID")
+    .lean();
+
+    // 2) load all reviews this user has made
+    const reviews = await Review.find({ user: userId })
+                                .select("appointment")
+                                .lean();
+    const reviewedSet = new Set(reviews.map(r => r.appointment.toString()));
+
+    // 3) tag appointments
+    appointments = appointments.map(appt => ({
+      ...appt,
+      hasReview: reviewedSet.has(appt._id.toString())
+    }));
 
     res.json(appointments);
   } catch (err) {
@@ -323,6 +337,7 @@ export const GetUserAppointments = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 export const GetVetAppointments = async (req, res) => {
   const token = req.cookies.vetToken;
