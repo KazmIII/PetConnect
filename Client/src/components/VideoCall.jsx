@@ -205,25 +205,7 @@ export default function VideoCall({ roomID, mode, scheduledEnd, onEnd }) {
     };
   }, [roomID, mode]);
 
-  // 2) Auto‑end on scheduled end
-  // useEffect(() => {
-  //   if (!scheduledEnd) return;
-  //   const endDate = new Date(scheduledEnd).getTime();
-  //   const nowMs   = Date.now();
-  //   const delay   = endDate - nowMs;
-
-  //   if (delay <= 0) {
-  //     // Already past end
-  //     handleEnd();
-  //     return;
-  //   }
-
-  //   const timer = setTimeout(() => {
-  //     handleEnd();
-  //   }, delay);
-
-  //   return () => clearTimeout(timer);
-  // }, [scheduledEnd]);
+  
 
   useEffect(() => {
         if (!scheduledEnd) return;

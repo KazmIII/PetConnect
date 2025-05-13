@@ -309,6 +309,7 @@ import { useNavigate } from "react-router-dom";
 import Spinner from "./Spinner";
 import { CalendarCheck } from "lucide-react";
 
+
 // ── Helper to combine date + time into a single Date object ───────────────
 const getDateTime = (dateString, timeString) => {
   const [time, mer] = timeString.split(" ");
@@ -352,11 +353,12 @@ export default function VetAppointmentsPage() {
       );
 
       // 2) Send notification to user
+      const vetName = appt.vetId?.name || "your vet";
     await axios.post(
       'http://localhost:5000/auth/notifications',
       {
         userId: appt.userId._id, // Assuming appt.userId contains user reference
-        message: `Your ${appt.consultationType} consultation with Dr. ${appt.vetId.name} has started!`,
+        message: `Your ${appt.consultationType} consultation with ${vetName} has started!`,
         type: 'appointment'
       },
       { withCredentials: true }

@@ -425,7 +425,7 @@ const Navbar = () => {
                         </button>
                       </li>
                       {/* For other roles */}
-<li className="flex items-center hover:text-orange-500">
+{/* <li className="flex items-center hover:text-orange-500">
   <div className="relative mr-3">
     <Bell className="w-5 h-5 text-orange-500" />
     {unreadNotifications > 0 && (
@@ -441,7 +441,7 @@ const Navbar = () => {
   >
     Notifications
   </button>
-</li>
+</li> */}
                     </>
                   )}
 

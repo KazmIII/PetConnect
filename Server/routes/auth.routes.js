@@ -27,13 +27,8 @@ import {SubmitAdoptionAd, GetAllAdoptionAds, GetAdoptionAdById, SubmitAdoptionAp
 } from '../controllers/AdoptionController.js';
 
 import {GetVerifiedVets, GetVetById } from '../controllers/VetController.js';
-
-import {GetVerifiedGroomers, GetGroomerById } from '../controllers/GroomerController.js';
-
-import {GetVerifiedSitters, GetSitterById } from '../controllers/SitterController.js';
-
-import {CreateAppointment, ConfirmAppointment, StripeWebhook, GetUserAppointments, GetVetAppointments, StartAppointment,
-   CompleteAppointment} from '../controllers/AppointmentController.js';
+import {CreateAppointment, ConfirmAppointment, StripeWebhook, GetUserAppointments, GetVetAppointments, StartAppointment, CompleteAppointment} from '../controllers/AppointmentController.js';
+import {CreateGroomerAppointment, ConfirmGroomerAppointment, GetUserGroomerAppointments, GetGroomerAppointments, CompleteGroomerAppointment} from '../controllers/GroomerAppointmentController.js';
 
 import {
   GetNotifications,
@@ -46,25 +41,47 @@ import {
   updateNotificationSetting
 } from '../controllers/NotificationSettingsController.js';
 
+import {GetVerifiedGroomers, GetGroomerById } from '../controllers/GroomerController.js';
+
+import {GetVerifiedSitters, GetSitterById } from '../controllers/SitterController.js';
+
 const AuthRoutes = express.Router();
 
 //Appointment Routes
+// 2) After redirect, confirm payment
 AuthRoutes.get('/appointments', GetUserAppointments);
 AuthRoutes.get('/appointments/vet', GetVetAppointments);
 AuthRoutes.post('/appointments/confirm', ConfirmAppointment); // move this ABOVE
 AuthRoutes.post('/appointments/:vetId', CreateAppointment); 
 AuthRoutes.post("/appointments/:appointmentId/start", StartAppointment);
 AuthRoutes.post("/appointments/:appointmentId/complete", CompleteAppointment);
+// ── Groomer Appointments ─────────────────────────────────────────────────────
+AuthRoutes.get('/appointments/groomer',           GetUserGroomerAppointments);
 
-//Groomer Routes
-AuthRoutes.get('/groomers', GetVerifiedGroomers);
-AuthRoutes.get('/groomers/:groomerId', GetGroomerById);
+// Payment confirmation must come before creation
+AuthRoutes.post('/appointments/groomer/confirm',  ConfirmGroomerAppointment);
+
+// Creation endpoint
+AuthRoutes.post('/appointments/groomer/:groomerId', CreateGroomerAppointment);
+
+// Mark as completed
+AuthRoutes.post(
+  '/appointments/groomer/:appointmentId/complete',
+  CompleteGroomerAppointment
+);
+
+
+
 //NotificationRoutes
 AuthRoutes.get('/notifications', GetNotifications);
 AuthRoutes.post('/notifications', CreateNotification);
 AuthRoutes.get('/notifications/settings',getNotificationSettings);
 AuthRoutes.put('/notifications/settings', updateNotificationSetting);
 AuthRoutes.delete('/notifications/:id', DeleteNotification);
+
+//Groomer Routes
+AuthRoutes.get('/groomers', GetVerifiedGroomers);
+AuthRoutes.get('/groomers/:groomerId', GetGroomerById);
 
 //Sitter Routes
 AuthRoutes.get('/sitters', GetVerifiedSitters);
@@ -74,7 +91,7 @@ AuthRoutes.get('/sitters/:sitterId', GetSitterById);
 AuthRoutes.get('/vets', GetVerifiedVets);
 AuthRoutes.get('/vets/:vetId', GetVetById);
 
-// Adoption Routes
+// PetConnect Routes
 AuthRoutes.post('/addAdoptionAd', UploadMultiple([{ name: 'photos', maxCount: 5 }]), SubmitAdoptionAd);
 AuthRoutes.put("/update-adoption-ad/:id", UploadMultiple([{ name: 'photos', maxCount: 5 }]), UpdateAdoptionAd);
 AuthRoutes.get('/get-adoption-ads', GetAllAdoptionAds);
@@ -89,14 +106,6 @@ AuthRoutes.get("/adoption-applications/:applicationId", GetAdoptionApplicationDe
 
  
 // service providers route
-const uploadFields = [
-  { name: 'vetResume', maxCount: 1 },
-  { name: 'vetLicenseFile', maxCount: 1 },
-  { name: 'vetDegree', maxCount: 1 },
-  { name: 'groomerCertificate', maxCount: 1 },
-  { name: 'sitterCertificate', maxCount: 1 }
-];
-AuthRoutes.post('/provider-register', UploadMultiple(uploadFields), verifyEmailDomain, RegisterProvider);
 AuthRoutes.post('/add-service', AddService);
 AuthRoutes.get('/get-services', GetServicesByProvider);
 AuthRoutes.get('/service/:serviceId', GetServiceDetails);
@@ -121,6 +130,10 @@ AuthRoutes.put('/user/update-detail-profile', UpdateDetailUserInfo);
 AuthRoutes.get('/sitter/profile', GetSitterInfo);
 AuthRoutes.put('/sitter/update-profile', verifyEmailDomain, UpdateSitterInfo);
 
+// Clinic specific routes
+AuthRoutes.get('/clinic/profile', GetClinicInfo);
+AuthRoutes.put('/clinic/update-profile', verifyEmailDomain, UpdateClinicProfile);
+
 // Pet Owner specific routes
 AuthRoutes.post('/create-pet', uploadSingle, CreatePetProfile);
 AuthRoutes.get('/get-user-pets', GetUserPets);
@@ -134,6 +147,15 @@ AuthRoutes.get('/clinic/vets-groomers', GetVetsAndGroomersByClinic);
 AuthRoutes.get('/clinic/providers-details/:role/:provider_id', GetProviderDetails);
 AuthRoutes.post('/clinic/update-provider-status', UpdateProviderVerificationStatus);
 AuthRoutes.get('/clinic/staff', GetRegisteredStaffByClinic);
+
+const uploadFields = [
+  { name: 'vetResume', maxCount: 1 },
+  { name: 'vetLicenseFile', maxCount: 1 },
+  { name: 'vetDegree', maxCount: 1 },
+  { name: 'groomerCertificate', maxCount: 1 },
+  { name: 'sitterCertificate', maxCount: 1 }
+];
+AuthRoutes.post('/provider-register', UploadMultiple(uploadFields), verifyEmailDomain, RegisterProvider);
 
 // Admin specific routes
 AuthRoutes.post('/admin/login', AdminLogin); 
@@ -150,7 +172,7 @@ AuthRoutes.get("/admin/get-groomers", GetRegisteredGroomers);
 AuthRoutes.get("/admin/get-sitters", GetRegisteredSitters);
 AuthRoutes.post("/admin/restrict-user/:id", RestrictUser);
 
-//Clinic Specific Route
+
 const clinicUploadFields = [
   { name: 'clinicRegistrationFile', maxCount: 1 },
   { name: 'NICFile', maxCount: 1 },
@@ -158,8 +180,6 @@ const clinicUploadFields = [
   { name: 'proofOfAddressFile', maxCount: 1 }
 ];
 AuthRoutes.post('/clinic-register', UploadMultiple(clinicUploadFields), verifyEmailDomain, RegisterClinic );
-AuthRoutes.get('/clinic/profile', GetClinicInfo);
-AuthRoutes.put('/clinic/update-profile', verifyEmailDomain, UpdateClinicProfile);
 
 
 export default AuthRoutes;
