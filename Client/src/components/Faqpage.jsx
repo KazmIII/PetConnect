@@ -1,4 +1,5 @@
-import React from 'react';
+import { useState } from 'react';
+import { ChevronDown, PawPrint } from 'lucide-react';
 
 const faqs = [
   {
@@ -47,20 +48,82 @@ const faqs = [
 ];
 
 export default function FAQPage() {
+  const [openIndex, setOpenIndex] = useState(null);
+
+  const toggleFAQ = (index) => {
+    setOpenIndex(openIndex === index ? null : index);
+  };
+
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 text-center">Frequently Asked Questions</h1>
-      <div className="space-y-4">
-        {faqs.map((item, idx) => (
-          <details key={idx} className="border rounded-lg p-4">
-            <summary className="font-medium cursor-pointer hover:text-gray-600">
-              {item.question}
-            </summary>
-            <p className="mt-2 text-gray-700">
-              {item.answer}
-            </p>
-          </details>
-        ))}
+    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
+            <PawPrint className="w-8 h-8 text-orange-600" />
+            PetConnect FAQs
+            <PawPrint className="w-8 h-8 text-orange-600" />
+          </h1>
+          <p className="text-lg text-gray-600">
+            Quick answers to common questions about our services
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          {faqs.map((item, index) => (
+            <div 
+              key={index}
+              className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 border border-orange-100"
+            >
+              <button
+                onClick={() => toggleFAQ(index)}
+                className="w-full px-6 py-5 text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-orange-500 rounded-xl"
+              >
+                <span className="text-lg font-semibold text-gray-800 pr-4">
+                  {item.question}
+                </span>
+                <ChevronDown 
+                  className={`w-6 h-6 text-orange-600 transform transition-transform duration-300 ${
+                    openIndex === index ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+              
+              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                openIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+              }`}>
+                <div className="px-6 pb-5 pt-2 border-t border-orange-50">
+                  <p className="text-gray-700 leading-relaxed">
+                    {item.answer}
+                    {index === 9 && ( // For the last question about contact
+                      <a 
+                        href="/contact" 
+                        className="ml-2 text-orange-600 hover:underline font-medium"
+                      >
+                        Contact us here
+                      </a>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Additional Help Section */}
+        <div className="mt-12 text-center bg-orange-50 rounded-xl p-8">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            Still need help?
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Our support team is ready to assist you
+          </p>
+          <a
+            href="/contact"
+            className="inline-flex items-center px-8 py-3 bg-gradient-to-r from-lime-600 to-teal-700 text-white font-medium rounded-lg hover:opacity-90 transition-colors"
+          >
+            Contact Support
+          </a>
+        </div>
       </div>
     </div>
   );

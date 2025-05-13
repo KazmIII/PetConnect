@@ -32,7 +32,7 @@ const ThankYouPage = () => {
         animate="visible"
       >
         {/* Floating sparkles */}
-        <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {[...Array(12)].map((_, i) => (
             <motion.div
               key={i}
@@ -88,25 +88,28 @@ const ThankYouPage = () => {
           >
             Return Home
           </Link>
-          
-          <Link
-            to="/profile/user"
-            className="inline-flex items-center justify-center px-8 py-3 border-2 border-teal-600 text-teal-600 rounded-full hover:bg-teal-50 transition-all transform hover:scale-105"
-          >
-            View Profile
-          </Link>
         </motion.div>
 
         <motion.div 
-          className="mt-8 text-gray-500 text-sm"
-          variants={childVariants}
+        className="mt-8 text-gray-500 text-sm"
+        variants={childVariants}
         >
-          <p className="mb-2">Your feedback helps improve our services!</p>
-          <div className="flex justify-center space-x-4">
-            <a href="/blog" className="hover:text-teal-600">Read our blog</a>
-            <span>•</span>
-            <a href="/FAQs" className="hover:text-teal-600">Visit FAQs</a>
-          </div>
+            <p className="mb-2">Your feedback helps improve our services!</p>
+            <div className="flex justify-center space-x-4">
+                <Link 
+                to="/blogs" 
+                className="text-teal-600 hover:text-teal-800 font-medium transition-colors cursor-pointer"
+                >
+                Read our blogs
+                </Link>
+                <span className="text-gray-400">•</span>
+                <Link 
+                to="/FAQs" 
+                className="text-teal-600 hover:text-teal-800 font-medium transition-colors cursor-pointer"
+                >
+                Visit FAQs
+                </Link>
+            </div>
         </motion.div>
       </motion.div>
     </div>

@@ -4,94 +4,108 @@ import { faFacebookF, faInstagram, faYoutube, faGooglePlay, faAppStore } from '@
 
 export default function Footer() {
   return (
-    <div className="flex flex-col">
-    <footer className="bg-black opacity-85 w-full  text-white pt-10">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-wrap items-center justify-between">
-          <div className="w-full md:w-1/3 text-center md:text-left mb-4 md:mb-0">
-            <h5 className="font-bold text-lg pb-4">PetConnect</h5>
-            <h5 className="font-bold text-xl pb-2">About Us</h5>
-            <p className="text-lg text-slate-400 font-semibold">
-              At PetConnect, we bridge the gap between pet owners and service providers, 
-              ensuring your furry friends receive the best care possible.
+    <footer className="bg-gray-900 text-white pt-12 pb-8">
+      <div className="container mx-auto px-4 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+          {/* About Section */}
+          <div className="md:col-span-2">
+            <h5 className="text-2xl font-bold text-orange-500 mb-4">PetConnect</h5>
+            <p className="text-gray-400 text-lg leading-relaxed">
+              Bridging the gap between pet lovers and care providers, ensuring 
+              your furry friends receive the best possible attention and services.
             </p>
           </div>
 
-          <div className="w-full md:w-1/3 text-center mb-4 md:mb-0 md:pl-40">
-            <ul className="list-none text-center md:text-left">
-              <li className="text-lg font-semibold mb-2">Our Services</li>
-              <li>
-                <a href="#!" className="text-white hover:text-gray-400 block">Consult Veterinarian</a>
-              </li>
-              <li>
-                <a href="#!" className="text-white hover:text-gray-400 block">Pet Sitting/Grooming</a>
-              </li>
-              <li>
-                <a href="/lost" className="text-white hover:text-gray-400 block">Lost & Found</a>
-              </li>
-              <li>
-                <a href="/predict-emotion" className="text-white hover:text-gray-400 block">Detect Pet Emotion</a>
-              </li>
+          {/* Services Section */}
+          <div className="mt-4 md:mt-0">
+            <h6 className="text-lg font-semibold text-white mb-4">Our Services</h6>
+            <ul className="space-y-3">
+              {[
+                ['Consult Veterinarian', '/vets'],
+                ['Pet Sitting/Grooming', '/'],
+                ['Lost & Found', '/lost'],
+                ['Detect Pet Emotion', '/predict-emotion'],
+                ['Pet Adoption', '/find-a-pet'],
+              ].map(([text, href]) => (
+                <li key={text}>
+                  <a href={href} className="text-gray-400 hover:text-orange-500 transition-colors">
+                    {text}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
-          <div className="w-full md:w-1/3 text-center mb-4 md:mb-0 md:pl-40">
-            <ul className="list-none text-center md:text-left">
-              <li className="text-lg font-semibold mb-2">Our Services</li>
-              <li>
-                <a href="/find-a-pet" className="text-white hover:text-gray-400 block">Pet Adoption</a>
-              </li>
-              <li>
-                <a href="#!" className="text-white hover:text-gray-400 block">Pet Grooming</a>
-              </li>
+          {/* Legal Section */}
+          <div className="mt-4 md:mt-0">
+            <h6 className="text-lg font-semibold text-white mb-4">Legal</h6>
+            <ul className="space-y-3">
+              {[
+                ['FAQs', '/FAQs'],
+                ['Contact', '/contact'],
+                ['Privacy Policy', '/privacy-policy'],
+                ['Terms & Conditions', '/terms-and-conditions'],
+              ].map(([text, href]) => (
+                <li key={text}>
+                  <a href={href} className="text-gray-400 hover:text-orange-500 transition-colors">
+                    {text}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
 
-        <hr className="my-4 border-t border-white w-full"/>
+        {/* Divider */}
+        <div className="border-t border-gray-700 my-8"></div>
 
-        <div className="flex flex-wrap items-center justify-between">
-          <div className="w-full md:w-1/4 text-center md:text-left mb-4 md:mb-0">
-            <p className="text-sm">© 2025 PetConnect. All rights reserved.</p>
+        {/* Bottom Section */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          {/* Copyright */}
+          <div className="order-2 md:order-1 text-center md:text-left">
+            <p className="text-gray-400">
+              © {new Date().getFullYear()} PetConnect. All rights reserved.
+            </p>
           </div>
 
-          <div className="w-full md:w-1/2 text-center mb-4 md:mb-0">
-            <ul className="list-none flex flex-wrap justify-center gap-6 text-xs">
-              <li><a href="/FAQs" className="text-white hover:text-gray-400">FAQs</a></li>
-              <li><a href="/contact" className="text-white hover:text-gray-400">Contact</a></li>
-              <li><a href="/privacy-policy" className="text-white hover:text-gray-400">Privacy Policy</a></li>
-              <li><a href="/terms-and-conditions" className="text-white hover:text-gray-400">Terms & Conditions</a></li>
-            </ul>
-          </div>
-
-          <div className="w-full md:w-1/4 text-center md:text-right mb-4 md:mb-0">
-            <div className="flex flex-col items-center md:items-end gap-4 mb-4">
-            
-
-
-              <h4 className="text-md">Connect with us</h4>
-              <ul className="list-none flex justify-center md:justify-end gap-6">
-                <li>
-                  <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" className="text-white hover:text-gray-400">
-                    <FontAwesomeIcon icon={faFacebookF} className="h-6 w-6" />
-                  </a>
-                </li>
-                <li>
-                  <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" className="text-white hover:text-gray-400">
-                    <FontAwesomeIcon icon={faInstagram} className="h-6 w-6" />
-                  </a>
-                </li>
-                <li>
-                  <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" className="text-white hover:text-gray-400">
-                    <FontAwesomeIcon icon={faYoutube} className="h-6 w-6" />
-                  </a>
-                </li>
-              </ul>
+          {/* Social Links */}
+          <div className="order-1 md:order-2 flex items-center gap-6">
+            <div className="flex gap-4">
+              {[
+                [faFacebookF, 'https://facebook.com'],
+                [faInstagram, 'https://instagram.com'],
+                [faYoutube, 'https://youtube.com'],
+              ].map(([icon, href]) => (
+                <a
+                  key={href}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-orange-500 transition-colors"
+                >
+                  <FontAwesomeIcon icon={icon} className="w-5 h-5" />
+                </a>
+              ))}
             </div>
+          </div>
+
+          {/* App Stores */}
+          <div className="order-3 flex gap-4">
+            <a href="#" className="hover:opacity-80 transition-opacity">
+              <FontAwesomeIcon 
+                icon={faGooglePlay} 
+                className="h-8 w-22 text-gray-300" 
+              />
+            </a>
+            <a href="#" className="hover:opacity-80 transition-opacity">
+              <FontAwesomeIcon 
+                icon={faAppStore} 
+                className="h-8 w-22 text-gray-300" 
+              />
+            </a>
           </div>
         </div>
       </div>
     </footer>
-    </div>
   );
 }
