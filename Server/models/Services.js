@@ -17,7 +17,7 @@ const availabilitySchema = new mongoose.Schema({
 
 // Reusable Home Visit fields
 const homeVisitFields = {
-  deliveryMethod:  { type: String, required: true },   // e.g. "Home Visit", "On-Site"
+  deliveryMethod:  { type: String, required: true },   // e.g. "Home Visit", "in-clinic" for groomer and sitter and for vet the last two along with the video consultation
   address:         { type: String },                    // starting address for radius/areas
   city:            { type: String },                    // read-only from profile
   coverageType:    { type: String, enum: ['radius','areas'] },

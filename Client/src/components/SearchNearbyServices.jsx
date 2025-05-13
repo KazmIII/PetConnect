@@ -85,10 +85,12 @@ const SearchNearbyServices = ({ onClose, initialService = '' }) => {
     }
   };
 
-  const goToSelected = () => {
-    if (!selectedService || !selectedCity) return;
+  const goToSelected = (overrideCity) => {
+    const cityToUse = overrideCity ?? selectedCity;
+    if (!selectedService || !cityToUse) return;
+ 
+    const cityParam = encodeURIComponent(cityToUse);
   
-    const cityParam = encodeURIComponent(selectedCity);
     if (selectedService === 'Veterinary Online Consultation') {
       navigate('/vets/video-consultation');
     } else if (selectedService === 'Veterinary In-Clinic Consultation') {
@@ -181,7 +183,7 @@ const SearchNearbyServices = ({ onClose, initialService = '' }) => {
                     }`}
                     onClick={() => {
                       setSelectedCity(city);
-                      goToSelected();
+                      goToSelected(city);
                     }}
                   >
                     <MapPin size={14} className="text-gray-500" />

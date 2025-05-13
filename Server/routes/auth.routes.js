@@ -32,7 +32,9 @@ import {GetVerifiedGroomers, GetGroomerById } from '../controllers/GroomerContro
 
 import {GetVerifiedSitters, GetSitterById } from '../controllers/SitterController.js';
 
-import {CreateAppointment, ConfirmAppointment, StripeWebhook, GetUserAppointments, GetVetAppointments, StartAppointment,
+import {CreateReview} from '../controllers/ReviewController.js';
+
+import {CreateAppointment, GetAppointmentById, ConfirmAppointment, StripeWebhook, GetUserAppointments, GetVetAppointments, StartAppointment,
    CompleteAppointment} from '../controllers/AppointmentController.js';
 
 import {
@@ -48,17 +50,23 @@ import {
 
 const AuthRoutes = express.Router();
 
+//Reviews Routes
+AuthRoutes.post("/create-review", CreateReview);
+// AuthRoutes.get ("/reviews/vet/:vetId", GetReviewsForVet);
+
 //Appointment Routes
 AuthRoutes.get('/appointments', GetUserAppointments);
 AuthRoutes.get('/appointments/vet', GetVetAppointments);
 AuthRoutes.post('/appointments/confirm', ConfirmAppointment); // move this ABOVE
-AuthRoutes.post('/appointments/:vetId', CreateAppointment); 
+AuthRoutes.post('/appointments/:vetId', CreateAppointment);
+AuthRoutes.get('/appointments/:appointmentId', GetAppointmentById); 
 AuthRoutes.post("/appointments/:appointmentId/start", StartAppointment);
 AuthRoutes.post("/appointments/:appointmentId/complete", CompleteAppointment);
 
 //Groomer Routes
 AuthRoutes.get('/groomers', GetVerifiedGroomers);
 AuthRoutes.get('/groomers/:groomerId', GetGroomerById);
+
 //NotificationRoutes
 AuthRoutes.get('/notifications', GetNotifications);
 AuthRoutes.post('/notifications', CreateNotification);

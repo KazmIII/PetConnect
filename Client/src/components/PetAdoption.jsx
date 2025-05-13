@@ -406,85 +406,93 @@ const PetAdoption = () => {
       {matchResults ? (
         <div>
           <h2 className="text-3xl font-bold mb-4">Match Results</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {matchResults.map((pet) => (
-              <div
-                key={pet._id}
-                className="border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+          {matchResults.length === 0 ? (
+            <div className="col-span-full text-center py-16 space-y-4">
+              <p className="text-xl text-gray-600">No pets match your search criteria.</p>
+              <button
+                className="bg-lime-600 hover:bg-lime-700 text-white py-2 px-4 rounded transition"
+                onClick={() => {
+                  setMatchResults(null);
+                  resetAdvancedSearch();
+                }}
               >
-                <Link
-                  to={`/pet-listing/${pet._id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block"
-                >
-                  <img
-                    className="w-full h-72 object-cover"
-                    src={pet.photos?.[0] || "placeholder.jpg"}
-                    alt={pet.name}
-                  />
-                  <div className="p-4">
-                    <h3 className="text-2xl font-semibold mb-2">{pet.name}</h3>
-                    <p className="text-base text-gray-600 mb-1">{pet.age} old</p>
-                    <p className="text-base text-orange-600 mb-1">{pet.breed}</p>
-                    <p className="text-base text-gray-600 flex items-center">
-                      <MapPin className="w-4 h-4 mr-1" />
-                      {pet.city}
-                    </p>
-                    {pet.compatibilityScore !== undefined && (
-                      <p className="text-base text-green-600 mt-2">
-                        Compatibility Score: {(pet.compatibilityScore * 100).toFixed(2)}%
+                Reset Search
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {matchResults.map((pet) => (
+                <div key={pet._id} className="border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                  <Link to={`/pet-listing/${pet._id}`} className="block">
+                    <img
+                      className="w-full h-72 object-cover"
+                      src={pet.photos?.[0] || "placeholder.jpg"}
+                      alt={pet.name}
+                    />
+                    <div className="p-4">
+                      <h3 className="text-2xl font-semibold mb-2">{pet.name}</h3>
+                      <p className="text-base text-gray-600 mb-1">{pet.age} old</p>
+                      <p className="text-base text-orange-600 mb-1">{pet.breed}</p>
+                      <p className="text-base text-gray-600 flex items-center">
+                        <MapPin className="w-4 h-4 mr-1" />
+                        {pet.city}
                       </p>
-                    )}
-                  </div>
-                </Link>
-              </div>
-            ))}
-          </div>
+                      {pet.compatibilityScore !== undefined && (
+                        <p className="text-base text-green-600 mt-2">
+                          Compatibility Score: {(pet.compatibilityScore * 100).toFixed(2)}%
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : petsLoading ? (
+        <div className="w-full flex justify-center items-center my-52">
+          <Spinner />
+        </div>
+      ) : filteredPets.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {filteredPets.map((pet) => (
+            <div key={pet._id} className="border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+              <Link to={`/pet-listing/${pet._id}`} className="block">
+                <img
+                  className="w-full h-72 object-cover"
+                  src={pet.photos?.[0] || "placeholder.jpg"}
+                  alt={pet.name}
+                />
+                <div className="p-4">
+                  <h3 className="text-2xl font-semibold mb-2">{pet.name}</h3>
+                  <p className="text-base text-gray-600 mb-1">{pet.age} old</p>
+                  <p className="text-base text-orange-600 mb-1">{pet.breed}</p>
+                  <p className="text-base text-gray-600 flex items-center">
+                    <MapPin className="w-4 h-4 mr-1" />
+                    {pet.city}
+                  </p>
+                </div>
+              </Link>
+            </div>
+          ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {petsLoading ? (
-            <div className="w-full flex justify-center items-center mx-auto  my-52">
-              <Spinner />
-            </div>          
-          ) : filteredPets.length > 0 ? (
-            filteredPets.map((pet) => (
-              <div
-                key={pet._id}
-                className="border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-              >
-                <Link
-                  to={`/pet-listing/${pet._id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block"
-                >
-                  <img
-                    className="w-full h-72 object-cover"
-                    src={pet.photos?.[0] || "placeholder.jpg"}
-                    alt={pet.name}
-                  />
-                  <div className="p-4">
-                    <h3 className="text-2xl font-semibold mb-2">{pet.name}</h3>
-                    <p className="text-base text-gray-600 mb-1">{pet.age} old</p>
-                    <p className="text-base text-orange-600 mb-1">{pet.breed}</p>
-                    <p className="text-base text-gray-600 flex items-center">
-                      <MapPin className="w-4 h-4 mr-1" />
-                      {pet.city}
-                    </p>
-                  </div>
-                </Link>
-              </div>
-            ))
-          ) : (
-            <p className="text-center text-gray-500 col-span-full">No pets found.</p>
-          )}
+        <div className="col-span-full text-center py-16 space-y-4">
+          <p className="text-xl text-gray-600">No pets available for adoption yet.</p>
+          <button
+            className="bg-teal-600 hover:bg-teal-700 text-white py-2 px-4 rounded transition"
+            onClick={() => {
+              setPetType("");
+              resetAdvancedSearch();
+            }}
+          >
+            Refresh List
+          </button>
         </div>
       )}
 
-      {/* LOAD MORE BUTTON (only for normal listing, not advanced results) */}
-      {!matchResults && hasMore && (
+      {/* LOAD MORE BUTTON */}
+      {!matchResults && hasMore && filteredPets.length > 0 && (
         <div className="flex justify-center my-6">
           <button
             className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded"

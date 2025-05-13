@@ -1,6 +1,7 @@
 import HomeSearchComponent from './HomeSearchComponent';
 import ServiceCards from './ServiceCards';
 import AdoptionOrRehome from './AdoptionOrRehome';
+import EmotionFeatureCard from './EmotionFeatureCard';
 
 export default function Home() {
 
@@ -14,6 +15,7 @@ export default function Home() {
           <ServiceCards />
         </div>
         <AdoptionOrRehome />
+        <EmotionFeatureCard />
         
       </div>
     </div>

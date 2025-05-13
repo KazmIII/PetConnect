@@ -7,6 +7,48 @@ import { VetModel } from "../models/Vet.js";
 import Notification from '../models/Notifications.js';
 import schedule from 'node-schedule';
 
+export const GetAppointmentById = async (req, res) => {
+  // Try both cookie names
+  const token = req.cookies.vetToken || req.cookies.pet_ownerToken;
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized – no token" });
+  }
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    return res.status(401).json({ message: "Unauthorized – invalid token" });
+  }
+
+  const requesterId = decoded.id;
+  const appointmentId = req.params.appointmentId;
+
+  try {
+    const appt = await Appointment
+      .findById(appointmentId)
+      .populate("vetId", "name roomID")
+      .populate("userId", "name email")
+      .lean();
+
+    if (!appt) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+
+    // Only the assigned vet or the booking user may fetch this
+    if (
+      appt.vetId._id.toString() !== requesterId &&
+      appt.userId._id.toString() !== requesterId
+    ) {
+      return res.status(403).json({ message: "Forbidden – access denied" });
+    }
+
+    res.json(appt);
+  } catch (err) {
+    console.error("Error in GetAppointmentById:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2022-11-15",

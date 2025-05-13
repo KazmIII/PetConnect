@@ -32,8 +32,13 @@ import PetEmotion from './components/PetEmotion';
 import Vets from './components/Vets';
 import VetAppointment from './components/VetAppointment';
 
+import ScrollToTop from './components/ScrollToTop';
+
 import Groomers from './components/Groomers';
 import GroomerAppointment from './components/GroomerAppointment';
+
+import SubmitFeedbackPage from './components/SubmitFeedbackPage';
+import ThankYouPage from './components/ThankYouPage';
 
 import Sitters from './components/Sitters';
 import SitterAppointment from './components/SitterAppointment';
@@ -69,6 +74,7 @@ import PaymentCancel from './components/PaymentCancel';
 import AppointmentsPage from './components/AppointmentsPage';
 import VetAppointmentsPage from './components/VetAppointmentsPage';
 import NotificationPage from './components/NotificationPage';
+
 const Modal = () => {
   const { activeComponent, update, checkLoginStatus, handleHideComponents, otpType, otpCode, userEmail, role, handleShowComponent } = useNavbar();
   const [showModal, setShowModal] = useState(false);
@@ -217,6 +223,9 @@ const AppContent = () => {
         <Route path="/sitters" element={<Sitters />} />
         <Route path="/appointment/:serviceType/sitter/:sitterId" element={<SitterAppointment />} />
 
+        <Route path="/submit-feedback" element={<ProtectedRoute requiredRole="pet_owner"> <SubmitFeedbackPage /> </ProtectedRoute>} />
+        <Route path="/thank-you" element={<ThankYouPage />} />
+
         <Route path="/find-a-pet" element={<PetAdoption />} />
         <Route path="/pet-listing/:id" element={<PetAdoptionDetail />} />
         <Route path="/pet-listing/:id/adoption-application" element={<ProtectedRoute requiredRole="pet_owner"> <AdoptionForm /> </ProtectedRoute>} />
@@ -288,6 +297,7 @@ export const App = () => {
   return (
     <NavbarProvider>
       <Router>
+        <ScrollToTop />
         <AppContent />
       </Router>
     </NavbarProvider>
