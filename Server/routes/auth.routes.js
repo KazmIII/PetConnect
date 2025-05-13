@@ -27,11 +27,11 @@ import {SubmitAdoptionAd, GetAllAdoptionAds, GetAdoptionAdById, SubmitAdoptionAp
 } from '../controllers/AdoptionController.js';
 
 import {GetVerifiedVets, GetVetById } from '../controllers/VetController.js';
-import {CreateAppointment, ConfirmAppointment, StripeWebhook, GetUserAppointments, GetVetAppointments, StartAppointment, CompleteAppointment} from '../controllers/AppointmentController.js';
+import {CreateAppointment, ConfirmAppointment, StripeWebhook, CancelAppointment,CheckOutHomeAppointment,GetUserAppointments, CheckInHomeAppointment,GetVetAppointments, StartAppointment, CompleteAppointment} from '../controllers/AppointmentController.js';
 import {CreateReview} from '../controllers/ReviewController.js';
 
-import {CreateGroomerAppointment, ConfirmGroomerAppointment, GetUserGroomerAppointments, GetGroomerAppointments, CompleteGroomerAppointment} from '../controllers/GroomerAppointmentController.js';
-
+import {CreateGroomerAppointment, GetUserGroomerAppointments, GetGroomerAppointments, CompleteGroomerAppointment,CheckInGroomerAppointment,CheckOutGroomerAppointment,StartGroomerAppointment} from '../controllers/GroomerAppointmentController.js';
+import {CreateSitterAppointment,StartSitterAppointment, CheckInSitterAppointment,CheckOutSitterAppointment,GetUserSitterAppointments, GetSitterAppointments, CompleteSitterAppointment} from '../controllers/SitterAppointmentController.js';
 import {
   GetNotifications,
   DeleteNotification,
@@ -59,21 +59,31 @@ AuthRoutes.get('/appointments', GetUserAppointments);
 AuthRoutes.get('/appointments/vet', GetVetAppointments);
 AuthRoutes.post('/appointments/confirm', ConfirmAppointment); // move this ABOVE
 AuthRoutes.post('/appointments/:vetId', CreateAppointment);
-// AuthRoutes.get('/appointments/:appointmentId', GetAppointmentById); 
 AuthRoutes.post("/appointments/:appointmentId/start", StartAppointment);
 AuthRoutes.post("/appointments/:appointmentId/complete", CompleteAppointment);
+AuthRoutes.post('/appointments/vet/:appointmentId/checkin', CheckInHomeAppointment);
+AuthRoutes.post('/appointments/vet/:appointmentId/checkout', CheckOutHomeAppointment);
+AuthRoutes.post('/appointments/vet/:appointmentId/cancel', CancelAppointment);
+
+
 // ── Groomer Appointments ─────────────────────────────────────────────────────
-AuthRoutes.get('/appointments/groomer',           GetUserGroomerAppointments);
+AuthRoutes.get('/appointments/groomer/:groomerId',           GetUserGroomerAppointments);
+
+AuthRoutes.get('/appointments/groomer',           GetGroomerAppointments);
+AuthRoutes.post('/appointments/groomer/:groomerId', CreateGroomerAppointment);
+AuthRoutes.post('/appointments/groomer/:appointmentId/complete',CompleteGroomerAppointment);
+AuthRoutes.post('/appointments/groomer/:appointmentId/checkin', CheckInGroomerAppointment);
+AuthRoutes.post('/appointments/groomer/:appointmentId/checkout', CheckOutGroomerAppointment);
+AuthRoutes.post('/appointments/groomer/:appointmentId/start', StartGroomerAppointment);
 
 // Payment confirmation must come before creation
-AuthRoutes.post('/appointments/groomer/confirm',  ConfirmGroomerAppointment);
-
-// Creation endpoint
-AuthRoutes.post('/appointments/groomer/:groomerId', CreateGroomerAppointment);
-
-// Mark as completed
-AuthRoutes.post('/appointments/groomer/:appointmentId/complete',CompleteGroomerAppointment);
-
+AuthRoutes.get('/appointments/sitter/:sitterId',           GetUserSitterAppointments);
+AuthRoutes.get('/appointments/sitter',           GetSitterAppointments);
+AuthRoutes.post('/appointments/sitter/:sitterId', CreateSitterAppointment);
+AuthRoutes.post('/appointments/sitter/:appointmentId/complete',CompleteSitterAppointment);
+AuthRoutes.post('/appointments/sitter/:appointmentId/checkin', CheckInSitterAppointment);
+AuthRoutes.post('/appointments/sitter/:appointmentId/checkout', CheckOutSitterAppointment);
+AuthRoutes.post('/appointments/sitter/:appointmentId/start', StartSitterAppointment);
 
 
 

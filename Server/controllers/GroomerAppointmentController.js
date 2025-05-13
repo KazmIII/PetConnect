@@ -1,6 +1,5 @@
 import Stripe from "stripe";
 import jwt from "jsonwebtoken";
-import { v4 as uuidv4 } from "uuid";
 import { Appointment } from "../models/GroomerAppointment.js"; // Adjust path if needed
 import { UserModel } from "../models/User.js";
 import { GroomerModel } from "../models/Groomer.js"; // Assuming you have this model
@@ -60,7 +59,11 @@ export const CreateGroomerAppointment = async (req, res) => {
         },
       ],
       mode: "payment",
-      metadata: { appointmentId: appointment._id.toString() },
+      metadata: {
+    appointmentId: appointment._id.toString(),
+    providerType:   "groomer",
+    providerId:     appointment.groomerId.toString()
+  },
       success_url: `${process.env.FRONTEND_URL}/appointments/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.FRONTEND_URL}/appointments/cancel?appointmentId=${appointment._id}`,
     });
@@ -242,6 +245,141 @@ export const GetGroomerAppointments = async (req, res) => {
     res.json(appointments);
   } catch (err) {
     console.error("Error in GetGroomerAppointments:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const GetGroomerById = async (req, res) => {
+  // 1) verify token
+  const token = req.cookies.pet_ownerToken;
+  if (!token) return res.status(401).json({ message: 'Unauthorized' });
+  try {
+    jwt.verify(token, process.env.JWT_SECRET);
+  } catch {
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+
+  // 2) fetch groomer
+  try {
+    const groomer = await GroomerModel.findById(req.params.groomerId).lean();
+    if (!groomer) return res.status(404).json({ message: 'Groomer not found' });
+    res.json(groomer);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Check-in for home services
+export const CheckInGroomerAppointment = async (req, res) => {
+  const token = req.cookies.groomerToken;
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+  try {
+    const { id: groomerId } = jwt.verify(token, process.env.JWT_SECRET);
+    const { appointmentId } = req.params;
+
+    const appt = await Appointment.findById(appointmentId);
+    if (!appt) return res.status(404).json({ message: "Appointment not found" });
+
+    if (appt.groomerId.toString() !== groomerId)
+      return res.status(403).json({ message: "Not allowed to check in this appointment" });
+
+    if (appt.status !== "booked")
+      return res.status(400).json({ message: "Only booked appointments can be checked in" });
+
+    appt.status = "in-progress";
+    await appt.save();
+
+    // Send notification to user
+    const groomer = await GroomerModel.findById(groomerId);
+    await Notification.create({
+      userId: appt.userId,
+      appointmentId: appt._id,
+      type: 'appointment',
+      message: `${groomer.name} has checked in for your home grooming appointment`,
+      date: new Date()
+    });
+
+    res.json({ success: true, message: "Checked in successfully" });
+  } catch (err) {
+    console.error("Error in CheckInGroomerAppointment:", err.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Check-out for home services
+export const CheckOutGroomerAppointment = async (req, res) => {
+  const token = req.cookies.groomerToken;
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+  try {
+    const { id: groomerId } = jwt.verify(token, process.env.JWT_SECRET);
+    const { appointmentId } = req.params;
+
+    const appt = await Appointment.findById(appointmentId);
+    if (!appt) return res.status(404).json({ message: "Appointment not found" });
+
+    if (appt.groomerId.toString() !== groomerId)
+      return res.status(403).json({ message: "Not allowed to check out this appointment" });
+
+    if (appt.status !== "in-progress")
+      return res.status(400).json({ message: "Only in-progress appointments can be checked out" });
+
+    appt.status = "completed";
+    await appt.save();
+
+    // Send notification to user
+    const groomer = await GroomerModel.findById(groomerId);
+    await Notification.create({
+      userId: appt.userId,
+      appointmentId: appt._id,
+      type: 'appointment',
+      message: `${groomer.name} has completed your home grooming appointment`,
+      date: new Date()
+    });
+
+    res.json({ success: true, message: "Checked out successfully" });
+  } catch (err) {
+    console.error("Error in CheckOutGroomerAppointment:", err.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Start salon appointments
+export const StartGroomerAppointment = async (req, res) => {
+  const token = req.cookies.groomerToken;
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+  try {
+    const { id: groomerId } = jwt.verify(token, process.env.JWT_SECRET);
+    const { appointmentId } = req.params;
+
+    const appt = await Appointment.findById(appointmentId);
+    if (!appt) return res.status(404).json({ message: "Appointment not found" });
+
+    if (appt.groomerId.toString() !== groomerId)
+      return res.status(403).json({ message: "Not allowed to start this appointment" });
+
+    if (appt.status !== "booked")
+      return res.status(400).json({ message: "Only booked appointments can be started" });
+
+    appt.status = "in-progress";
+    await appt.save();
+
+    // Send notification to user
+    const groomer = await GroomerModel.findById(groomerId);
+    await Notification.create({
+      userId: appt.userId,
+      appointmentId: appt._id,
+      type: 'appointment',
+      message: `Your salon grooming appointment with ${groomer.name} has started`,
+      date: new Date()
+    });
+
+    res.json({ success: true, message: "Appointment started" });
+  } catch (err) {
+    console.error("Error in StartGroomerAppointment:", err.message);
     res.status(500).json({ message: "Internal server error" });
   }
 };
