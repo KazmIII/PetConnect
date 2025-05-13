@@ -324,7 +324,7 @@ if (display === 'Today') {
       };
 
       const { data } = await axios.post(
-        `http://localhost:5000/auth/appointments/${groomerId}`,
+        `http://localhost:5000/auth/appointments/groomer/${groomerId}`,
         payload,
         { withCredentials: true }
       );
