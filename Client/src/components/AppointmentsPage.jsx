@@ -78,7 +78,10 @@ export default function AppointmentsPage() {
             >
               <div className="space-y-1">
                 <p className="text-gray-900 mb-2 text-2xl font-semibold">
-                  <span className="text-gray-900">Dr.</span> {appt.vetId?.name || "Unknown Vet"}
+                  <span className="text-gray-900">
+                    {appt.providerType === "vet" ? "Dr." : appt.providerType === "groomer" ? "Stylist" : "Sitter"}
+                  </span>{" "}
+                  {appt.providerName}
                 </p>
                 <p className="text-gray-700">
                   <span className="font-semibold text-gray-900">Date & Time:</span> {startDT.toLocaleDateString()} at {appt.slot.startTime}
@@ -104,9 +107,7 @@ export default function AppointmentsPage() {
                 <button
                   onClick={() =>
                     navigate(
-                      `/submit-feedback?` +
-                        `appointmentId=${appt._id}&` +
-                        `vetId=${appt.vetId._id}`
+                      `/submit-feedback?appointmentId=${appt._id}&vetId=${appt.providerType === "vet" ? appt.providerId : ""}`
                     )
                   }
                   className="mt-2 px-4 py-2 bg-gradient-to-r from-teal-400 to-teal-700 text-white rounded hover:opacity-75"

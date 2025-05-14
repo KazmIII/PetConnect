@@ -130,9 +130,14 @@ const SitterAppointment = () => {
         (acc, block) => acc.concat(block.slots),
         []
       );
+
+      // ** NEW: only keep slots that are neither booked nor pending **
+      const freeSlots = allSlots.filter(
+        slot => slot.status !== "booked" && slot.status !== "pending"
+      );
   
-      console.log(`Slots for ${dayName} (${isoDate}):`, allSlots);
-      return allSlots;
+      console.log(`Free slots for ${dayName} (${isoDate}):`, freeSlots);
+      return freeSlots;
   
     } catch (err) {
       console.error('Error fetching slots:', err);

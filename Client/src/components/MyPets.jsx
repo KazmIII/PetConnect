@@ -1,20 +1,40 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Trash2, Pencil, Camera } from "lucide-react";
+import { Trash2, Pencil, Camera, Save } from "lucide-react";
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from "axios";
 import Papa from "papaparse";
 import backgroundImage from "../assets/BgMemoryhd.jpg";
 
+const petColorsList = [
+  "Black",
+  "Brown / Chocolate",
+  "Blue",
+  "Cream / Fawn / Yellow",
+  "Gold / Apricot",
+  "Other",
+  "Mixed Colour",
+  "Red / Ginger",
+  "Silver / Grey",
+  "White",
+];
+
 const MyPets = () => {
   const imageRef = useRef();
   const [pets, setPets] = useState([]);
+  const [showBreedModal, setShowBreedModal] = useState(false);
+  const [tempSelectedBreeds, setTempSelectedBreeds] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedColors, setSelectedColors] = useState([]);
   const [petData, setPetData] = useState({
     name: "",
     petType: "",
-    breed: "",
     age: "",
     gender: "",
     size: "",
+    breed: [],
+    colors: [], 
+    spayedNeutered: "",         // "Yes" | "No" | "Unknown"
+    microchipped: "",  
   });
   const [file, setFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
@@ -27,6 +47,7 @@ const MyPets = () => {
   const [updatedPet, setUpdatedPet] = useState({});
   const [breeds, setBreeds] = useState({});
   const [errorMessage, setErrorMessage] = useState('');
+  
   const { petId } = useParams();
 
   const navigate = useNavigate();
@@ -269,6 +290,47 @@ const MyPets = () => {
       alert('Failed to delete pet profile');
     }
   };
+
+    // Breed Modal
+  // ---------------------------
+  const openBreedModal = () => {
+    // Temp store the existing selected breed(s) so we can show them checked
+    setTempSelectedBreeds([...petData.breed]);
+    setSearchTerm("");
+    console.log("opening breed modal");
+    setShowBreedModal(true);
+  };
+
+  const closeBreedModal = () => {
+    setShowBreedModal(false);
+  };
+
+  const handleBreedCheckbox = (breedName) => {
+    // Max 3 selection
+    let updated = [...tempSelectedBreeds];
+    if (updated.includes(breedName)) {
+      updated = updated.filter((b) => b !== breedName);
+    } else {
+      if (updated.length >= 3) {
+        alert("You can select up to 3 breeds only.");
+        return;
+      }
+      updated.push(breedName);
+    }
+    setTempSelectedBreeds(updated);
+  };
+
+  const saveBreedSelection = () => {
+    // Save to formData
+    setPetData((prev) => ({ ...prev, breed: tempSelectedBreeds }));
+    setShowBreedModal(false);
+  };
+
+  const relevantBreeds =
+    petData.petType && breeds[petData.petType] ? breeds[petData.petType] : [];
+  const filteredBreeds = relevantBreeds.filter((breedName) =>
+    breedName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
 
   const renderContent = () => (
@@ -566,21 +628,23 @@ const MyPets = () => {
                   )}
 
                   {petData.petType !== "Other" && (
-                    <select
-                      name="breed"
-                      value={petData.breed}
-                      onChange={handleInputChange}
-                      className="w-full p-2.5 mb-4 border border-gray-300 rounded-lg text-gray-600"
-                    >
-                      <option value="" disabled>
-                        Select breed
-                      </option>
-                      {(breeds[petData.petType] || []).map((breed) => (
-                        <option key={breed} value={breed}>
-                          {breed}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="mb-4">
+              <label className="block mb-2 font-medium">Breed (up to 3)<span className="text-red-600"> *</span></label>
+              <button
+                type="button"
+                onClick={openBreedModal}
+                className="px-3 py-2 w-1/3 bg-teal-600 text-white rounded hover:bg-teal-700"
+                disabled={!petData.petType} // only enable if species is chosen
+              >
+                Select Breed
+              </button>
+              {/* Show currently selected breeds */}
+              {petData.breed.length > 0 && (
+                <div className="mt-2 text-sm">
+                  Selected: {petData.breed.join(", ")}
+                </div>
+              )}
+            </div>
                   )}
 
                   <input
@@ -695,6 +759,115 @@ const MyPets = () => {
                 <p className="text-red-500 text-center mb-2">{errorMessage}</p>
               )}
 
+              {/* Neutered (radio) */}
+            <div className="mb-4">
+              <label className="block mb-2 font-medium">Is your pet neutered?<span className="text-red-600"> *</span></label>
+              <div className="grid grid-cols-3 gap-2">
+                {["Yes", "No", "Unknown"].map((val) => (
+                  <label
+                    key={val}
+                    className="flex items-center bg-orange-100 p-2.5 border border-gray-300 rounded hover:border-orange-500 cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name="spayedNeutered"
+                      value={val}
+                      checked={petData.spayedNeutered === val}
+                      onChange={handleInputChange}
+                      className="form-radio h-5 w-5 accent-teal-600"
+                    />
+                    <span className="ml-2 text-gray-700">{val}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Microchipped (radio) */}
+            <div className="mb-4">
+              <label className="block mb-2 font-medium">Is your pet microchipped?<span className="text-red-600"> *</span></label>
+              <div className="grid grid-cols-2 gap-2">
+                {["Yes", "No"].map((val) => (
+                  <label
+                    key={val}
+                    className="flex items-center bg-orange-100 p-2.5 border border-gray-300 rounded hover:border-orange-500 cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name="microchipped"
+                      value={val}
+                      checked={petData.microchipped === val}
+                      onChange={handleInputChange}
+                      className="form-radio h-5 w-5 text-orange-600"
+                    />
+                    <span className="ml-2 text-gray-700">{val}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+              {/* Pet Colors (checkboxes) */}
+            <div className="mb-4">
+              <label className="block mb-2 font-medium text-gray-900">
+                Pet Color(s)<span className="text-red-600"> *</span>
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-2 gap-2">
+                {petColorsList.map((color) => {
+                  // Adjusted color shades
+                  const colorMapping = {
+                    Black: "#000000",
+                    "Brown / Chocolate": "#944300", // Lighter brown
+                    Blue: "#456789", // Tailwind blue-500 (softer blue)
+                    "Cream / Fawn / Yellow": "#F3c188", // Tailwind yellow-300
+                    "Gold / Apricot": "#F3901c", // Tailwind orange-500
+                    Other: "#D3D3D3",
+                    "Mixed Colour": "#A9A9A9",
+                    "Red / Ginger": "#e1621d", // Tailwind red-600 (less intense)
+                    "Silver / Grey": "#cccccc", // Tailwind gray-500
+                    White: "#FFFFFF",
+                  };
+
+                  // Check if the background is dark to change text color
+                  const isDarkColor = ["Black", "Brown / Chocolate", "Blue", "Red / Ginger"].includes(color);
+
+                  // Determine if the color is selected
+                  const isSelected = petData.colors.includes(color);
+
+                  return (
+                    <label
+                      key={color}
+                      className="flex items-center p-2 border border-gray-300 rounded cursor-pointer transition-all"
+                      style={{
+                        backgroundColor: isSelected
+                          ? colorMapping[color] || "#EA580C" // Orange-700 when selected
+                          : "#FEF3C7", // Light orange background (orange-100)
+                        color: isSelected && isDarkColor ? "#FFFFFF" : "#1F2937", // White text for selected dark colors
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = colorMapping[color] || "#EA580C";
+                        e.currentTarget.style.color = isDarkColor ? "#FFFFFF" : "#1F2937"; // Change text color on hover for dark colors
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = isSelected
+                          ? colorMapping[color] || "#EA580C"
+                          : "#FEF3C7";
+                        e.currentTarget.style.color = isSelected && isDarkColor ? "#FFFFFF" : "#1F2937"; // Revert to appropriate text color
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        name="colors"
+                        value={color}
+                        checked={isSelected}
+                        onChange={handleInputChange}
+                        className="form-checkbox h-5 w-5 accent-orange-700"
+                      />
+                      <span className="ml-2">{color}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
               {/* Submit Button */}
               <div className="flex justify-center">
                 <button
@@ -737,6 +910,65 @@ const MyPets = () => {
             </div>
           </div>
         </div>
+      )}
+      {showBreedModal && (
+        <>
+          <div className="fixed inset-0 bg-black opacity-20 z-40"></div>
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="relative bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+              <button
+                onClick={closeBreedModal}
+                className="absolute top-1 right-3 text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                &times;
+              </button>
+
+              <h2 className="text-xl font-bold mb-4">Select up to 3 breeds</h2>
+
+              {/* Search */}
+              <input
+                type="text"
+                placeholder="Search Breeds..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full p-2 border rounded mb-4"
+              />
+
+              {/* Breed checkboxes */}
+              <div className="max-h-64 overflow-y-auto mb-4">
+                {filteredBreeds.map((breedName) => (
+                  <label
+                    key={breedName}
+                    className="flex items-center p-2 border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={tempSelectedBreeds.includes(breedName)}
+                      onChange={() => handleBreedCheckbox(breedName)}
+                      className="form-checkbox h-5 w-5 text-orange-600"
+                    />
+                    <span className="ml-2 text-gray-700">{breedName}</span>
+                  </label>
+                ))}
+
+                {filteredBreeds.length === 0 && (
+                  <p className="text-sm text-gray-500">No breeds found.</p>
+                )}
+              </div>
+
+              {/* Centered Save Button with Icon */}
+              <div className="flex justify-center">
+                <button
+                  onClick={saveBreedSelection}
+                  className="flex items-center px-4 py-2 bg-gradient-to-r from-teal-500 to-teal-800 text-white rounded hover:opacity-90"
+                >
+                  <Save className="w-5 h-5 mr-2" /> {/* Lucide Check icon */}
+                  Save Breeds
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

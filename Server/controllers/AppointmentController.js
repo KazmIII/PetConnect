@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
-import { Appointment } from "../models/Appointment.js";
+import { Appointment as VetAppt  } from "../models/Appointment.js";
 // rename the GroomerAppointment export to avoid collision with the other Appointment model
 import { Appointment as GroomerAppointment } from "../models/GroomerAppointment.js";
 import { SitterAppointment }  from "../models/SitterAppointment.js";
@@ -31,7 +31,7 @@ export const GetAppointmentById = async (req, res) => {
   const appointmentId = req.params.appointmentId;
 
   try {
-    const appt = await Appointment
+    const appt = await VetAppt 
       .findById(appointmentId)
       .populate("vetId", "name roomID")
       .populate("userId", "name email")
@@ -84,7 +84,7 @@ export const CreateAppointment = async (req, res) => {
     }
 
     // 1) Create appointment in Mongo with pending payment
-    const appointment = await Appointment.create({
+    const appointment = await VetAppt .create({
       vetId,
       userId,
       date: new Date(date),
@@ -161,8 +161,6 @@ schedule.scheduleJob(remindAt, async () => {
   }
 };
 
-
-
 export const ConfirmAppointment = async (req, res) => {
   const { session_id } = req.body;
   if (!session_id) {
@@ -193,7 +191,7 @@ export const ConfirmAppointment = async (req, res) => {
     } else if (providerType === "sitter") {
       apptModel = SitterAppointment;
     } else {
-      apptModel = Appointment; // vet or default
+      apptModel = VetAppt ; // vet or default
     }
     const appt      = await apptModel.findById(appointmentId);
     if (!appt) {
@@ -248,6 +246,7 @@ switch (providerType) {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
 export const StripeWebhook = async (req, res) => {
   const sig = req.headers["stripe-signature"];
   let event;
@@ -278,7 +277,7 @@ export const StripeWebhook = async (req, res) => {
 
     try {
       // Update appointment status in your database
-      await Appointment.findByIdAndUpdate(apptId, {
+      await VetAppt .findByIdAndUpdate(apptId, {
         paymentStatus: "paid",
         status: "booked",
         'slot.status': 'booked',
@@ -297,8 +296,6 @@ export const StripeWebhook = async (req, res) => {
   res.json({ received: true });
 };
 
-
-
 export const CompleteAppointment = async (req, res) => {
   const token = req.cookies.vetToken;
   if (!token) return res.status(401).json({ message: "Unauthorized" });
@@ -307,7 +304,7 @@ export const CompleteAppointment = async (req, res) => {
     const { id: vetId } = jwt.verify(token, process.env.JWT_SECRET);
     const { appointmentId } = req.params;
 
-    const appt = await Appointment.findById(appointmentId);
+    const appt = await VetAppt .findById(appointmentId);
     if (!appt) return res.status(404).json({ message: "Appointment not found" });
 
     if (appt.vetId.toString() !== vetId)
@@ -326,42 +323,83 @@ export const CompleteAppointment = async (req, res) => {
   }
 };
 
+// helper to normalize any appointment doc into a common shape
+function normalize(appt, type) {
+  let providerId, providerName;
+  switch (type) {
+    case "vet":
+      providerId   = appt.vetId._id;
+      providerName = appt.vetId.name;
+      break;
+    case "sitter":
+      providerId   = appt.sitterId._id;
+      providerName = appt.sitterId.name;
+      break;
+    case "groomer":
+      providerId   = appt.groomerId._id;
+      providerName = appt.groomerId.name;
+      break;
+  }
+
+  return {
+    _id:              appt._id,
+    date:             appt.date,
+    slot:             appt.slot,
+    status:           appt.status,
+    paymentStatus:    appt.paymentStatus,
+    consultationType: appt.consultationType,
+    providerType:     type,
+    providerId,
+    providerName,
+    hasReview:        appt.hasReview || false
+  };
+}
 
 export const GetUserAppointments = async (req, res) => {
   const token = req.cookies.pet_ownerToken;
   if (!token) return res.status(401).json({ message: "Unauthorized" });
 
+  let userId;
   try {
-    const { id: userId } = jwt.verify(token, process.env.JWT_SECRET);
+    ({ id: userId } = jwt.verify(token, process.env.JWT_SECRET));
+  } catch (err) {
+    return res.status(401).json({ message: "Unauthorized – invalid token" });
+  }
 
-    // 1) load all appointments for this user
-    let appointments = await Appointment.find({
-      userId,
-      paymentStatus: "paid",
-      status: { $in: ["booked", "in-progress", "completed"] }
-    })
-    .populate("vetId", "name roomID")
-    .lean();
-
-    // 2) load all reviews this user has made
-    const reviews = await Review.find({ user: userId })
-                                .select("appointment")
-                                .lean();
+  try {
+    // 1) fetch reviews by this user (any appointment type)
+    const reviews = await Review.find({ user: userId }).select("appointment").lean();
     const reviewedSet = new Set(reviews.map(r => r.appointment.toString()));
 
-    // 3) tag appointments
-    appointments = appointments.map(appt => ({
-      ...appt,
-      hasReview: reviewedSet.has(appt._id.toString())
-    }));
+    // 2) fetch each type of appointment
+    const [vetAppts, sitterAppts, groomerAppts] = await Promise.all([
+      VetAppt.find({ userId, paymentStatus: "paid", status: { $in: ["booked","in-progress","completed"] } })
+        .populate("vetId", "name roomID").lean(),
+      SitterAppointment.find({ userId, paymentStatus: "paid", status: { $in: ["booked","in-progress","completed"] } })
+        .populate("sitterId", "name").lean(),
+      GroomerAppointment.find({ userId, paymentStatus: "paid", status: { $in: ["booked","in-progress","completed"] } })
+        .populate("groomerId", "name").lean()
+    ]);
+    console.log(vetAppts[0].vetId);
+// Should print something like { _id: "...", name: "Dr. Smith", roomID: "abc123" }
 
-    res.json(appointments);
+
+    // 3) normalize and tag hasReview
+    const all = [
+      ...vetAppts.map(a => ({ ...normalize(a, "vet"),    hasReview: reviewedSet.has(a._id.toString()) })),
+      ...sitterAppts.map(a => ({ ...normalize(a, "sitter"),hasReview: reviewedSet.has(a._id.toString()) })),
+      ...groomerAppts.map(a=> ({ ...normalize(a, "groomer"),hasReview: reviewedSet.has(a._id.toString()) }))
+    ];
+
+    // 4) sort by date ascending
+    all.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    res.json(all);
   } catch (err) {
     console.error("Error in GetUserAppointments:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 export const GetVetAppointments = async (req, res) => {
   const token = req.cookies.vetToken;
@@ -369,7 +407,7 @@ export const GetVetAppointments = async (req, res) => {
 
   try {
     const { id: vetId } = jwt.verify(token, process.env.JWT_SECRET);
-    const appointments = await Appointment.find({
+    const appointments = await VetAppt .find({
       vetId,
       paymentStatus: "paid",
       status: { $in: ["booked", "in-progress", "completed"] }
@@ -394,7 +432,7 @@ export const StartAppointment = async (req, res) => {
     const { id: vetId } = jwt.verify(token, process.env.JWT_SECRET);
     const { appointmentId } = req.params;
 
-    const appt = await Appointment.findById(appointmentId);
+    const appt = await VetAppt .findById(appointmentId);
     if (!appt) return res.status(404).json({ message: "Appointment not found" });
     if (appt.vetId.toString() !== vetId)
       return res.status(403).json({ message: "Not allowed" });
@@ -417,7 +455,7 @@ export const CheckInHomeAppointment = async (req, res) => {
     const { id: vetId } = jwt.verify(token, process.env.JWT_SECRET);
     const { appointmentId } = req.params;
 
-    const appt = await Appointment.findById(appointmentId);
+    const appt = await VetAppt .findById(appointmentId);
     if (!appt) return res.status(404).json({ message: "Appointment not found" });
 
     if (appt.vetId.toString() !== vetId) {
@@ -461,7 +499,7 @@ export const CheckOutHomeAppointment = async (req, res) => {
     const { id: vetId } = jwt.verify(token, process.env.JWT_SECRET);
     const { appointmentId } = req.params;
 
-    const appt = await Appointment.findById(appointmentId);
+    const appt = await VetAppt .findById(appointmentId);
     if (!appt) return res.status(404).json({ message: "Appointment not found" });
 
     if (appt.vetId.toString() !== vetId) {
@@ -505,7 +543,7 @@ export const CancelAppointment = async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const { appointmentId } = req.params;
 
-    const appt = await Appointment.findById(appointmentId);
+    const appt = await VetAppt .findById(appointmentId);
     if (!appt) return res.status(404).json({ message: "Appointment not found" });
 
     // Authorization check
