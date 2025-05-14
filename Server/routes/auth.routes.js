@@ -55,9 +55,10 @@ AuthRoutes.post("/create-review", CreateReview);
 
 //Appointment Routes
 // 2) After redirect, confirm payment
-AuthRoutes.get('/appointments', GetUserAppointments);
 AuthRoutes.get('/appointments/vet', GetVetAppointments);
 AuthRoutes.post('/appointments/confirm', ConfirmAppointment); // move this ABOVE
+AuthRoutes.get('/appointments', GetUserAppointments);
+
 AuthRoutes.post('/appointments/:vetId', CreateAppointment);
 AuthRoutes.post("/appointments/:appointmentId/start", StartAppointment);
 AuthRoutes.post("/appointments/:appointmentId/complete", CompleteAppointment);

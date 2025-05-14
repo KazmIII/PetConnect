@@ -185,32 +185,7 @@ if (display === 'Today') {
   });
 }
 
-    //   if (display === 'Today') {
-    //   const now = new Date();
-    //   const localMidnight = new Date(now);
-    //   localMidnight.setHours(0, 0, 0, 0); // Local midnight
-    //   const localMidnightUTC = Date.UTC(
-    //     localMidnight.getFullYear(),
-    //     localMidnight.getMonth(),
-    //     localMidnight.getDate()
-    //   );
-
-    //   slots = slots.filter(s => {
-    //     const [t, mer] = s.startTime.split(' ');
-    //     const normalizedMer = normalizeMeridiem(mer);
-    //     let [h, m] = t.split(':').map(Number);
-
-    //     if (normalizedMer === 'PM' && h !== 12) h += 12;
-    //     if (normalizedMer === 'AM' && h === 12) h = 0;
-
-    //     // Create slot date in UTC
-    //     const slotUTCDate = new Date(`${iso}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00Z`);
-        
-    //     // Compare against local day in UTC
-    //     return slotUTCDate.getTime() >= localMidnightUTC && 
-    //            slotUTCDate.getTime() > Date.now();
-    //   });
-    // }
+    
       const uniqueSlots = Array.from(new Set(slots.map(s => s.startTime)))
         .map(startTime => slots.find(s => s.startTime === startTime));
 

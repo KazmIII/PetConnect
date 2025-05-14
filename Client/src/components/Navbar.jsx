@@ -94,10 +94,21 @@ const Navbar = () => {
   };
 
   // In your Navbar function, after handleServiceClick:
-  const handleNavigateToVetAppointments = () => {
-    setIsProfileDropdownOpen(false);
-    navigate('/vet/appointments');
+  // const handleNavigateToVetAppointments = () => {
+  //   setIsProfileDropdownOpen(false);
+  //   navigate('/vet/appointments');
+  // };
+  // Replace handleNavigateToVetAppointments with this:
+const handleNavigateToServiceAppointments = () => {
+  setIsProfileDropdownOpen(false);
+  // Determine route based on user role
+  const routeMap = {
+    vet: '/vet/appointments',
+    groomer: '/groomer/appointments',
+    sitter: '/sitter/appointments'
   };
+  navigate(routeMap[userRole] || '/appointments');
+};
 
 
   const handleProfileClick = () => {
@@ -420,28 +431,11 @@ const Navbar = () => {
                       </li>
                       <li className="flex items-center hover:text-orange-500">
                         <CalendarClock className="w-5 h-5 mr-3 text-orange-500" />
-                        <button onClick={handleNavigateToVetAppointments}>
+                        <button onClick={handleNavigateToServiceAppointments}>
                           Appointments
                         </button>
                       </li>
-                      {/* For other roles */}
-{/* <li className="flex items-center hover:text-orange-500">
-  <div className="relative mr-3">
-    <Bell className="w-5 h-5 text-orange-500" />
-    {unreadNotifications > 0 && (
-      <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full transform translate-x-1/2 -translate-y-1/2 animate-pulse"></div>
-    )}
-  </div>
-  <button 
-    onClick={() => { 
-      setIsProfileDropdownOpen(false); 
-      navigate('/notifications');
-      setUnreadNotifications(0);
-    }}
-  >
-    Notifications
-  </button>
-</li> */}
+                      
                     </>
                   )}
 
