@@ -47,6 +47,8 @@ const appointmentSchema = new mongoose.Schema({
     type: String, 
     enum: ['video', 'in-clinic','home'] 
   },
+  startedAt: Date, // Track when service started
+  completedAt: Date, // Track when service completed
 
   roomID:          { type: String, default: null },
 //   meetingLink: { type: String }, // Zoom/Google Meet URL (auto-generated later)

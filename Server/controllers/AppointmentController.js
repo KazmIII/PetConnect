@@ -318,6 +318,7 @@ export const CompleteAppointment = async (req, res) => {
       return res.status(400).json({ message: "Only in-progress appointments can be completed" });
 
     appt.status = "completed";
+    appt.completedAt = new Date();
     await appt.save();
 
     res.json({ success: true, message: "Appointment marked as completed." });
@@ -352,6 +353,8 @@ function normalize(appt, type) {
     status:           appt.status,
     paymentStatus:    appt.paymentStatus,
     consultationType: appt.consultationType,
+    startedAt: appt.startedAt,
+    completedAt: appt.completedAt,
     providerType:     type,
     providerId,
     providerName,
@@ -441,6 +444,7 @@ export const StartAppointment = async (req, res) => {
       return res.status(403).json({ message: "Not allowed" });
 
     appt.status = 'in-progress';
+    appt.startedAt = new Date();
     await appt.save();
     res.json({ success: true });
   } catch (err) {
@@ -474,6 +478,7 @@ export const CheckInHomeAppointment = async (req, res) => {
     }
 
     appt.status = "in-progress";
+    appt.startedAt = new Date();
     await appt.save();
 
     // Send notification
@@ -518,6 +523,7 @@ export const CheckOutHomeAppointment = async (req, res) => {
     }
 
     appt.status = "completed";
+    appt.completedAt = new Date();
     await appt.save();
 
     // Send notification
@@ -578,3 +584,4 @@ export const CancelAppointment = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+

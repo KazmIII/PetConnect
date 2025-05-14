@@ -325,9 +325,9 @@ export default function GroomerAppointmentsPage() {
             const startDT = getDateTime(appt.date, appt.slot.startTime);
             const endDT = getDateTime(appt.date, appt.slot.endTime);
             const isHomeService = appt.consultationType === 'home';
-            // const canStart = now >= startDT && now <= endDT;
+            const canStart = now >= startDT && now <= endDT;
             // allow check-in anytime after start
-             const canStart = now >= startDT;
+            //  const canStart = now >= startDT;
 
             const canComplete = now >= endDT;
 

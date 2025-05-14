@@ -47,6 +47,8 @@ const sitterAppointmentSchema = new mongoose.Schema({
     type: String,
     enum: ['drop-off', 'home']
   },
+  startedAt: Date, // Track when service started
+  completedAt: Date, // Track when service completed
 
   // Timestamps
   createdAt: { type: Date, default: Date.now },

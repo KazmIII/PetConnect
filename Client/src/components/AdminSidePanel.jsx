@@ -57,14 +57,13 @@ const handleNavigation = (section) => {
         >
           All Service Providers
         </button>
-        {/* <button
-        onClick={() => handleNavigation("settings")}
-        className={`p-2 text-left rounded hover:bg-gray-500 hover:text-orange-300 transition ${
-          activeSection === "settings" ? "bg-gray-500" : ""
-        }`}
-      >
-        Settings
-      </button> */}
+      <button
+          onClick={() => handleNavigation("appointments")}
+          className={`p-2 text-left rounded hover:bg-orange-700 hover:text-white transition ${activeSection === "appointments" ? "bg-orange-600" : ""
+            }`}
+        >
+          Track Appointment services
+        </button>
 
         <button
           onClick={() => handleNavigation("blogs")}

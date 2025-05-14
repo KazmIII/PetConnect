@@ -5,6 +5,10 @@ import { GroomerModel } from "../models/Groomer.js";
 import { SitterModel } from "../models/Sitter.js";
 import Blog from "../models/Blog.js";  
 import {sendVerificationStatusEmail} from '../middleware/Email.js';
+import { Appointment as VetAppt  } from "../models/Appointment.js";
+// rename the GroomerAppointment export to avoid collision with the other Appointment model
+import { Appointment as GroomerAppointment } from "../models/GroomerAppointment.js";
+import { SitterAppointment }  from "../models/SitterAppointment.js";
 
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -261,6 +265,57 @@ export const RestrictUser = async (req, res) => {
   } catch (error) {
     console.error("Error toggling restriction:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const GetAdminAppointments = async (req, res) => {
+  try {
+    const [vetAppts, sitterAppts, groomerAppts] = await Promise.all([
+      VetAppt.find({})
+        .populate("vetId", "name")
+        .populate("userId", "name email")
+        .lean(),
+      SitterAppointment.find({})
+        .populate("sitterId", "name")
+        .populate("userId", "name email")
+        .lean(),
+      GroomerAppointment.find({})
+        .populate("groomerId", "name")
+        .populate("userId", "name email")
+        .lean()
+    ]);
+
+    const normalizeAdmin = (appt, type) => ({
+      _id: appt._id,
+      type: type,
+      date: appt.date,
+      slot: appt.slot,
+      status: appt.status,
+      startedAt: appt.startedAt,
+      completedAt: appt.completedAt,
+      consultationType: appt.consultationType,
+      provider: {
+        id: appt[`${type}Id`]._id,
+        name: appt[`${type}Id`].name
+      },
+      user: {
+        id: appt.userId._id,
+        name: appt.userId.name,
+        email: appt.userId.email
+      },
+      paymentStatus: appt.paymentStatus
+    });
+
+    const allAppointments = [
+      ...vetAppts.map(a => normalizeAdmin(a, 'vet')),
+      ...sitterAppts.map(a => normalizeAdmin(a, 'sitter')),
+      ...groomerAppts.map(a => normalizeAdmin(a, 'groomer'))
+    ];
+
+    res.json(allAppointments);
+  } catch (err) {
+    console.error("Error in GetAdminAppointments:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
