@@ -117,7 +117,11 @@ export const CreateAppointment = async (req, res) => {
         },
       ],
       mode: "payment",
-      metadata: { appointmentId: appointment._id.toString() },
+      metadata: { 
+    appointmentId: appointment._id.toString(),
+    providerType: "vet",          // Add this
+    providerId: vetId.toString()  // Add this
+  },
       success_url: `${process.env.FRONTEND_URL}/appointments/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.FRONTEND_URL}/appointments/cancel?appointmentId=${appointment._id}`,
     });
@@ -422,7 +426,6 @@ export const GetVetAppointments = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 export const StartAppointment = async (req, res) => {
   const token = req.cookies.vetToken;

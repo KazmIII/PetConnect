@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, Stethoscope, PawPrint, Scissors } from "lucide-react";
 
-// ── helper to combine date + time into a Date object ────────────────────
 const getDateTime = (dateString, timeString) => {
   const [time, mer] = timeString.split(" ");
   let [h, m] = time.split(":").map(Number);
@@ -15,12 +14,22 @@ const getDateTime = (dateString, timeString) => {
 
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState([]);
+  const [selectedType, setSelectedType] = useState("vet");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [now, setNow] = useState(new Date());
   const navigate = useNavigate();
 
-  // fetch appointments on mount
+  const filteredAppointments = appointments.filter(
+    (appt) => appt.providerType === selectedType
+  );
+
+  const appointmentCounts = {
+    vet: appointments.filter(appt => appt.providerType === "vet").length,
+    sitter: appointments.filter(appt => appt.providerType === "sitter").length,
+    groomer: appointments.filter(appt => appt.providerType === "groomer").length,
+  };
+
   useEffect(() => {
     fetch("http://localhost:5000/auth/appointments", {
       credentials: "include",
@@ -35,13 +44,11 @@ export default function AppointmentsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // ticking clock to re-render for time-based UI
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
 
-  // navigate to video room
   const handleJoinConsultation = (roomID, endDT) => {
     navigate(
       `/video?roomID=${encodeURIComponent(roomID)}` +
@@ -51,91 +58,185 @@ export default function AppointmentsPage() {
     );
   };
 
-  if (loading)
-    return <p className="text-center py-8">Loading your appointments…</p>;
-  if (error)
-    return <p className="text-center py-8 text-red-600">Error: {error}</p>;
-  if (!appointments.length)
-    return <p className="text-center py-8">You have no booked appointments.</p>;
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-orange-600 text-lg">Loading your appointments...</p>
+    </div>
+  );
+
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-red-600 text-lg">Error: {error}</p>
+    </div>
+  );
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6 flex text-orange-600 items-center gap-2">
-        <CalendarClock size={24} /> My Appointments
-      </h1>
-
-      <div className="space-y-6">
-        {appointments.map((appt) => {
-          const startDT = getDateTime(appt.date, appt.slot.startTime);
-          const endDT = getDateTime(appt.date, appt.slot.endTime);
-          const isVideo = appt.consultationType === "video";
-          const canJoin = isVideo && appt.roomID && now < endDT && appt.status === "in-progress";
-
-          return (
-            <div
-              key={appt._id}
-              className="p-5 rounded-xl shadow-lg flex flex-col sm:flex-row sm:justify-between sm:items-center bg-orange-200"
-            >
-              <div className="space-y-1">
-                <p className="text-gray-900 mb-2 text-2xl font-semibold">
-                  <span className="text-gray-900">
-                    {appt.providerType === "vet" ? "Dr." : appt.providerType === "groomer" ? "Stylist" : "Sitter"}
-                  </span>{" "}
-                  {appt.providerName}
-                </p>
-                <p className="text-gray-700">
-                  <span className="font-semibold text-gray-900">Date & Time:</span> {startDT.toLocaleDateString()} at {appt.slot.startTime}
-                </p>
-                <p className="text-gray-700">
-                  <span className="font-semibold text-gray-900">Type:</span>{' '}
-                  <span className="inline-block px-2 py-0.5 text-sm rounded-full bg-white text-black capitalize">
-                    {appt.consultationType}
-                  </span>
-                </p>
-                <p className="text-gray-700">
-                  <span className="font-semibold text-gray-900">Status:</span>{' '}
-                  <span className={`inline-block px-2 py-0.5 text-sm rounded-full ${appt.status === "booked" ? "bg-yellow-100 text-yellow-800" :
-                      appt.status === "in-progress" ? "bg-green-100 text-green-800" :
-                        "bg-teal-100 text-teal-800"
-                    }`}>
-                    {appt.status}
-                  </span>
-                </p>
-              </div>
-              {/* ── NEW: after status, show button if completed & not reviewed ── */}
-              {appt.status === "completed" && !appt.hasReview && (
-                <button
-                  onClick={() =>
-                    navigate(
-                      `/submit-feedback?appointmentId=${appt._id}&vetId=${appt.providerType === "vet" ? appt.providerId : ""}`
-                    )
-                  }
-                  className="mt-2 px-4 py-2 bg-gradient-to-r from-teal-400 to-teal-700 text-white rounded hover:opacity-75"
-                >
-                  Leave a Review
-                </button>
-              )}
-              {/* If they already reviewed… */}
-              {appt.status === "completed" && appt.hasReview && (
-                <span className="mt-2 inline-block text-green-600">Thank you for your feedback!</span>
-              )}
-              {/* ──────────────────────────────────────────────────────────────── */}
-
-              {isVideo && (
-                <div className="mt-4 sm:mt-0 sm:text-right">
-                  {canJoin && (
-                    <button
-                      onClick={() => handleJoinConsultation(appt.roomID, endDT)}
-                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-                    >
-                      Join Consultation
-                    </button>
-                  )}
+    <div className="max-w-7xl mx-auto p-6 flex flex-col md:flex-row gap-8 min-h-screen">
+      {/* Full-height Side Panel */}
+      <div className="w-full md:w-72 flex-shrink-0 h-full">
+        <div className="bg-orange-50 rounded-xl p-6 shadow-lg border border-orange-100 h-full flex flex-col">
+          <h2 className="text-xl font-bold text-orange-800 mb-6 flex items-center gap-3">
+            <CalendarClock className="w-6 h-6 text-orange-600" />
+            Filter Appointments
+          </h2>
+          
+          <nav className="space-y-2 flex-1">
+            {[
+              { 
+                type: "vet", 
+                label: "Veterinarian", 
+                icon: <Stethoscope className="w-5 h-5" />,
+                count: appointmentCounts.vet
+              },
+              { 
+                type: "sitter", 
+                label: "Pet Sitter", 
+                icon: <PawPrint className="w-5 h-5" />,
+                count: appointmentCounts.sitter
+              },
+              { 
+                type: "groomer", 
+                label: "Groomer", 
+                icon: <Scissors className="w-5 h-5" />,
+                count: appointmentCounts.groomer
+              },
+            ].map(({ type, label, icon, count }) => (
+              <button
+                key={type}
+                onClick={() => setSelectedType(type)}
+                className={`w-full flex items-center justify-between p-3 rounded-lg transition-all duration-200
+                  ${selectedType === type 
+                    ? "bg-white shadow-md ring-1 ring-orange-200 text-orange-700 font-semibold"
+                    : "bg-transparent hover:bg-orange-100 text-gray-600 hover:text-orange-600"}
+                `}
+              >
+                <div className="flex items-center gap-3">
+                  {React.cloneElement(icon, {
+                    className: `${
+                      selectedType === type ? "text-orange-600" : "text-gray-500"
+                    } w-5 h-5`
+                  })}
+                  <span>{label}</span>
                 </div>
-              )}
-            </div>
-          );
-        })}
+                <span className={`text-sm px-2 py-1 rounded-full ${
+                  selectedType === type 
+                    ? "bg-orange-100 text-orange-700" 
+                    : "bg-gray-100 text-gray-500"
+                }`}>
+                  {count}
+                </span>
+              </button>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 h-full">
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-orange-50 h-full flex flex-col">
+          <h1 className="text-3xl font-bold mb-6 flex items-center gap-3 text-orange-800">
+            <CalendarClock className="w-8 h-8 text-orange-600" />
+            My Appointments
+            <span className="text-lg font-medium text-orange-600 ml-2">
+              ({filteredAppointments.length})
+            </span>
+          </h1>
+
+          <div className="flex-1 overflow-auto">
+            {!filteredAppointments.length ? (
+              <div className="text-center py-8 bg-orange-50 rounded-lg h-full flex items-center justify-center">
+                <div>
+                  <p className="text-orange-700 font-medium text-lg">
+                    No {selectedType.replace(/^\w/, c => c.toUpperCase())} appointments found
+                  </p>
+                  <p className="text-sm text-orange-600 mt-2">
+                    Book a new appointment to see it here
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredAppointments.map((appt) => {
+                  const startDT = getDateTime(appt.date, appt.slot.startTime);
+                  const endDT = getDateTime(appt.date, appt.slot.endTime);
+                  const isVideo = appt.consultationType === "video";
+                  const canJoin = isVideo && appt.roomID && now < endDT && appt.status === "in-progress";
+
+                  return (
+                    <div
+                      key={appt._id}
+                      className="p-5 rounded-xl shadow-sm flex flex-col sm:flex-row sm:justify-between sm:items-center bg-orange-50 border border-orange-100"
+                    >
+                      <div className="space-y-1 flex-1">
+                        <p className="text-gray-900 text-xl font-semibold mb-2">
+                          <span className="text-orange-700">
+                            {appt.providerType === "vet" ? "Dr." : 
+                            appt.providerType === "groomer" ? "Stylist" : "Sitter"}
+                          </span>{" "}
+                          {appt.providerName}
+                        </p>
+                        <div className="flex flex-wrap gap-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-orange-700">Date:</span>
+                            <span className="text-sm text-gray-700">
+                              {startDT.toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-orange-700">Time:</span>
+                            <span className="text-sm text-gray-700">
+                              {appt.slot.startTime} - {appt.slot.endTime}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-orange-700">Type:</span>
+                            <span className="text-sm px-2 py-1 rounded-full bg-orange-100 text-orange-700 capitalize">
+                              {appt.consultationType}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="text-sm font-medium text-orange-700">Status:</span>
+                          <span className={`text-sm px-3 py-1 rounded-full ${
+                            appt.status === "booked" ? "bg-yellow-100 text-yellow-800" :
+                            appt.status === "in-progress" ? "bg-green-100 text-green-800" :
+                            "bg-teal-100 text-teal-800"
+                          }`}>
+                            {appt.status}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 sm:mt-0 flex flex-col gap-2 items-end">
+                        {appt.status === "completed" && !appt.hasReview && (
+                          <button
+                            onClick={() => navigate(`/submit-feedback?appointmentId=${appt._id}`)}
+                            className="px-4 py-2 bg-gradient-to-r from-orange-400 to-orange-600 text-white rounded-lg hover:opacity-90 transition-opacity"
+                          >
+                            Leave Review
+                          </button>
+                        )}
+
+                        {isVideo && canJoin && (
+                          <button
+                            onClick={() => handleJoinConsultation(appt.roomID, endDT)}
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                          >
+                            <span>Join Now</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M22 8.5V15.5C22 19 20 21 16.5 21H7.5C4 21 2 19 2 15.5V8.5C2 5 4 3 7.5 3H16.5C20 3 22 5 22 8.5Z" />
+                              <path d="M12.4 15.8L15.7 12.5L12.4 9.2M7.7 12.5H15.6" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
