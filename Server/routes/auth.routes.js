@@ -5,7 +5,7 @@ import verifyEmailDomain from '../middleware/VerifyEmailDomain.js';
 
 import {AdminLogin, VerifyAdmin, GetPendingClinics,  UpdateClinicVerificationStatus, GetClinicDetails, GetRegisteredUsers,
   GetPendingSitters, GetSitterDetails, UpdateSitterVerificationStatus, GetRegisteredVets, GetRegisteredGroomers, GetRegisteredSitters,
-  RestrictUser,
+  RestrictUser,GetAdminAppointments
 } from '../controllers/AdminController.js';
 
 import { Profile, Register, Logout, VerifyEmail, Login, ForgotPassword, ResetPassword,
@@ -188,6 +188,7 @@ AuthRoutes.get("/admin/get-vets", GetRegisteredVets);
 AuthRoutes.get("/admin/get-groomers", GetRegisteredGroomers);
 AuthRoutes.get("/admin/get-sitters", GetRegisteredSitters);
 AuthRoutes.post("/admin/restrict-user/:id", RestrictUser);
+AuthRoutes.get("/admin/appointments", GetAdminAppointments);
 
 
 const clinicUploadFields = [

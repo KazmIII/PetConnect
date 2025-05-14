@@ -41,6 +41,8 @@ const groomerAppointmentSchema = new mongoose.Schema({
     enum: ['pending', 'paid', 'refunded', 'failed'],  
     default: 'pending' 
   },
+  startedAt: Date, // Track when service started
+  completedAt: Date, // Track when service completed
 
   // Consultation Details
   consultationType: { 

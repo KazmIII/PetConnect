@@ -11,6 +11,8 @@ import RegisteredStaff from './RegisteredStaff';
 import ProviderDetails from "./ProvidersDetails";
 import { BlogLibrary } from "./AdminBlogLibrary";
 import AddBlog from "./AddBlog";
+AdminAppointments
+import AdminAppointments from "./AdminAppointments";
 
 
 const AdminDashboard = () => {
@@ -117,6 +119,7 @@ useEffect(() => {
     <Route path="/service-providers" element={<RegisteredStaff />} />
     <Route path="/blogs" element={<BlogLibrary />} />
     <Route path="/blogs/new" element={<AddBlog />} />
+    <Route path="/appointments" element={<AdminAppointments />} />
   </Routes>
 </div>
       </div>
