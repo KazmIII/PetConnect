@@ -425,7 +425,7 @@ const BlogDetail = () => {
   
           {contentDisplay}
   
-          {!isEditing && (
+          {/* {!isEditing && (
             <div className="mt-4">
               <button
                 className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
@@ -434,7 +434,7 @@ const BlogDetail = () => {
                 Edit Content
               </button>
             </div>
-          )}
+          )} */}
   
           {/* Comment Section */}
           <div className="mt-12">
