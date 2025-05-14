@@ -136,6 +136,41 @@ const AdoptionForm = () => {
     }
     try {
       setError('');
+
+      // First validate images with Gemini
+      const validationFormData = new FormData();
+      formData.homeImages.forEach(file => {
+        validationFormData.append('homeImages', file);
+      });
+
+      let validationResponse;
+try {
+  validationResponse = await axios.post(
+    'http://localhost:5000/api/validate-home-images',
+    validationFormData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    }
+  );
+} catch (err) {
+  if (err.response && err.response.status === 400) {
+    // validation failed, show specific Gemini error message
+    setError(err.response.data?.error || "Some home images are not acceptable. Please upload better ones.");
+    return;
+  } else {
+    console.error('Image validation request failed:', err);
+    setError('Something went wrong during image validation. Please try again.');
+    return;
+  }
+}
+
+
+      if (!validationResponse.data.valid) {
+        setError(validationResponse.data.error || "Invalid home images detected");
+        return;
+      }
       // Create a new FormData object.
       const data = new FormData();
       
@@ -182,6 +217,7 @@ const AdoptionForm = () => {
       setError('Failed to submit application. Please try again.');
     }
   };
+
   const handleBack = () => {
     // Navigate back dynamically based on state or fallback to browser history
     if (location.state?.from) {
@@ -428,6 +464,7 @@ const AdoptionForm = () => {
                   name="numberOfAdults"
                   placeholder="Type here..."
                   required
+                  min='0'
                   value={formData.numberOfAdults}
                   onChange={handleChange}
                   className="mb-4 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:border-teal-500 focus:ring-teal-500"
@@ -443,6 +480,7 @@ const AdoptionForm = () => {
                   name="numberOfKids"
                   placeholder="Type here..."
                   required
+                  min='0'
                   value={formData.numberOfKids}
                   onChange={handleChange}
                   className="mb-4 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:border-teal-500 focus:ring-teal-500"
@@ -458,6 +496,7 @@ const AdoptionForm = () => {
                   name="youngestChildAge"
                   placeholder="Type here..."
                   required
+                  min='1'
                   value={formData.youngestChildAge}
                   onChange={handleChange}
                   className="mb-4 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:border-teal-500 focus:ring-teal-500"

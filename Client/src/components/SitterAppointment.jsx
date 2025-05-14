@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Calendar, ThumbsUp, ChevronLeft, ChevronRight, MapPin, Home } from 'lucide-react';
+import { Calendar, ThumbsUp, Star, ChevronLeft, ChevronRight, MapPin, Home } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import sunrise from '../assets/sunrise.png';
 import sunset from '../assets/sunset.png';
@@ -22,6 +22,41 @@ const SitterAppointment = () => {
   const [selectedDate, setSelectedDate] = useState('Today');
   const [selectedIsoDate, setSelectedIsoDate] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
+
+  const [reviews, setReviews] = useState([]);
+  const [error, setError] = useState(null);
+
+  const providerType = 'sitter';
+  const providerId = sitterId;
+
+  //fetch reviews
+  useEffect(() => {
+    // don’t even try if we’re missing data
+    if (!providerType || !sitterId) return;
+
+    const fetchReviews = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const url = `http://localhost:5000/auth/reviews/${providerType}/${providerId}`;
+        const res = await axios.get(url);
+
+        setReviews(res.data.reviews || []);
+      } catch (err) {
+        console.error('Error loading reviews:', err);
+        setError(
+          err.response?.data?.message 
+            ? err.response.data.message 
+            : err.message || 'Something went wrong'
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, [providerType, providerId]);
 
   const [timeSlots, setTimeSlots] = useState({
     morning: [],
@@ -501,13 +536,64 @@ if (display === 'Today') {
           </div>
         )}
 
-        <div className="mt-8 border-t pt-4 text-sm text-gray-600">
-          <h3 className="font-semibold text-gray-800">
-            Reviews About {sitter.name.split(' ')[0]} (556)
+        <div className="mt-8 border-t border-gray-100 pt-6">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <Star className="w-5 h-5 text-amber-500" />
+            Reviews About {sitter.name.split(" ")[0]} 
+            <span className="text-amber-600">({reviews.length})</span>
           </h3>
-          <div className="flex items-center gap-1 mt-2">
-            <ThumbsUp className="w-4 h-4 text-teal-600" /> I recommend this doctor
-          </div>
+
+          {reviews.length === 0 ? (
+            <div className="mt-4 p-6 text-center bg-gray-50 rounded-xl">
+              <p className="text-gray-500 italic">No reviews yet - be the first to share your experience!</p>
+            </div>
+          ) : (
+            <div className="mt-6 space-y-5">
+              {reviews.map((review) => (
+                <div 
+                  key={review._id}
+                  className="p-5 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-100"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h4 className="font-medium text-gray-900">
+                        {review.user?.name || "Anonymous User"}
+                        <span className="ml-2 text-xs font-normal text-gray-400">
+                          • {new Date(review.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </span>
+                      </h4>
+                      {review.text && (
+                        <p className="mt-2 text-gray-600 leading-relaxed">
+                          "{review.text}"
+                        </p>
+                      )}
+                    </div>
+                    
+                    <div className="flex flex-col items-end pl-4">
+                      <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-4 h-4 ${i < review.rating ? 'text-amber-500 fill-amber-500' : 'text-gray-300'}`}
+                          />
+                        ))}
+                      </div>
+                      {review.rating >= 4 && (
+                        <div className="mt-2 flex items-center gap-1 text-xs font-medium text-teal-600">
+                          <ThumbsUp className="w-4 h-4" />
+                          Recommended
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -275,7 +275,7 @@ export const UpdateService = async (req, res) => {
     isPackage, 
     maxPets, 
     availability, 
-    deliveryMethods     
+    deliveryMethod        
   } = req.body;
 
   const serviceModelMappings = {
@@ -315,7 +315,7 @@ export const UpdateService = async (req, res) => {
     service.price = price;
     service.duration = duration;
     service.availability = availability;
-    service.deliveryMethods = deliveryMethods;
+    service.deliveryMethod = deliveryMethod;
 
     // Role-specific fields
     if (userRole === 'groomer') {

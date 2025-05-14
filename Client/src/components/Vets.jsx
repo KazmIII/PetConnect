@@ -15,14 +15,15 @@ const Vets = () => {
   const [sortOptions, setSortOptions] = useState([]);
   
   const [isNearMeActive, setIsNearMeActive] = useState(false);
-  const initialServiceTypes = useMemo(() => {
+
+  const [selectedServiceTypes, setSelectedServiceTypes] = useState(() => {
     const queryTypes = searchParams.getAll('serviceType');
-    // Combine route param with query params, removing duplicates
-    return routeServiceType 
-      ? [...new Set([routeServiceType, ...queryTypes])]
-      : queryTypes;
-  }, [routeServiceType, searchParams]);
-  const [selectedServiceTypes, setSelectedServiceTypes] = useState(initialServiceTypes);
+    return queryTypes.length
+      ? queryTypes
+      : routeServiceType
+        ? [routeServiceType]
+        : [];
+  });
   const [city, setCity] = useState(searchParams.get('city') || '');
 
   // Modal state
@@ -45,13 +46,12 @@ const Vets = () => {
   }, []);
 
   useEffect(() => {
-    const queryTypes = searchParams.getAll('serviceType');
-    const initialTypes = routeServiceType 
-      ? [...new Set([routeServiceType, ...queryTypes])]
-      : queryTypes;
-    setSelectedServiceTypes(initialTypes);
-    setCity(searchParams.get('city') || '');
-  }, [routeServiceType, searchParams]);
+    const paramCity = searchParams.get('city');
+    if (paramCity) {
+      setCity(paramCity);
+      setIsNearMeActive(true);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchVets = async () => {
@@ -89,118 +89,41 @@ const Vets = () => {
         return '';
     }
   };
-
-
-  const filteredVets = useMemo(() => {
-  const cityKey = city?.trim().toLowerCase();
-  const hasCityFilter = Boolean(cityKey);
-  const hasServiceFilter = selectedServiceTypes.length > 0;
-
-  return vets
-    .filter(vet => {
-      // 1) Service filtering (only if you picked any)
-      const serviceMatch = hasServiceFilter
-        ? selectedServiceTypes.some(type => {
-            const method = getDeliveryMethod(type);
-            return vet.services?.some(s => s.deliveryMethod === method);
-          })
-        : true;
-
-      // 2) City filtering (only if city param exists)
-      const locationMatch = hasCityFilter
-        ? vet.clinicId?.city?.toLowerCase() === cityKey
-        : true;
-
-      return serviceMatch && locationMatch;
-    })
-    // 3) Sorting as before
-    .sort((a, b) => {
-      for (const opt of sortOptions) {
-        let diff = 0;
-        switch (opt) {
-          case 'experience':
-            diff = b.experience - a.experience; break;
-          case 'fee':
-            diff = a.fee - b.fee; break;
-          case 'rating':
-            diff = b.rating - a.rating; break;
-          case 'availability':
-            diff = (b.availableToday ? 1 : 0) - (a.availableToday ? 1 : 0);
-            break;
-        }
-        if (diff) return diff;
-      }
-      return 0;
-    });
-}, [vets, selectedServiceTypes, city, sortOptions]);
-
-  
     
   useEffect(() => {
-    const storedCity = localStorage.getItem('userCity');
+    const storedCity = searchParams.get('city');
     if (storedCity) {
       setCity(storedCity);
     } else {
-      setCity(searchParams.get('city') || '');
+      setCity(localStorage.getItem('userCity'));
     }
   }, [searchParams]);
 
-  const handleFilter = async (type) => {
-    let newTypes = [...selectedServiceTypes];
-    
-    // Handle exclusive filters
-    if (type === 'video-consultation') {
-      newTypes = newTypes.includes(type) ? [] : [type];
-      setIsNearMeActive(false);
-    } else {
-      // Remove video-consultation if adding other service
-      newTypes = newTypes.filter(t => t !== 'video-consultation');
-      if (newTypes.includes(type)) {
-        newTypes = newTypes.filter(t => t !== type);
-      } else {
-        newTypes.push(type);
-      }
-    }
+    const handleFilter = async (type) => {
+      let newTypes = [...selectedServiceTypes];
+      // Toggle the clicked filter
+      if (newTypes.includes(type)) newTypes = newTypes.filter(t => t !== type);
+      else newTypes.push(type);
 
-    // Handle location requirements
-    if (['home-visit','in-clinic'].includes(type)) {
-      let cityToUse = city;
-    
-      if (!cityToUse) {
+      // If adding in-clinic or home-visit, ensure city is set
+      if (['home-visit', 'in-clinic'].includes(type) && !city) {
         const detected = await detectCityByGeo();
         if (!detected) {
           alert('Could not detect a nearby service city');
           return;
         }
-        cityToUse = detected;
-        setCity(cityToUse);
-        localStorage.setItem('userCity', cityToUse);
+        setCity(detected);
+        localStorage.setItem('userCity', detected);
       }
-    }
-    setSelectedServiceTypes(newTypes);
-    
-    // Update URL except for home-visit
-    if (type !== 'home-visit') {
-      const params = new URLSearchParams();
-      newTypes.forEach(t => t !== 'home-visit' && params.append('serviceType', t));
-      if (city) params.set('city', city);
-      
-      navigate(newTypes.length === 1 ? 
-        `/vets/${newTypes[0]}?${params}` : 
-        `/vets?${params}`
-      );
-    }
+
+      setSelectedServiceTypes(newTypes);
+      // NOTE: we no longer call navigate here — URL stays as-is
   };
 
   const handleDoctorsNearMe = async () => {
     setIsNearMeActive(prev => !prev);
-  
-    // Always clear out any video-consultation filter when doctors-near-me toggles on
-    setSelectedServiceTypes(prev => {
-      const withoutVideo = prev.filter(t => t !== 'video-consultation');
-      return withoutVideo;
-    });
-  
+    setSelectedServiceTypes(prev => prev.filter(t => t !== 'video-consultation'));
+
     if (!city) {
       const detected = await detectCityByGeo();
       if (detected) {
@@ -209,9 +132,54 @@ const Vets = () => {
       }
     }
   };
-  
-  
-  const isActive = (type) => selectedServiceTypes.includes(type);
+
+  const isActive = type => selectedServiceTypes.includes(type);
+
+  const effectiveServiceTypes = useMemo(() => {
+    return selectedServiceTypes.length
+      ? selectedServiceTypes
+      : (routeServiceType ? [routeServiceType] : []);
+  }, [selectedServiceTypes, routeServiceType]);
+
+  const filteredVets = useMemo(() => {
+    const cityKey = city.trim().toLowerCase();
+    const hasCityFilter = Boolean(cityKey) && isNearMeActive;
+    const hasServiceFilter = effectiveServiceTypes.length > 0;
+
+    return vets
+      .filter(vet => {
+        // service match
+        if (hasServiceFilter) {
+          return effectiveServiceTypes.some(type => 
+            vet.services?.some(s => 
+              s.deliveryMethod.toLowerCase().replace(/\s+/g,'-') === type
+            )
+          );
+        }
+        return true;
+      })
+      .filter(vet => {
+        if (hasCityFilter) {
+          return vet.clinicId?.city?.toLowerCase() === cityKey;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        for (const opt of sortOptions) {
+          let diff = 0;
+          switch (opt) {
+            case 'experience': diff = b.experience - a.experience; break;
+            case 'fee': diff = a.fee - b.fee; break;
+            case 'rating': diff = b.rating - a.rating; break;
+            case 'availability': 
+              diff = (b.availableToday ? 1 : 0) - (a.availableToday ? 1 : 0);
+              break;
+          }
+          if (diff) return diff;
+        }
+        return 0;
+      });
+  }, [vets, effectiveServiceTypes, city, sortOptions, isNearMeActive]);
 
   const handleBookClick = (vet) => {
     const services = vet.services || [];
@@ -237,6 +205,7 @@ const Vets = () => {
   };
 
   return (
+    
     <div className="max-w-5xl mx-auto px-4 py-6">
       <h1 className="text-xl font-medium text-gray-800 mb-2">
         {filteredVets.length}{' '}

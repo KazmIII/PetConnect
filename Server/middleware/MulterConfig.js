@@ -38,6 +38,29 @@ const UploadMultiple = (fields) => {
     fileFilter: fileFilter
   }).fields(fields); // Handle dynamic fields
 };
+
+// Add this to your multer config file
+const imageOnlyFilter = (req, file, cb) => {
+  const isImage = file.mimetype.startsWith('image/');
+  const extname = path.extname(file.originalname).toLowerCase();
+  const isImageExt = ['.jpeg', '.jpg', '.png', '.gif'].includes(extname);
+
+  if (isImage && isImageExt) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files are allowed!'), false);
+  }
+};
+
+// Create specific configuration for home image validation
+const uploadHomeImages = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+    files: 10 // Match your MAX_PHOTOS
+  },
+  fileFilter: imageOnlyFilter // Stricter filter without PDFs
+}).array('homeImages'); // Handle multiple files in single field
  
 
-export { uploadSingle, UploadMultiple };
+export { uploadSingle, UploadMultiple, uploadHomeImages  };

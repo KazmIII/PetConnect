@@ -65,3 +65,31 @@ export const CreateReview = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const GetReviewsByProvider = async (req, res) => {
+  const { providerType, providerId } = req.params;
+  console.log("role: ", providerType);
+  console.log("id: ", providerId);
+
+  if (!providerId) {
+    return res.status(400).json({ message: "Missing providerId parameter" });
+  }
+
+  try {
+    // 2) Build dynamic filter
+    //    e.g. if providerType === "groomer", it will filter { groomer: providerId }
+    const filter = { [providerType]: providerId };
+
+    // 3) Query & populate
+    const reviews = await Review.find(filter)
+      .sort({ createdAt: -1 })               // newest-first
+      .populate("user", "name email")        // reviewer info
+      .populate("appointment", "date")       // (optional) when the appt happened
+      .lean();
+
+    return res.status(200).json({ reviews });
+  } catch (err) {
+    console.error("Error in GetReviewsByProvider:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};

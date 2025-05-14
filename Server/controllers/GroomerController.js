@@ -9,7 +9,8 @@ export const GetVerifiedGroomers = async (req, res) => {
       .find({
         emailVerified: true,
         verificationStatus: "verified", 
-        restricted: false
+        restricted: false,
+        "services.0":     { $exists: true } 
       })
       .populate("clinicId", "clinicName city")
       .populate({

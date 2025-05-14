@@ -28,7 +28,7 @@ import {SubmitAdoptionAd, GetAllAdoptionAds, GetAdoptionAdById, SubmitAdoptionAp
 
 import {GetVerifiedVets, GetVetById } from '../controllers/VetController.js';
 import {CreateAppointment, ConfirmAppointment, StripeWebhook, CancelAppointment,CheckOutHomeAppointment,GetUserAppointments, CheckInHomeAppointment,GetVetAppointments, StartAppointment, CompleteAppointment} from '../controllers/AppointmentController.js';
-import {CreateReview} from '../controllers/ReviewController.js';
+import {CreateReview, GetReviewsByProvider} from '../controllers/ReviewController.js';
 
 import {CreateGroomerAppointment, GetUserGroomerAppointments, GetGroomerAppointments, CompleteGroomerAppointment,CheckInGroomerAppointment,CheckOutGroomerAppointment,StartGroomerAppointment} from '../controllers/GroomerAppointmentController.js';
 import {CreateSitterAppointment,StartSitterAppointment, CheckInSitterAppointment,CheckOutSitterAppointment,GetUserSitterAppointments, GetSitterAppointments, CompleteSitterAppointment} from '../controllers/SitterAppointmentController.js';
@@ -51,7 +51,7 @@ const AuthRoutes = express.Router();
 
 //Reviews Routes
 AuthRoutes.post("/create-review", CreateReview);
-// AuthRoutes.get ("/reviews/vet/:vetId", GetReviewsForVet);
+AuthRoutes.get("/reviews/:providerType(vet|groomer|sitter)/:providerId", GetReviewsByProvider);
 
 //Appointment Routes
 // 2) After redirect, confirm payment
