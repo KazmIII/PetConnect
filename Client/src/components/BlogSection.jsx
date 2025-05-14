@@ -1,24 +1,25 @@
-
-
+// src/components/BlogList.jsx
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Link, useLocation } from "react-router-dom";
-import { FaSearch } from "react-icons/fa";
+import { FaSearch, FaSpinner } from "react-icons/fa";
 
 const BlogList = () => {
   const { search } = useLocation();
-  const queryParams = new URLSearchParams(search);
-  const initialCategory = queryParams.get("category") || "";
+  const queryParams      = new URLSearchParams(search);
+  const initialCategory  = queryParams.get("category") || "";
 
-  const [blogs, setBlogs] = useState([]);
-  const [category, setCategory] = useState(initialCategory);
-  const [categories] = useState([
+  const [blogs, setBlogs]         = useState([]);
+  const [category, setCategory]   = useState(initialCategory);
+  const [loading, setLoading]     = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const categories = [
     "Dog Care",
     "Cat Care",
     "Pet Nutrition",
     "General Pet Care",
-  ]);
-  const [searchTerm, setSearchTerm] = useState("");
+  ];
 
   // Keep category state in sync if someone clicks the breadcrumb link
   useEffect(() => {
@@ -29,17 +30,18 @@ const BlogList = () => {
   // Fetch blogs whenever category changes
   useEffect(() => {
     const fetchBlogs = async () => {
+      setLoading(true);
       try {
         const url = category
-          ? `http://localhost:5000/api/blogs?category=${encodeURIComponent(
-              category
-            )}`
+          ? `http://localhost:5000/api/blogs?category=${encodeURIComponent(category)}`
           : "http://localhost:5000/api/blogs";
 
         const response = await axios.get(url);
         setBlogs(response.data);
       } catch (err) {
         console.error("Error fetching blogs:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -51,8 +53,16 @@ const BlogList = () => {
     b.Title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Heading: category name or default
   const headingText = category || "Pet Blogs";
+
+  // Show spinner while loading
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <FaSpinner className="animate-spin text-4xl text-orange-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-6">

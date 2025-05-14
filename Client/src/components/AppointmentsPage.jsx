@@ -20,15 +20,28 @@ export default function AppointmentsPage() {
   const [now, setNow] = useState(new Date());
   const navigate = useNavigate();
 
-  const filteredAppointments = appointments.filter(
-    (appt) => appt.providerType === selectedType
-  );
-
   const appointmentCounts = {
     vet: appointments.filter(appt => appt.providerType === "vet").length,
     sitter: appointments.filter(appt => appt.providerType === "sitter").length,
     groomer: appointments.filter(appt => appt.providerType === "groomer").length,
   };
+
+  // Sort and filter appointments
+  const filteredAndSortedAppointments = appointments
+    .filter((appt) => appt.providerType === selectedType)
+    .slice()
+    .sort((a, b) => {
+      const aStart = getDateTime(a.date, a.slot.startTime);
+      const bStart = getDateTime(b.date, b.slot.startTime);
+      return bStart - aStart; // Newest first
+    });
+
+  const activeAppointments = filteredAndSortedAppointments.filter(
+    (appt) => appt.status !== "completed"
+  );
+  const completedAppointments = filteredAndSortedAppointments.filter(
+    (appt) => appt.status === "completed"
+  );
 
   useEffect(() => {
     fetch("http://localhost:5000/auth/appointments", {
@@ -51,10 +64,10 @@ export default function AppointmentsPage() {
 
   const handleJoinConsultation = (roomID, endDT) => {
     navigate(
-      `/video?roomID=${encodeURIComponent(roomID)}` +
-      `&mode=join` +
-      `&scheduledEnd=${encodeURIComponent(endDT.toISOString())}` +
-      `&role=client`
+       `/video?roomID=${roomID}` +
+        `&mode=join` +
+        `&scheduledEnd=${encodeURIComponent(endDT.toISOString())}` +
+        `&role=client`
     );
   };
 
@@ -72,7 +85,7 @@ export default function AppointmentsPage() {
 
   return (
     <div className="max-w-7xl mx-auto p-6 flex flex-col md:flex-row gap-8 min-h-screen">
-      {/* Full-height Side Panel */}
+      {/* Side Panel */}
       <div className="w-full md:w-72 flex-shrink-0 h-full">
         <div className="bg-orange-50 rounded-xl p-6 shadow-lg border border-orange-100 h-full flex flex-col">
           <h2 className="text-xl font-bold text-orange-800 mb-6 flex items-center gap-3">
@@ -131,19 +144,19 @@ export default function AppointmentsPage() {
         </div>
       </div>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <div className="flex-1 h-full">
         <div className="bg-white rounded-xl p-6 shadow-sm border border-orange-50 h-full flex flex-col">
           <h1 className="text-3xl font-bold mb-6 flex items-center gap-3 text-orange-800">
             <CalendarClock className="w-8 h-8 text-orange-600" />
             My Appointments
             <span className="text-lg font-medium text-orange-600 ml-2">
-              ({filteredAppointments.length})
+              ({filteredAndSortedAppointments.length})
             </span>
           </h1>
 
           <div className="flex-1 overflow-auto">
-            {!filteredAppointments.length ? (
+            {activeAppointments.length === 0 && completedAppointments.length === 0 ? (
               <div className="text-center py-8 bg-orange-50 rounded-lg h-full flex items-center justify-center">
                 <div>
                   <p className="text-orange-700 font-medium text-lg">
@@ -155,84 +168,162 @@ export default function AppointmentsPage() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
-                {filteredAppointments.map((appt) => {
-                  const startDT = getDateTime(appt.date, appt.slot.startTime);
-                  const endDT = getDateTime(appt.date, appt.slot.endTime);
-                  const isVideo = appt.consultationType === "video";
-                  const canJoin = isVideo && appt.roomID && now < endDT && appt.status === "in-progress";
+              <div className="space-y-8">
+                {activeAppointments.length > 0 && (
+                  <div>
+                    <h2 className="text-xl font-semibold text-orange-800 mb-4">
+                      Upcoming Appointments
+                    </h2>
+                    <div className="space-y-4">
+                      {activeAppointments.map((appt) => {
+                        const startDT = getDateTime(appt.date, appt.slot.startTime);
+                        const endDT = getDateTime(appt.date, appt.slot.endTime);
+                        const isVideo = appt.consultationType === "video";
+                        const canJoin = isVideo && appt.roomID && now >= startDT && now <= endDT;
 
-                  return (
-                    <div
-                      key={appt._id}
-                      className="p-5 rounded-xl shadow-sm flex flex-col sm:flex-row sm:justify-between sm:items-center bg-orange-50 border border-orange-100"
-                    >
-                      <div className="space-y-1 flex-1">
-                        <p className="text-gray-900 text-xl font-semibold mb-2">
-                          <span className="text-orange-700">
-                            {appt.providerType === "vet" ? "Dr." : 
-                            appt.providerType === "groomer" ? "Groomer" : "Sitter"}
-                          </span>{" "}
-                          {appt.providerName}
-                        </p>
-                        <div className="flex flex-wrap gap-4">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-orange-700">Date:</span>
-                            <span className="text-sm text-gray-700">
-                              {startDT.toLocaleDateString()}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-orange-700">Time:</span>
-                            <span className="text-sm text-gray-700">
-                              {appt.slot.startTime} - {appt.slot.endTime}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-orange-700">Type:</span>
-                            <span className="text-sm px-2 py-1 rounded-full bg-orange-100 text-orange-700 capitalize">
-                              {appt.consultationType}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className="text-sm font-medium text-orange-700">Status:</span>
-                          <span className={`text-sm px-3 py-1 rounded-full ${
-                            appt.status === "booked" ? "bg-yellow-100 text-yellow-800" :
-                            appt.status === "in-progress" ? "bg-green-100 text-green-800" :
-                            "bg-teal-100 text-teal-800"
-                          }`}>
-                            {appt.status}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 sm:mt-0 flex flex-col gap-2 items-end">
-                        {appt.status === "completed" && !appt.hasReview && (
-                          <button
-                            onClick={() => navigate(`/submit-feedback?appointmentId=${appt._id}`)}
-                            className="px-4 py-2 bg-gradient-to-r from-orange-400 to-orange-600 text-white rounded-lg hover:opacity-90 transition-opacity"
+                        return (
+                          <div
+                            key={appt._id}
+                            className="p-5 rounded-xl shadow-sm flex flex-col sm:flex-row sm:justify-between sm:items-center bg-orange-50 border border-orange-100"
                           >
-                            Leave Review
-                          </button>
-                        )}
+                            <div className="space-y-1 flex-1">
+                              <p className="text-gray-900 text-xl font-semibold mb-2">
+                                <span className="text-orange-700">
+                                  {appt.providerType === "vet" ? "Dr." : 
+                                  appt.providerType === "groomer" ? "Groomer" : "Sitter"}
+                                </span>{" "}
+                                {appt.providerName}
+                              </p>
+                              <div className="flex flex-wrap gap-4">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium text-orange-700">Date:</span>
+                                  <span className="text-sm text-gray-700">
+                                    {startDT.toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium text-orange-700">Time:</span>
+                                  <span className="text-sm text-gray-700">
+                                    {appt.slot.startTime} - {appt.slot.endTime}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium text-orange-700">Type:</span>
+                                  <span className="text-sm px-2 py-1 rounded-full bg-orange-100 text-orange-700 capitalize">
+                                    {appt.consultationType}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="mt-2 flex items-center gap-2">
+                                <span className="text-sm font-medium text-orange-700">Status:</span>
+                                <span className={`text-sm px-3 py-1 rounded-full ${
+                                  appt.status === "booked" ? "bg-yellow-100 text-yellow-800" :
+                                  appt.status === "in-progress" ? "bg-green-100 text-green-800" :
+                                  "bg-teal-100 text-teal-800"
+                                }`}>
+                                  {appt.status}
+                                </span>
+                              </div>
+                            </div>
 
-                        {isVideo && canJoin && (
-                          <button
-                            onClick={() => handleJoinConsultation(appt.roomID, endDT)}
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-                          >
-                            <span>Join Now</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M22 8.5V15.5C22 19 20 21 16.5 21H7.5C4 21 2 19 2 15.5V8.5C2 5 4 3 7.5 3H16.5C20 3 22 5 22 8.5Z" />
-                              <path d="M12.4 15.8L15.7 12.5L12.4 9.2M7.7 12.5H15.6" />
-                            </svg>
-                          </button>
-                        )}
-                      </div>
+                            <div className="mt-4 sm:mt-0 flex flex-col gap-2 items-end">
+                              {appt.status === "completed" && !appt.hasReview && (
+                                <button
+                                  onClick={() => navigate(`/submit-feedback?appointmentId=${appt._id}`)}
+                                  className="px-4 py-2 bg-gradient-to-r from-orange-400 to-orange-600 text-white rounded-lg hover:opacity-90 transition-opacity"
+                                >
+                                  Leave Review
+                                </button>
+                              )}
+
+                             
+                              {isVideo && canJoin && (
+  <button
+    onClick={() => handleJoinConsultation(appt.roomID, endDT)}
+    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+  >
+    <span>Join Now</span>
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M22 8.5V15.5C22 19 20 21 16.5 21H7.5C4 21 2 19 2 15.5V8.5C2 5 4 3 7.5 3H16.5C20 3 22 5 22 8.5Z" />
+      <path d="M12.4 15.8L15.7 12.5L12.4 9.2M7.7 12.5H15.6" />
+    </svg>
+  </button>
+)}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
+                  </div>
+                )}
+
+                {completedAppointments.length > 0 && (
+                  <div>
+                    <h2 className="text-xl font-semibold text-orange-800 mb-4">
+                      Completed Appointments
+                    </h2>
+                    <div className="space-y-4">
+                      {completedAppointments.map((appt) => {
+                        const startDT = getDateTime(appt.date, appt.slot.startTime);
+                        const endDT = getDateTime(appt.date, appt.slot.endTime);
+
+                        return (
+                          <div
+                            key={appt._id}
+                            className="p-5 rounded-xl shadow-sm flex flex-col sm:flex-row sm:justify-between sm:items-center bg-orange-50 border border-orange-100"
+                          >
+                            <div className="space-y-1 flex-1">
+                              <p className="text-gray-900 text-xl font-semibold mb-2">
+                                <span className="text-orange-700">
+                                  {appt.providerType === "vet" ? "Dr." : 
+                                  appt.providerType === "groomer" ? "Groomer" : "Sitter"}
+                                </span>{" "}
+                                {appt.providerName}
+                              </p>
+                              <div className="flex flex-wrap gap-4">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium text-orange-700">Date:</span>
+                                  <span className="text-sm text-gray-700">
+                                    {startDT.toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium text-orange-700">Time:</span>
+                                  <span className="text-sm text-gray-700">
+                                    {appt.slot.startTime} - {appt.slot.endTime}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium text-orange-700">Type:</span>
+                                  <span className="text-sm px-2 py-1 rounded-full bg-orange-100 text-orange-700 capitalize">
+                                    {appt.consultationType}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="mt-2 flex items-center gap-2">
+                                <span className="text-sm font-medium text-orange-700">Status:</span>
+                                <span className="text-sm px-3 py-1 rounded-full bg-teal-100 text-teal-800">
+                                  {appt.status}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="mt-4 sm:mt-0 flex flex-col gap-2 items-end">
+                              {!appt.hasReview && (
+                                <button
+                                  onClick={() => navigate(`/submit-feedback?appointmentId=${appt._id}`)}
+                                  className="px-4 py-2 bg-gradient-to-r from-orange-400 to-orange-600 text-white rounded-lg hover:opacity-90 transition-opacity"
+                                >
+                                  Leave Review
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

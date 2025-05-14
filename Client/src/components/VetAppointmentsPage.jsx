@@ -25,13 +25,22 @@ export default function VetAppointmentsPage() {
     axios
       .get("http://localhost:5000/auth/appointments/vet", { withCredentials: true })
       .then(({ data }) => {
+        // Modified sorting logic here
         const activeAppointments = data
           .filter(appt => ['booked', 'in-progress'].includes(appt.status))
-          .sort((a, b) => getDateTime(a.date, a.slot.startTime) - getDateTime(b.date, b.slot.startTime));
+          .sort((a, b) => {
+            const bStart = getDateTime(b.date, b.slot.startTime);
+            const aStart = getDateTime(a.date, a.slot.startTime);
+            return bStart - aStart; // Newest first
+          });
 
         const completedAppointments = data
           .filter(appt => appt.status === "completed")
-          .sort((a, b) => getDateTime(b.date, b.slot.endTime) - getDateTime(a.date, a.slot.endTime));
+          .sort((a, b) => {
+            const bStart = getDateTime(b.date, b.slot.startTime);
+            const aStart = getDateTime(a.date, a.slot.startTime);
+            return bStart - aStart; // Newest first
+          });
 
         setAppointments([...activeAppointments, ...completedAppointments]);
       })
@@ -234,7 +243,13 @@ export default function VetAppointmentsPage() {
 
                       {canAct && appt.status === "in-progress" && (
                         <button
-                          onClick={() => navigate(`/video?roomID=${appt.roomID}&mode=join&role=vet`)}
+                          onClick={() => { 
+                            const endDT = getDateTime(appt.date, appt.slot.endTime);
+                            navigate(`/video?roomID=${appt.roomID}` +
+                            `&mode=join` +
+                            `&scheduledEnd=${encodeURIComponent(endDT.toISOString())}` +
+                            `&role=vet`);
+                          }}
                           className="px-4 py-2 bg-gradient-to-r from-teal-400 to-teal-600 text-white rounded-lg hover:opacity-90 transition-opacity"
                         >
                           Join Video Call
