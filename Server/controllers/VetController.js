@@ -137,9 +137,18 @@ export const GetVerifiedVets = async (req, res) => {
         select: "serviceName price availability deliveryMethod",
       });
 
-      console.log("vets ni server; ", vets);
+    const withPhotos = vets.map(vet => {
+      const obj = vet.toObject();
+      if (vet.profilePhoto?.data && vet.profilePhoto.contentType) {
+        const b64 = vet.profilePhoto.data.toString("base64");
+        obj.profilePhotoUrl = `data:${vet.profilePhoto.contentType};base64,${b64}`;
+      } else {
+        obj.profilePhotoUrl = null; // or a default
+      }
+      return obj;
+    });
 
-    return res.json({ vets });
+    return res.json({ vets: withPhotos });
   } catch (err) {
     console.error("Error in GetVerifiedVets:", err);
     return res.status(500).json({ message: "Error fetching vets" });

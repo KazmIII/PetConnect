@@ -45,6 +45,7 @@ export default function Footer() {
                 ['Contact', '/contact'],
                 ['Privacy Policy', '/privacy-policy'],
                 ['Terms & Conditions', '/terms-and-conditions'],
+                ['Submit a Complaint', '/complaints'],
               ].map(([text, href]) => (
                 <li key={text}>
                   <a href={href} className="text-gray-400 hover:text-orange-500 transition-colors">

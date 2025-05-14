@@ -144,28 +144,27 @@ const AdoptionForm = () => {
       });
 
       let validationResponse;
-try {
-  validationResponse = await axios.post(
-    'http://localhost:5000/api/validate-home-images',
-    validationFormData,
-    {
-      headers: {
-        'Content-Type': 'multipart/form-data'
+      try {
+        validationResponse = await axios.post(
+          'http://localhost:5000/api/validate-home-images',
+          validationFormData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          }
+        );
+      } catch (err) {
+        if (err.response && err.response.status === 400) {
+          // validation failed, show specific Gemini error message
+          setError(err.response.data?.error || "Some home images are not acceptable. Please upload better ones.");
+          return;
+        } else {
+          console.error('Image validation request failed:', err);
+          setError('Something went wrong during image validation. Please try again.');
+          return;
+        }
       }
-    }
-  );
-} catch (err) {
-  if (err.response && err.response.status === 400) {
-    // validation failed, show specific Gemini error message
-    setError(err.response.data?.error || "Some home images are not acceptable. Please upload better ones.");
-    return;
-  } else {
-    console.error('Image validation request failed:', err);
-    setError('Something went wrong during image validation. Please try again.');
-    return;
-  }
-}
-
 
       if (!validationResponse.data.valid) {
         setError(validationResponse.data.error || "Invalid home images detected");

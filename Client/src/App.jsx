@@ -33,6 +33,7 @@ import Vets from './components/Vets';
 import VetAppointment from './components/VetAppointment';
 
 import ScrollToTop from './components/ScrollToTop';
+import ComplaintForm from './components/ComplaintForm';
 
 import Groomers from './components/Groomers';
 import GroomerAppointment from './components/GroomerAppointment';
@@ -217,6 +218,8 @@ const AppContent = () => {
         <Route path="/vets" element={<Vets />} />
         <Route path="/vets/:serviceType" element={<Vets />} />
         <Route path="/consultation/:serviceType/vet/:vetId" element={<VetAppointment />} />
+
+        <Route path="/complaints" element={<ComplaintForm />} />
 
         <Route path="/groomers" element={<Groomers />} />
         <Route path="/appointment/:serviceType/groomer/:groomerId" element={<GroomerAppointment />} />

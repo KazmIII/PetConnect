@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, EyeOff, ChevronDown} from "lucide-react";
+import { Eye, EyeOff, ChevronDown, X} from "lucide-react";
 import axios from 'axios';
 
 const majorCitiesPakistan = [
@@ -41,9 +41,11 @@ export default function ProviderRegister({onRegisterSuccess, onClose}) {
     sitterAddress: '',
     sitterCertificate: null,
     sittingExperience: '',
+    profilePhoto: null,
   });
 
   const [clinics, setClinics] = useState([]); // Stores fetched clinics based on city
+  const [profilePreview, setProfilePreview] = useState(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -65,6 +67,7 @@ export default function ProviderRegister({onRegisterSuccess, onClose}) {
         }
     }
   };
+
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -80,11 +83,25 @@ export default function ProviderRegister({onRegisterSuccess, onClose}) {
   };
 
   const handleFileChange = (e) => {
-   const selectedFile = e.target.files?.[0];
+    const selectedFile = e.target.files?.[0];
     const fileName = e.target.name;
+    
+    if (fileName === 'profilePhoto' && selectedFile) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePreview(reader.result);
+      };
+      reader.readAsDataURL(selectedFile);
+    }
+
     if (selectedFile) {
       setFormData({ ...formData, [fileName]: selectedFile });
     }
+  };
+
+  const removeProfilePhoto = () => {
+    setProfilePreview(null);
+    setFormData({ ...formData, profilePhoto: null });
   };
 
   const handleNext = async () => {
@@ -276,6 +293,45 @@ export default function ProviderRegister({onRegisterSuccess, onClose}) {
                     <span className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-600">
                       <ChevronDown />
                     </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Profile Photo {!profilePreview && '(optional)'}
+                    </label>
+                    
+                    {profilePreview ? (
+                      <div className="relative w-24 h-24">
+                        <img 
+                          src={profilePreview} 
+                          alt="Profile preview" 
+                          className="w-full h-full rounded-full object-cover border-2 border-orange-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={removeProfilePhoto}
+                          className="absolute -top-2 -right-2 bg-white rounded-full p-0.5 shadow-sm border border-gray-200 hover:bg-gray-50"
+                        >
+                          <X className="w-4 h-4 text-gray-600" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-full p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-orange-500 transition-colors">
+                        <div className="text-center">
+                          <p className="text-sm text-gray-600">
+                            Click to upload photo<br />
+                            <span className="text-xs text-gray-500">(JPEG, PNG, max 5MB)</span>
+                          </p>
+                        </div>
+                        <input 
+                          type="file" 
+                          name="profilePhoto" 
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="hidden" 
+                        />
+                      </label>
+                    )}
                   </div>
                     {errorMessage && <p className="text-red-500 text-center mt-2">{errorMessage}</p>}
 

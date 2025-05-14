@@ -29,6 +29,10 @@ const GroomerSchema = new mongoose.Schema({
         type: Number, 
         required: true 
     },
+    profilePhoto: {
+        data: Buffer,
+        contentType: String,
+    },
     groomerCertificate: { 
         type: Buffer, 
         required: true 

@@ -43,6 +43,10 @@ const VetSchema = new Schema({
         type: Schema.Types.Buffer, 
         required: true 
     },
+    profilePhoto: {
+        data: Buffer,
+        contentType: String,
+    },
     emailVerified:{
         type:Boolean,
         default:false

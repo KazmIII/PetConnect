@@ -16,6 +16,7 @@ import http from 'http';
 import { Server } from 'socket.io';
 import { StripeWebhook } from "./controllers/AppointmentController.js";
 import imageValidationRouter from './routes/imageValidation.js';
+import complaintRoutes from './routes/complaintRoutes.js';
 
 dotenv.config();
 const PORT = process.env.PORT || 5000;
@@ -63,6 +64,7 @@ app.use('/api/memory-books', memoryRoutes);
 app.use('/pets', predictedEmotion);
 app.use('/api', predictMatch);
 app.use('/api', imageValidationRouter);
+app.use('/api/complaints', complaintRoutes);
 
 // Create HTTP server and attach socket.io
 const server = http.createServer(app);

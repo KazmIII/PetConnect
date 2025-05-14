@@ -260,28 +260,35 @@ const Sitters = () => {
         <Spinner className="text-center py-4" />
       ) : (
         <div className="space-y-6">
-          {filteredSitters.map(g => (
+          {filteredSitters.map(sitter => (
             <div
-              key={g._id}
+              key={sitter._id}
               className="max-w-[58rem] bg-white border border-gray-200 rounded-lg p-6 shadow"
             >
               <div className="flex justify-between items-start">
-                <div>
-                  <h2 className="text-lg text-gray-800">{g.name}</h2>
-                  <p className="text-sm text-gray-600">{g.sitterAddress}</p>
-                  <div className="mt-6 flex gap-8 text-xs">
-                    <div>
-                      <div className="font-medium text-gray-900">
-                        {g.yearsOfExperience || 5} Years
+                <div className="flex items-start gap-4">
+                  <img
+                    src={sitter.profilePhotoUrl || '/avatar.png'}
+                    alt={`Dr. ${sitter.name}`}
+                    className="w-[5rem] h-[5rem] rounded-full object-cover border border-gray-200"
+                  />
+                  <div>
+                    <h2 className="text-lg text-gray-800">{sitter.name}</h2>
+                    <p className="text-sm text-gray-600">{sitter.sitterAddress}</p>
+                    <div className="mt-6 flex gap-8 text-xs">
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {sitter.yearsOfExperience || 5} Years
+                        </div>
+                        <div className="text-gray-500">Experience</div>
                       </div>
-                      <div className="text-gray-500">Experience</div>
                     </div>
                   </div>
                 </div>
+
                 <div className="flex flex-col items-end space-y-2">
-                  
                   <button
-                    onClick={() => handleBookClick(g)}
+                    onClick={() => handleBookClick(sitter)}
                     className="px-4 py-3 w-48 bg-orange-600 text-white text-sm rounded-sm hover:bg-orange-500 transition"
                   >
                     Book Appointment
@@ -290,11 +297,11 @@ const Sitters = () => {
               </div>
 
               <div className="flex gap-1.5 overflow-x-auto mt-4 pb-2">
-                {g.services?.map((s, idx) => {
+                {sitter.services?.map((s, idx) => {
                   let Icon, label, borderColor;
                   switch (s.deliveryMethod) {
                     case 'In-Clinic':
-                      Icon = Scissors; label = g.sitterAddress; borderColor = 'blue';
+                      Icon = Scissors; label = sitter.sitterAddress; borderColor = 'blue';
                       break;
                     case 'Home Visit':
                       Icon = Home; label = 'Home Visit'; borderColor = 'purple';
@@ -305,7 +312,7 @@ const Sitters = () => {
                   return (
                     <Link
                       key={idx}
-                      to={`/appointment/${s.deliveryMethod.toLowerCase().replace(/\s/g, '-')}/sitter/${g._id}`}
+                      to={`/appointment/${s.deliveryMethod.toLowerCase().replace(/\s/g, '-')}/sitter/${sitter._id}`}
                       className={`min-w-[18rem] p-3 rounded-md border border-${borderColor}-800 hover:bg-gray-100 block`}
                     >
                       <div className="flex justify-between">

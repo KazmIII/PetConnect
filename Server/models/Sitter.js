@@ -38,6 +38,10 @@ const SitterSchema = new mongoose.Schema({
         type: String, 
         required: true 
     },
+     profilePhoto: {
+        data: Buffer,
+        contentType: String,
+    },
     verificationStatus: {
         type: String,
         enum: ['pending', 'verified', 'rejected'],

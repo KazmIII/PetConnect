@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { ChevronLeft } from 'lucide-react';
 import axios from 'axios';
 
 export default function AdoptionApplicationDetail() {
@@ -42,9 +43,20 @@ export default function AdoptionApplicationDetail() {
     return <div className="text-center mt-8 text-lg">Application not found.</div>;
   }
 
+  const handleBack = () => {
+    if (location.state?.from) {
+      navigate(location.state.from);
+    } else {
+      navigate(-1); 
+    }
+  };
+
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-5xl mx-auto bg-orange-200 rounded-lg shadow-lg p-6">
+        <button className='flex flex-row items-center mb-2 text-gray-700 font-semibold hover:underline'onClick={handleBack}> 
+            <ChevronLeft className="w-5 h-5"/> Back
+        </button>
         <h1 className="text-2xl font-bold text-center mb-6 text-orange-700">Adoption Application Details</h1>
         
         {/* Adopter Information */}

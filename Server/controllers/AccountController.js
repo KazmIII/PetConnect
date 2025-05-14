@@ -50,6 +50,9 @@ export const RegisterProvider = async (req, res) => {
     const vetDegreeBuffer = req.files['vetDegree']?.[0]?.buffer;
     const groomerCertificateBuffer = req.files['groomerCertificate']?.[0]?.buffer;
     const sitterCertificateBuffer = req.files['sitterCertificate']?.[0]?.buffer;
+    const profilePhotoBuffer = req.files['profilePhoto']?.[0]?.buffer;
+    const profilePhotoMimetype = req.files['profilePhoto']?.[0]?.mimetype;
+
 
     // Ensure all required files are uploaded for specific roles
     if (role === "vet" && (!vetResumeBuffer || !vetLicenseBuffer || !vetDegreeBuffer || !clinic)) {
@@ -79,7 +82,10 @@ export const RegisterProvider = async (req, res) => {
         verificationToken,
         verificationTokenExpiresAt,
         verificationStatus: "pending",
-        clinicId: foundClinic._id,  
+        clinicId: foundClinic._id,
+        profilePhoto: profilePhotoBuffer
+      ? { data: profilePhotoBuffer, contentType: profilePhotoMimetype }
+      : undefined,
       });
     } else if (role === "groomer") {
       provider = new GroomerModel({
@@ -95,6 +101,9 @@ export const RegisterProvider = async (req, res) => {
         verificationTokenExpiresAt,
         verificationStatus: "pending",
         clinicId: foundClinic._id, 
+        profilePhoto: profilePhotoBuffer
+      ? { data: profilePhotoBuffer, contentType: profilePhotoMimetype }
+      : undefined,
       });
     } else if (role === "sitter") {
       provider = new SitterModel({
@@ -110,6 +119,9 @@ export const RegisterProvider = async (req, res) => {
         verificationToken,
         verificationTokenExpiresAt,
         verificationStatus: "pending",
+        profilePhoto: profilePhotoBuffer
+      ? { data: profilePhotoBuffer, contentType: profilePhotoMimetype }
+      : undefined,
       });
     }
 

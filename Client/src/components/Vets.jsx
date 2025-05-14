@@ -291,22 +291,29 @@ const Vets = () => {
               className="max-w-[58rem] bg-white border border-gray-200 rounded-lg p-6 shadow-md shadow-gray-300"
             >
               <div className="flex justify-between items-start">
-                <div>
-                  <h2 className="text-lg text-gray-800">Dr. {vet.name}</h2>
-                  <p className="text-sm text-gray-600">
-                    {vet.specialization || 'Veterinarian'}
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {vet.qualifications ||
-                      'DVM (Doctor of Veterinary Medicine)'}
-                  </p>
-                  <div className="mt-6 flex gap-8">
-                    <div>
-                      <div className="font-medium text-sm text-gray-900">
-                        {vet.yearsOfExperience || '10'} Years
-                      </div>
-                      <div className="text-xs text-gray-500 mt-0.5">
-                        Experience
+                <div className="flex items-start gap-4">
+                  <img
+                    src={vet.profilePhotoUrl || '/avatar.png'}
+                    alt={`Dr. ${vet.name}`}
+                    className="w-[5rem] h-[5rem] rounded-full object-cover border border-gray-200"
+                  />
+                  <div>
+                    <h2 className="text-lg text-gray-800">Dr. {vet.name}</h2>
+                    <p className="text-sm text-gray-600">
+                      {vet.specialization || 'Veterinarian'}
+                    </p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {vet.qualifications ||
+                        'DVM (Doctor of Veterinary Medicine)'}
+                    </p>
+                    <div className="mt-6 flex gap-8">
+                      <div>
+                        <div className="font-medium text-sm text-gray-900">
+                          {vet.yearsOfExperience || '10'} Years
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          Experience
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -481,10 +488,10 @@ const Vets = () => {
                 let Icon, serviceName;
                 if (s.deliveryMethod === 'Video Consultation') {
                   Icon = Video;
-                  serviceName = 'Online Video Consultation';
+                  serviceName = 'video-consultation';
                 } else if (s.deliveryMethod === 'In-Clinic') {
                   Icon = MapPin;
-                  serviceName = modalClinicName;
+                  serviceName = 'in-clinic';
                 } else if (s.deliveryMethod === 'Home Visit') {
                   Icon = Home;
                   serviceName = 'Home Visit';

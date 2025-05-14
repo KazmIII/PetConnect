@@ -169,7 +169,8 @@ const uploadFields = [
   { name: 'vetLicenseFile', maxCount: 1 },
   { name: 'vetDegree', maxCount: 1 },
   { name: 'groomerCertificate', maxCount: 1 },
-  { name: 'sitterCertificate', maxCount: 1 }
+  { name: 'sitterCertificate', maxCount: 1 },
+  { name: 'profilePhoto', maxCount: 1 }
 ];
 AuthRoutes.post('/provider-register', UploadMultiple(uploadFields), verifyEmailDomain, RegisterProvider);
 
