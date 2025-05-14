@@ -31,10 +31,10 @@ const ClinicDashboard = () => {
       setActiveSection("requests");
     } else if (path.startsWith("/clinic/staff")) {
       setActiveSection("staff");
-    } else {
+    } else if (path === "/clinic/dashboard" || path === "/clinic") {
       setActiveSection("dashboard");
     }
-    localStorage.setItem("activeSection", activeSection); // Update localStorage
+    localStorage.setItem("activeSection", activeSection);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -90,13 +90,10 @@ const ClinicDashboard = () => {
           setIsSidePanelOpen={setIsSidePanelOpen}
         />
 
-        <div
-          className={`transition-all duration-300 ${
-            isSidePanelOpen ? "w-3/4" : "w-full"
-          } bg-gray-100 overflow-auto hide-scrollbar`}
-        >
-          <Routes>
-            <Route path="/dashboard" element={<ClinicHome />} />
+        <div className={`transition-all duration-300 ${isSidePanelOpen ? "w-3/4" : "w-full"} bg-gray-100 overflow-auto hide-scrollbar`}>
+      <Routes>
+        <Route path="/dashboard" element={<ClinicHome />} />
+        <Route path="/" element={<ClinicHome />} /> {/* Default route */}
             <Route path="/requests" element={<PendingProvidersRequests />} />
             <Route path="/requests/:role/:provider_id" element={<ProviderDetails />} />
             <Route path="/staff/:role/:provider_id" element={<ProviderDetails />} />

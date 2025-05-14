@@ -171,7 +171,7 @@ export default function AppointmentsPage() {
                         <p className="text-gray-900 text-xl font-semibold mb-2">
                           <span className="text-orange-700">
                             {appt.providerType === "vet" ? "Dr." : 
-                            appt.providerType === "groomer" ? "Stylist" : "Sitter"}
+                            appt.providerType === "groomer" ? "Groomer" : "Sitter"}
                           </span>{" "}
                           {appt.providerName}
                         </p>
