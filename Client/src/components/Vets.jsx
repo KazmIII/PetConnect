@@ -105,6 +105,10 @@ const Vets = () => {
       if (newTypes.includes(type)) newTypes = newTypes.filter(t => t !== type);
       else newTypes.push(type);
 
+       if (type === 'video-consultation') {
+        setIsNearMeActive(false);
+      }
+
       // If adding in-clinic or home-visit, ensure city is set
       if (['home-visit', 'in-clinic'].includes(type) && !city) {
         const detected = await detectCityByGeo();
@@ -168,9 +172,17 @@ const Vets = () => {
         for (const opt of sortOptions) {
           let diff = 0;
           switch (opt) {
-            case 'experience': diff = b.experience - a.experience; break;
-            case 'fee': diff = a.fee - b.fee; break;
-            case 'rating': diff = b.rating - a.rating; break;
+            case 'experience':
+              diff = (b.yearsOfExperience || 0) - (a.yearsOfExperience || 0);
+              break;
+
+            case 'fee':
+              // find the cheapest service price for each vet
+              const minA = Math.min(...(a.services || []).map(s => s.price || Infinity));
+              const minB = Math.min(...(b.services || []).map(s => s.price || Infinity));
+              diff = minA - minB;
+              break;
+
             case 'availability': 
               diff = (b.availableToday ? 1 : 0) - (a.availableToday ? 1 : 0);
               break;
@@ -219,6 +231,7 @@ const Vets = () => {
       </p>
 
       <div className="max-w-[58rem] flex gap-2 mb-6 text-xs font-medium text-lime-700 overflow-x-auto pb-2">
+        <p className='text-lg mr-4'>Apply Filters: </p>
         <button 
           className={`px-3 py-2 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
             ${isNearMeActive ? 'bg-lime-200' : 'bg-white'
@@ -240,13 +253,6 @@ const Vets = () => {
             onClick={() => toggleSortOption('fee')}
         >
           Lowest Fee
-        </button>
-        <button 
-          className={`px-3 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
-            ${sortOptions.includes('rating') ? 'bg-lime-200' : 'bg-white'}`}
-            onClick={() => toggleSortOption('rating')}
-        >
-          Highest Rated
         </button>
         <button 
           className={`px-3 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
@@ -274,10 +280,6 @@ const Vets = () => {
           onClick={() => handleFilter('home-visit')}
         >
           Home Visit
-        </button>
-
-        <button className="px-3 bg-white border border-lime-700 rounded-full whitespace-nowrap">
-          Online Now
         </button>
       </div>
 
@@ -354,17 +356,19 @@ const Vets = () => {
                         </div>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="flex items-center text-xs text-green-600">
-                          <span className="w-2 h-2 bg-green-600 rounded-full mr-2" />
-                          Available today
-                        </span>
+                        {vet.services.find(s => s.deliveryMethod === 'Video Consultation')?.availableToday ? (
+                          <span className="flex items-center text-xs text-green-600">
+                            <span className="w-2 h-2 bg-green-600 rounded-full mr-2" />
+                            Available today
+                          </span>
+                        ) : (
+                          <span className="flex items-center text-xs text-green-600">
+                            <span className="w-2 h-2 bg-green-600 rounded-full mr-2" />
+                            Not available today
+                          </span>
+                        )}
                         <span className="font-normal text-xs">
-                          Rs.{' '}
-                          {
-                            vet.services.find(
-                              (s) => s.deliveryMethod === 'Video Consultation'
-                            )?.price
-                          }
+                          Rs. {vet.services.find(s => s.deliveryMethod === 'Video Consultation')?.price}
                         </span>
                       </div>
                     </div>
@@ -385,20 +389,22 @@ const Vets = () => {
                           </span>
                         </div>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="flex items-center text-xs text-green-600">
-                          <span className="w-2 h-2 bg-green-600 rounded-full mr-2" />
-                          Available today
-                        </span>
-                        <span className="font-normal text-xs">
-                          Rs.{' '}
-                          {
-                            vet.services.find(
-                              (s) => s.deliveryMethod === 'In-Clinic'
-                            )?.price
-                          }
-                        </span>
-                      </div>
+                       <div className="flex justify-between items-center">
+        {vet.services.find(s => s.deliveryMethod === 'In-Clinic')?.availableToday ? (
+          <span className="flex items-center text-xs text-green-600">
+            <span className="w-2 h-2 bg-green-600 rounded-full mr-2" />
+            Available today
+          </span>
+        ) : (
+          <span className="flex items-center text-xs text-green-600">
+            <span className="w-2 h-2 bg-green-600 rounded-full mr-2" />
+            Not available today
+          </span>
+        )}
+        <span className="font-normal text-xs">
+          Rs. {vet.services.find(s => s.deliveryMethod === 'In-Clinic')?.price}
+        </span>
+      </div>
                     </div>
                   </Link>
                 )}
@@ -418,20 +424,22 @@ const Vets = () => {
                         </div>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="flex items-center text-xs text-green-600">
-                          <span className="w-2 h-2 bg-green-600 rounded-full mr-2" />
-                          Available today
-                        </span>
-                        <span className="font-normal text-xs">
-                          Rs.{' '}
-                          {
-                            vet.services.find(
-                              (s) => s.deliveryMethod === 'Home Visit'
-                            )?.price
-                          }
-                        </span>
-                      </div>
-                    </div>
+        {vet.services.find(s => s.deliveryMethod === 'Home Visit')?.availableToday ? (
+          <span className="flex items-center text-xs text-green-600">
+            <span className="w-2 h-2 bg-green-600 rounded-full mr-2" />
+            Available today
+          </span>
+        ) : (
+          <span className="flex items-center text-xs text-green-600">
+            <span className="w-2 h-2 bg-green-600 rounded-full mr-2" /> {/* Fixed color here */}
+            Not available today
+          </span>
+        )}
+        <span className="font-normal text-xs">
+          Rs. {vet.services.find(s => s.deliveryMethod === 'Home Visit')?.price}
+        </span>
+      </div>
+    </div>
                   </Link>
                 )}
               </div>
@@ -462,90 +470,94 @@ const Vets = () => {
 
       {/* Modal Overlay */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg w-full max-w-md p-6 relative">
-            {/* Close button */}
-            <button
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-lg w-full max-w-md p-6 relative">
+      <button
+        onClick={() => setIsModalOpen(false)}
+        className="absolute top-6 right-6 font-semibold text-gray-500 hover:text-gray-600 text-xs"
+      >
+        ✕
+      </button>
+
+      <div className="text-center mb-6">
+        <h2 className="text-sm font-semibold text-gray-800">
+          Book appointment with Dr. {modalVetName}
+        </h2>
+        <p className="text-gray-500 text-xs">Please select one</p>
+      </div>
+
+      <div className="space-y-1">
+        {modalServices.map((s, idx) => {
+          let Icon, serviceName;
+          if (s.deliveryMethod === 'Video Consultation') {
+            Icon = Video;
+            serviceName = 'video-consultation';
+          } else if (s.deliveryMethod === 'In-Clinic') {
+            Icon = MapPin;
+            serviceName = 'in-clinic';
+          } else if (s.deliveryMethod === 'Home Visit') {
+            Icon = Home;
+            serviceName = 'home-visit';
+          }
+
+          return (
+            <Link
+              key={idx}
+              to={`/consultation/${serviceName}/vet/${modalVetId}`}
+              className="block p-2 border rounded-lg hover:bg-gray-50 transition-colors"
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-6 right-6 font-semibold text-gray-500 hover:text-gray-600 text-xs"
             >
-              ✕
-            </button>
-
-            {/* Header */}
-            <div className="text-center mb-6">
-              <h2 className="text-sm font-semibold text-gray-800">
-                Book appointment with Dr. {modalVetName}
-              </h2>
-              <p className="text-gray-500 text-xs">
-                Please select one
-              </p>
-            </div>
-
-            {/* Services list */}
-            <div className="space-y-1">
-              {modalServices.map((s, idx) => {
-                let Icon, serviceName;
-                if (s.deliveryMethod === 'Video Consultation') {
-                  Icon = Video;
-                  serviceName = 'video-consultation';
-                } else if (s.deliveryMethod === 'In-Clinic') {
-                  Icon = MapPin;
-                  serviceName = 'in-clinic';
-                } else if (s.deliveryMethod === 'Home Visit') {
-                  Icon = Home;
-                  serviceName = 'Home Visit';
-                }
-
-                return (
-                  <Link
-                    key={idx}
-                    to={`/consultation/${serviceName}/vet/${modalVetId}`}
-                    className="block p-2 border rounded-lg hover:bg-gray-50 transition-colors"
-                    onClick={() => setIsModalOpen(false)}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-start gap-3">
-                        <Icon className="w-5 h-5 text-teal-800 mt-1" />
-                        <div>
-                          <h3 className="font-semibold text-gray-800 text-sm">
-                            {serviceName}
-                          </h3>
-                          {s.deliveryMethod === 'In-Clinic' && modalClinicCity && (
-                            <p className="text-xs text-orange-700 mt-1">
-                              Location: {modalClinicCity}
-                            </p>
-                          )}
-                          <div className="mt-2 text-xs text-gray-600">
-                            {s.location && (
-                              <div className="flex items-center gap-1">
-                                <MapPin className="w-4 h-4" />
-                                {s.location}
-                              </div>
-                            )}
-                            <div className="flex items-center gap-1 mt-1 text-green-600">
-                              <span className="w-2 h-2 bg-green-600 rounded-full" />
-                              {s.availableToday ? 'Available today' : `Available ${s.nextAvailable}`}
-                            </div>
-                          </div>
+              <div className="flex justify-between items-start">
+                <div className="flex items-start gap-3">
+                  <Icon className="w-5 h-5 text-teal-800 mt-1" />
+                  <div>
+                    <h3 className="font-semibold text-gray-800 text-sm capitalize">
+                      {serviceName.replace('-', ' ')}
+                    </h3>
+                    {s.deliveryMethod === 'In-Clinic' && modalClinicCity && (
+                      <p className="text-xs text-orange-700 mt-1">
+                        Location: {modalClinicCity}
+                      </p>
+                    )}
+                    <div className="mt-2 text-xs text-gray-600">
+                      {s.location && (
+                        <div className="flex items-center gap-1">
+                          <MapPin className="w-4 h-4" />
+                          {s.location}
                         </div>
-                      </div>
-
-                      {/* Price and chevron */}
-                      <div className="text-right flex flex-col items-end">
-                        <span className="font-semibold text-gray-800 text-sm"><span className='text-xs'>Rs. </span>{s.price}</span>
-                        <span className='w-5 h-5 flex items-center justify-center bg-gray-200 rounded-full mt-1'>
-                        <ChevronRight className="w-3.5 h-3.5 text-bold text-cyan-950" />
-                        </span>
+                      )}
+                      <div className={`flex items-center gap-1 mt-1 ${
+                        s.availableToday ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        <span className={`w-2 h-2 rounded-full ${
+                          s.availableToday ? 'bg-green-600' : 'bg-red-600'
+                        }`} />
+                        {s.availableToday 
+                          ? 'Available today' 
+                          : s.nextAvailable 
+                            ? `Available ${new Date(s.nextAvailable).toLocaleDateString()}`
+                            : 'Not available'}
                       </div>
                     </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
+                  </div>
+                </div>
+
+                <div className="text-right flex flex-col items-end">
+                  <span className="font-semibold text-gray-800 text-sm">
+                    <span className='text-xs'>Rs. </span>{s.price}
+                  </span>
+                  <span className='w-5 h-5 flex items-center justify-center bg-gray-200 rounded-full mt-1'>
+                    <ChevronRight className="w-3.5 h-3.5 text-bold text-cyan-950" />
+                  </span>
+                </div>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 };

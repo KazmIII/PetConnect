@@ -706,17 +706,24 @@ export const UpdateSitterInfo = async (req, res) => {
       });
     }
 
-    const { name, email, phone, password, city, sitterAddress } = req.body;
+    const {
+      name,
+      email,
+      phone,
+      password,
+      city,
+      sitterAddress
+    } = req.body;
 
-    // Handle `name` update
-    if (name && name !== sitter.name) {
-      sitter.name = name;
+    // Only update non-empty and changed fields
+    if (name && name.trim() && name !== sitter.name) {
+      sitter.name = name.trim();
     }
 
-    // Handle `email` update
-    if (email && email !== sitter.email) {
+    if (email && email.trim() && email !== sitter.email) {
       const existingSitter = await SitterModel.findOne({ email });
-      if (existingSitter) {
+
+      if (existingSitter && existingSitter._id.toString() !== sitter._id.toString()) {
         return res.status(400).json({
           success: false,
           message: "Email is already in use. Please choose another one.",
@@ -724,45 +731,40 @@ export const UpdateSitterInfo = async (req, res) => {
       }
 
       const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
-      const verificationTokenExpiresAt = Date.now() + 5 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000; //1 Hour
+      const verificationTokenExpiresAt = Date.now() + 60 * 60 * 1000; // 1 hour
 
       sitter.email = email;
       sitter.emailVerified = false;
       sitter.verificationToken = verificationToken;
       sitter.verificationTokenExpiresAt = verificationTokenExpiresAt;
 
-      // Send verification email asynchronously
+      // Send email verification
       setImmediate(async () => {
         try {
-          await sendVerificationEmail(sitter.email, verificationToken);
+          await sendVerificationEmail(email, verificationToken);
         } catch (error) {
           console.error("Error sending verification email:", error);
         }
       });
     }
 
-    // Handle `phone` update
-    if (phone && phone !== sitter.phone) {
-      sitter.phone = phone;
+    if (phone && phone.trim() && phone !== sitter.phone) {
+      sitter.phone = phone.trim();
     }
 
-    // Handle `password` update
-    if (password) {
+    if (password && password.trim()) {
       const hashedPassword = bcryptjs.hashSync(password, 10);
       sitter.password = hashedPassword;
     }
 
-    // Handle `city` update
-    if (city && city !== sitter.city) {
-      sitter.city = city;
+    if (city && city.trim() && city !== sitter.city) {
+      sitter.city = city.trim();
     }
 
-    // Handle `sitterAddress` update
-    if (sitterAddress && sitterAddress !== sitter.sitterAddress) {
-      sitter.sitterAddress = sitterAddress;
+    if (sitterAddress && sitterAddress.trim() && sitterAddress !== sitter.sitterAddress) {
+      sitter.sitterAddress = sitterAddress.trim();
     }
 
-    // Save the updated sitter
     await sitter.save();
 
     return res.status(200).json({
@@ -778,3 +780,4 @@ export const UpdateSitterInfo = async (req, res) => {
     });
   }
 };
+

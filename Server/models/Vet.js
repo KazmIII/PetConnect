@@ -66,6 +66,12 @@ const VetSchema = new Schema({
             ref: 'VetService', 
         }
     ],
+    reviews: [  // Added reviews reference
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Review'
+        }
+    ],
     resetPasswordToken:String,
     resetPasswordTokenExpiresAt:Date,
     verificationToken:String,

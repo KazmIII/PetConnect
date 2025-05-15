@@ -57,8 +57,17 @@ const SitterProfile = () => {
 
     try {
       setIsLoading(true);
+      console.log("Sending formData:", formData);
 
-      await axios.put('http://localhost:5000/auth/sitter/update-profile', formData, { withCredentials: true });
+      const filteredData = {};
+
+      Object.keys(formData).forEach((key) => {
+        if (formData[key] !== "") {
+          filteredData[key] = formData[key];
+        }
+      });
+
+      await axios.put('http://localhost:5000/auth/sitter/update-profile', filteredData, { withCredentials: true });
       setIsEditing(false);
       if (formData.email !== sitterData.email) {
         handleShowComponent('verifyOTP', 'email', formData.email, '', 'sitter', true);

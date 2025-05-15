@@ -11,19 +11,21 @@ const Sitters = () => {
   const [sitters, setSitters] = useState([]);
   const [loading, setLoading] = useState(true);
   const { serviceType: routeServiceType } = useParams();
-  const [searchParams] = useSearchParams();
   const [sortOptions, setSortOptions] = useState([]);
   const [isNearMeActive, setIsNearMeActive] = useState(false);
   
-  const initialServiceTypes = useMemo(() => {
-    const queryTypes = searchParams.getAll('serviceType');
-    return routeServiceType 
-      ? [...new Set([routeServiceType, ...queryTypes])]
-      : queryTypes;
-  }, [routeServiceType, searchParams]);
-  
-  const [selectedServiceTypes, setSelectedServiceTypes] = useState(initialServiceTypes);
-  const [city, setCity] = useState(searchParams.get('city') || '');
+  const [selectedServiceTypes, setSelectedServiceTypes] = useState([]);
+  const [city, setCity] = useState('');
+
+  const [searchParams] = useSearchParams();
+
+  // Sync initial city from ?city=
+  useEffect(() => {
+    const paramCity = searchParams.get('city');
+    if (paramCity) {
+      setCity(paramCity);
+    }
+  }, [searchParams]);
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,16 +45,6 @@ const Sitters = () => {
       .then(setSitterInfo)
       .catch(console.error);
   }, []);
-
-  // Sync URL params with state
-  useEffect(() => {
-    const types = searchParams.getAll('serviceType');
-    const init = routeServiceType
-      ? [...new Set([routeServiceType, ...types])]
-      : types;
-    setSelectedServiceTypes(init);
-    setCity(searchParams.get('city') || '');
-  }, [routeServiceType, searchParams]);
 
   // Fetch sitters
  useEffect(() => {
@@ -99,83 +91,81 @@ const Sitters = () => {
     }
   };
 
-  const handleFilter = (type) => {
+   const handleFilter = type => {
     setSelectedServiceTypes(prev => {
-      const newTypes = prev.includes(type)
+      // toggle
+      const next = prev.includes(type)
         ? prev.filter(t => t !== type)
         : [...prev, type];
-      navigate(`?${new URLSearchParams({
-        serviceType: newTypes,
-        ...(city && { city })
-      })}`);
-      return newTypes;
+
+      // if selecting video, clear near-me
+      if (type === 'home-visit' || type === 'drop-off') {
+        // no URL change
+      }
+      return next;
     });
   };
 
-  const isActive = (type) => selectedServiceTypes.includes(type);
-
-  const handleDoctorsNearMe = async () => {
-  try {
-    const detectedCity = await detectCityByGeo();
-    setCity(detectedCity);
-    setIsNearMeActive(true);
-    navigate(`?city=${encodeURIComponent(detectedCity)}`); // ✅ Add serviceType param
-  } catch (error) {
-    console.error('Error detecting location:', error);
-  }
-};
-
- const filteredSitters = useMemo(() => {
-  const cityKey = city?.trim().toLowerCase();
-  const hasCityFilter    = cityKey !== '';
-  const hasServiceFilter = selectedServiceTypes.length > 0;
-
-  console.log('Filtering sitters for city:', cityKey);
-  sitters.forEach(g => {
-    console.log(
-      `→ ${g.name}: clinic city =`,
-      g.city?.toLowerCase()
-    );
-  });
-
-  return sitters
-    .filter(g => {
-      // 1) service filtering (only if you clicked at least one)
-      const serviceMatch = hasServiceFilter
-        ? selectedServiceTypes.some(t => {
-            const method = getDeliveryMethod(t);
-            return g.services?.some(s => s.deliveryMethod === method);
-          })
-        : true;
-
-      // 2) city filtering (only when ?city= is present)
-      const locationMatch = hasCityFilter
-        ? (g.city?.toLowerCase() === cityKey)
-        : true;
-
-      return serviceMatch && locationMatch;
-    })
-    // 3) then sort
-    .sort((a, b) => {
-      for (const opt of sortOptions) {
-        let diff = 0;
-        switch (opt) {
-          case 'experience':
-            diff = b.yearsOfExperience - a.yearsOfExperience; break;
-          case 'fee':
-            diff = a.fee - b.fee; break;
-          case 'rating':
-            diff = b.rating - a.rating; break;
-          case 'availability':
-            diff = (b.availableToday ? 1 : 0)
-                 - (a.availableToday ? 1 : 0);
-            break;
-        }
-        if (diff) return diff;
+ const handleNearMe = async () => {
+    try {
+      const detected = await detectCityByGeo();
+      if (detected) {
+        setCity(detected);
+        setIsNearMeActive(true);
       }
-      return 0;
-    });
-}, [sitters, selectedServiceTypes, city, sortOptions]);
+    } catch {
+      alert('Could not determine your city');
+    }
+  };
+
+  const isActive = type => selectedServiceTypes.includes(type);
+
+  const filteredSitters = useMemo(() => {
+    const cityKey = city.trim().toLowerCase();
+    return sitters
+      .filter(s => {
+        // service filter
+        if (selectedServiceTypes.length) {
+          return selectedServiceTypes.some(type => {
+            const methodMap = {
+              'home-visit': 'Home Visit',
+              'drop-off': 'In-Clinic', // drop-off = in-clinic on sitter
+            };
+            return s.services?.some(svc => svc.deliveryMethod === methodMap[type]);
+          });
+        }
+        return true;
+      })
+      .filter(s => {
+        // city / near-me filter
+        if (isNearMeActive) {
+          return s.city?.toLowerCase() === cityKey;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        for (let opt of sortOptions) {
+          let diff = 0;
+          switch (opt) {
+            case 'experience':
+              diff = (b.yearsOfExperience || 0) - (a.yearsOfExperience || 0);
+              break;
+            case 'fee':
+              const minA = Math.min(...(a.services||[]).map(x=>x.price||Infinity));
+              const minB = Math.min(...(b.services||[]).map(x=>x.price||Infinity));
+              diff = minA - minB;
+              break;
+            case 'availability':
+              diff =
+                (b.availableToday ? 1 : 0) -
+                (a.availableToday ? 1 : 0);
+              break;
+          }
+          if (diff) return diff;
+        }
+        return 0;
+      });
+  }, [sitters, selectedServiceTypes, city, isNearMeActive, sortOptions]);
 
 
   const handleBookClick = sitter => {
@@ -184,7 +174,7 @@ const Sitters = () => {
       const svc = services[0];
       let path = '';
       if (svc.deliveryMethod === 'In-Clinic') {
-        path = `/appointment/drop-off/sitter/${sitter._id}`;
+        path = `/appointment/in-clinic/sitter/${sitter._id}`;
       } else if (svc.deliveryMethod === 'Home Visit') {
         path = `/appointment/home-visit/sitter/${sitter._id}`;
       }
@@ -211,10 +201,11 @@ const Sitters = () => {
       </p>
 
       <div className="max-w-[58rem] flex gap-2 mb-6 text-xs font-medium text-lime-700 overflow-x-auto pb-2">
+        <p className='text-lg mr-4'>Apply Filters: </p>
         <button 
           className={`px-3 py-2 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
             ${isNearMeActive ? 'bg-lime-200' : 'bg-white'}`}
-          onClick={handleDoctorsNearMe}
+          onClick={handleNearMe}
         >
           Sitters Near Me
         </button>
@@ -232,13 +223,7 @@ const Sitters = () => {
         >
           Lowest Fee
         </button>
-        <button 
-          className={`px-3 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
-            ${sortOptions.includes('rating') ? 'bg-lime-200' : 'bg-white'}`}
-          onClick={() => toggleSortOption('rating')}
-        >
-          Highest Rated
-        </button>
+
         <button 
           className={`px-3 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
             ${sortOptions.includes('availability') ? 'bg-lime-200' : 'bg-white'}`}
@@ -253,6 +238,14 @@ const Sitters = () => {
           onClick={() => handleFilter('home-visit')}
         >
           Home Visit
+        </button>
+         <button
+          className={`px-3 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
+            ${isActive('drop-off') ? 'bg-lime-200' : 'bg-white'
+          }`}
+          onClick={() => handleFilter('drop-off')}
+        >
+          Drop Off
         </button>
       </div>
 
@@ -301,7 +294,7 @@ const Sitters = () => {
                   let Icon, label, borderColor;
                   switch (s.deliveryMethod) {
                     case 'In-Clinic':
-                      Icon = Scissors; label = sitter.sitterAddress; borderColor = 'blue';
+                      Icon = Scissors; label = `In ${sitter.city}`; borderColor = 'blue';
                       break;
                     case 'Home Visit':
                       Icon = Home; label = 'Home Visit'; borderColor = 'purple';
@@ -322,10 +315,12 @@ const Sitters = () => {
                         </div>
                         <span className="font-normal text-xs">Rs. {s.price}</span>
                       </div>
-                      {/* <div className="mt-1 text-xs text-green-600 flex items-center gap-1">
-                        <span className="w-2 h-2 bg-green-600 rounded-full" />
-                        {s.availableToday ? 'Available today' : `Next: ${s.nextAvailable}`}
-                      </div> */}
+                      <div className="mt-1 text-xs text-green-600 flex items-center gap-1">
+                      <span className="w-2 h-2 bg-green-600 rounded-full" />
+                      {s.availableToday 
+                        ? 'Available today' 
+                        : 'Not Available today'}
+                    </div>
                     </Link>
                   );
                 })}
@@ -376,18 +371,18 @@ const Sitters = () => {
             <div className="space-y-1">
               {modalServices.map((s, idx) => {
                 let Icon, serviceName;
-                if (s.deliveryMethod === 'At Salon') {
+                if (s.deliveryMethod === 'In-Clinic') {
                   Icon = MapPin;
-                  serviceName = modalClinicName;
+                  serviceName = 'in-clinic';
                 } else if (s.deliveryMethod === 'Home Visit') {
                   Icon = Home;
-                  serviceName = 'Home Visit';
+                  serviceName = 'home-visit';
                 }
 
                 return (
                   <Link
                     key={idx}
-                    to={`/appointment/${serviceName.toLowerCase().replace(/\s/g, '-')}/sitter/${modalSitterId}`}
+                    to={`/appointment/${serviceName}/sitter/${modalSitterId}`}
                     className="block p-2 border rounded-lg hover:bg-gray-50 transition-colors"
                     onClick={() => setIsModalOpen(false)}
                   >

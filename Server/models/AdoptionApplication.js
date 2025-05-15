@@ -45,6 +45,11 @@ const AdoptionApplicationSchema = new Schema({
   experience: {
     description: { type: String, required: true },
   },
+  status: {
+    type: String,
+    enum: ["pending", "accepted", "rejected"],
+    default: "pending",
+  },
   submittedAt: { type: Date, default: Date.now },
 });
 

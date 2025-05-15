@@ -3,6 +3,8 @@
 import { VetModel } from "../models/Vet.js";
 import { Appointment } from "../models/Appointment.js";
 import { VeterinarianService } from "../models/Services.js";
+import dayjs from 'dayjs'; // you can also use plain Date if you prefer
+
 
 export const GetVetById = async (req, res) => {
   try {
@@ -122,38 +124,64 @@ console.log('Server processing:', {
   }
 };
 // ─── GET ALL VERIFIED VETS ──────────────────────────────────────────────────────
-//
+
 export const GetVerifiedVets = async (req, res) => {
   try {
+    // 1) fetch only fully verified vets
     const vets = await VetModel
       .find({
         emailVerified: true,
-        verificationStatus: "verified", 
+        verificationStatus: 'verified',
         restricted: false
       })
-      .populate("clinicId", "clinicName city")
+      .populate('clinicId', 'clinicName city')
       .populate({
-        path: "services",
-        select: "serviceName price availability deliveryMethod",
+        path: 'services',
+        select: 'services customService description price duration isActive availability deliveryMethod'
       });
 
-    const withPhotos = vets.map(vet => {
+    // 2) figure out current weekday name
+    const todayName = dayjs().format('dddd'); // e.g. "Tuesday"
+
+    // 3) annotate each service with availableToday
+    const vetsWithPhotosAndAvailability = vets.map(vet => {
       const obj = vet.toObject();
+
+      // build profilePhotoUrl if present
       if (vet.profilePhoto?.data && vet.profilePhoto.contentType) {
-        const b64 = vet.profilePhoto.data.toString("base64");
+        const b64 = vet.profilePhoto.data.toString('base64');
         obj.profilePhotoUrl = `data:${vet.profilePhoto.contentType};base64,${b64}`;
       } else {
-        obj.profilePhotoUrl = null; // or a default
+        obj.profilePhotoUrl = null;
       }
+
+      // for each populated service
+      obj.services = obj.services.map(svc => {
+        // find the availability entry for today
+        const todayEntry = (svc.availability || []).find(a => a.day === todayName);
+        
+        // consider any slot whose status !== 'booked' as free
+        const hasFree = todayEntry
+          ? todayEntry.slots.some(slot => slot.status !== 'booked')
+          : false;
+
+        return {
+          ...svc,
+          availableToday: hasFree
+        };
+      });
+
       return obj;
     });
 
-    return res.json({ vets: withPhotos });
-  } catch (err) {
-    console.error("Error in GetVerifiedVets:", err);
-    return res.status(500).json({ message: "Error fetching vets" });
+    return res.json({ vets: vetsWithPhotosAndAvailability });
+  }
+  catch (err) {
+    console.error('Error in GetVerifiedVets:', err);
+    return res.status(500).json({ message: 'Error fetching vets' });
   }
 };
+
 
 //
 // ─── GET A SINGLE VET BY ID (WITH SLOT FILTERING) ───────────────────────────────

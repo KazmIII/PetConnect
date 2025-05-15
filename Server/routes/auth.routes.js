@@ -23,7 +23,8 @@ import { GetClinicsByCity, GetVetsAndGroomersByClinic, GetProviderDetails, Updat
 import {AddService, GetServicesByProvider, GetServiceDetails, DeleteService, UpdateService} from '../controllers/ProviderController.js';
 
 import {SubmitAdoptionAd, GetAllAdoptionAds, GetAdoptionAdById, SubmitAdoptionApplication, CheckUserApplication, GetMyApplications, 
-  GetUserAdoptionAds, UpdateAdoptionAd, GetAdoptionApplications, GetAdoptionApplicationDetails
+  GetUserAdoptionAds, UpdateAdoptionAd, GetAdoptionApplications, GetAdoptionApplicationDetails, UpdateApplicationStatus, 
+  GetAdoptionAdStatusByApplicationId
 } from '../controllers/AdoptionController.js';
 
 import {GetVerifiedVets, GetVetById } from '../controllers/VetController.js';
@@ -119,6 +120,8 @@ AuthRoutes.get("/check-application/:id", CheckUserApplication);
 AuthRoutes.get('/get-my-applications', GetMyApplications);
 AuthRoutes.get("/get-adoption-applications/:id", GetAdoptionApplications);
 AuthRoutes.get("/adoption-applications/:applicationId", GetAdoptionApplicationDetails);
+AuthRoutes.put("/applications/:petId/status", UpdateApplicationStatus);
+AuthRoutes.get('/application-status/:applicationId', GetAdoptionAdStatusByApplicationId);
 
  
 // service providers route

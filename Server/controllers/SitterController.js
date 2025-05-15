@@ -5,25 +5,55 @@ import { Appointment } from "../models/Appointment.js";
 
 export const GetVerifiedSitters = async (req, res) => {
   try {
-    const sitters = await SitterModel
-      .find({
-        emailVerified: true,
-        verificationStatus: "verified", 
-        restricted: false
-      })
-      .populate({
-        path: "services",
-        select: "serviceName price availability deliveryMethod",
-      });
+    const sitters = await SitterModel.find({
+      emailVerified: true,
+      verificationStatus: "verified",
+      restricted: false,
+    }).populate({
+      path: "services",
+      select: "serviceName price availability deliveryMethod",
+    });
 
-    console.log("sitter found in server: ", sitters);
+    const now = new Date();
 
-    return res.json({ sitters });
+const today = now.toISOString().split("T")[0]; // 'YYYY-MM-DD'
+
+const sittersWithAvailability = sitters.map((sitter) => {
+  const updatedServices = sitter.services.map((service) => {
+    const isAvailableToday = service.availability?.some((slot) => {
+      if (!slot.available) return false;
+
+      const slotDate = new Date(`${slot.date}T${slot.time || '00:00'}`);
+      
+      // Check if it's today and the slot time is still in the future
+      return (
+        slotDate.toISOString().split("T")[0] === today &&
+        slotDate > now
+      );
+    });
+
+    return {
+      ...service._doc,
+      availableToday: isAvailableToday || false,
+    };
+  });
+
+  return {
+    ...sitter._doc,
+    services: updatedServices,
+  };
+});
+
+
+    console.log("Sitters with availability logic: ", sittersWithAvailability);
+
+    return res.json({ sitters: sittersWithAvailability });
   } catch (err) {
     console.error("Error in GetVerifiedSitters:", err);
     return res.status(500).json({ message: "Error fetching Sitters" });
   }
 };
+
 
 export const GetSitterById = async (req, res) => {
   try {
