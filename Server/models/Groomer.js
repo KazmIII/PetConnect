@@ -60,6 +60,12 @@ const GroomerSchema = new mongoose.Schema({
             ref: 'GroomerService', 
         }
     ],
+    reviews: [  // Added reviews reference
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Review'
+        }
+    ],
     resetPasswordToken:String,
     resetPasswordTokenExpiresAt:Date,
     verificationToken:String,

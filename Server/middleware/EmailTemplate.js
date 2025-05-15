@@ -427,3 +427,51 @@ export const Reset_Password_Email_Template = `
   </body>
   </html>
 `;
+
+// Acceptance email
+export const Acceptance_Email_Template = `
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+  body { font-family: Arial; background:#fdfdfd; }
+  .header { background:#10b981; color:#fff; padding:20px; text-align:center; }
+  .content { padding:20px; }
+  .footer { font-size:12px; color:#888; text-align:center; padding:10px; }
+  .next-steps { background:#ecfdf5; border:1px solid #10b981; padding:15px; margin:20px 0; }
+</style></head><body>
+  <div class="header">Congratulations!</div>
+  <div class="content">
+    <p>Hello,</p>
+    <p>Your adoption application for <strong>{petTitle}</strong> has been <span style="color:#10b981;font-weight:bold;">accepted</span>!</p>
+    <div class="next-steps">
+      <p><strong>Next Steps:</strong></p>
+      <p>{nextSteps}</p>
+    </div>
+    <p>Thank you for using our service.</p>
+  </div>
+  <div class="footer">&copy; ${new Date().getFullYear()} PetConnect</div>
+</body></html>
+`;
+
+// Rejection email
+export const Rejection_Email_Template = `
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+  body { font-family: Arial; background:#fef2f2; }
+  .header { background:#ef4444; color:#fff; padding:20px; text-align:center; }
+  .content { padding:20px; }
+  .reason { background:#fee2e2; border:1px solid #ef4444; padding:15px; margin:20px 0; }
+  .footer { font-size:12px; color:#888; text-align:center; padding:10px; }
+</style></head><body>
+  <div class="header">Application Update</div>
+  <div class="content">
+    <p>Hello,</p>
+    <p>We’re sorry to inform you that your application for <strong>{petTitle}</strong> was <span style="color:#ef4444;font-weight:bold;">not selected</span>.</p>
+    <div class="reason">
+      <p><strong>Reason:</strong></p>
+      <p>{reason}</p>
+    </div>
+    <p>Feel free to browse other pets available for adoption.</p>
+  </div>
+  <div class="footer">&copy; ${new Date().getFullYear()} PetConnect</div>
+</body></html>
+`;

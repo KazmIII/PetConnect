@@ -37,7 +37,7 @@ const MyListings = () => {
   const updateStatus = async (petId, newStatus) => {
     try {
       await axios.put(
-        `http://localhost:5000/adoption/update-status/${petId}`,
+        `http://localhost:5000/auth/applications/${petId}/status`,
         { status: newStatus },
         { withCredentials: true }
       );

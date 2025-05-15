@@ -61,6 +61,12 @@ const SitterSchema = new mongoose.Schema({
             ref: 'SitterService', 
         }
     ],
+    reviews: [  // Added reviews reference
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Review'
+        }
+    ],
     resetPasswordToken:String,
     resetPasswordTokenExpiresAt:Date,
     verificationToken:String,

@@ -1,6 +1,7 @@
 import { transporter } from "./Email.config.js";
 import { Verification1_Email_Template, VerificationStatus_Email_Template,  Reset_Password_Email_Template,
-  ProviderVerificationStatus_Email_Template, Verification_Email_Template } from "./EmailTemplate.js";
+  ProviderVerificationStatus_Email_Template, Verification_Email_Template, Acceptance_Email_Template, 
+  Rejection_Email_Template  } from "./EmailTemplate.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -97,3 +98,43 @@ export const sendProviderVerificationStatusEmail = async (email, status, type) =
   }
 };
 
+
+/**
+ * Send acceptance email when an application is accepted
+ */
+export const sendAcceptanceEmail = async (email, { petTitle, nextSteps }) => {
+  try {
+    const html = Acceptance_Email_Template
+      .replace("{petTitle}", petTitle)
+      .replace("{nextSteps}", nextSteps);
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: `Your adoption application for "${petTitle}" was accepted!`,
+      html,
+    });
+    console.log("Acceptance email sent to", email);
+  } catch (err) {
+    console.error("Error sending acceptance email:", err);
+  }
+};
+
+/**
+ * Send rejection email when an application is rejected
+ */
+export const sendRejectionEmail = async (email, { petTitle, reason }) => {
+  try {
+    const html = Rejection_Email_Template
+      .replace("{petTitle}", petTitle)
+      .replace("{reason}", reason);
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: `Your adoption application for "${petTitle}"`,
+      html,
+    });
+    console.log("Rejection email sent to", email);
+  } catch (err) {
+    console.error("Error sending rejection email:", err);
+  }
+};

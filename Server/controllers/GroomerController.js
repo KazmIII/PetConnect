@@ -8,9 +8,9 @@ export const GetVerifiedGroomers = async (req, res) => {
     const groomers = await GroomerModel
       .find({
         emailVerified: true,
-        verificationStatus: "verified", 
+        verificationStatus: "verified",
         restricted: false,
-        "services.0":     { $exists: true } 
+        "services.0": { $exists: true }
       })
       .populate("clinicId", "clinicName city")
       .populate({
@@ -18,7 +18,33 @@ export const GetVerifiedGroomers = async (req, res) => {
         select: "serviceName price availability deliveryMethod",
       });
 
-    return res.json({ groomers });
+    const now = new Date();
+    const today = now.toISOString().split("T")[0];
+
+    const groomersWithAvailability = groomers.map((groomer) => {
+      const updatedServices = groomer.services.map((service) => {
+        const isAvailableToday = service.availability?.some((slot) => {
+          if (!slot.available) return false;
+          const slotDate = new Date(`${slot.date}T${slot.time || '00:00'}`);
+          return (
+            slotDate.toISOString().split("T")[0] === today &&
+            slotDate > now
+          );
+        });
+
+        return {
+          ...service._doc,
+          availableToday: isAvailableToday || false,
+        };
+      });
+
+      return {
+        ...groomer._doc,
+        services: updatedServices,
+      };
+    });
+
+    return res.json({ groomers: groomersWithAvailability });
   } catch (err) {
     console.error("Error in GetVerifiedGroomers:", err);
     return res.status(500).json({ message: "Error fetching Groomers" });

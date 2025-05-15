@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { AdoptionAdModel } from '../models/AdoptionAd.js';
 import { UserModel } from '../models/User.js';
 import { AdoptionApplicationModel } from '../models/AdoptionApplication.js'
+import { sendAcceptanceEmail, sendRejectionEmail } from '../middleware/Email.js';
 
 
 export const SubmitAdoptionAd = async (req, res) => {
@@ -226,7 +227,7 @@ export const GetAllAdoptionAds = async (req, res) => {
     const skip = (page - 1) * limit;
 
     // Filtering logic
-    let filter = {};
+    let filter = { status: "Available" };
     if (req.query.species) filter.species = req.query.species;
     if (req.query.age) filter.age = req.query.age;
     if (req.query.breed) filter.breed = req.query.breed;
@@ -310,12 +311,9 @@ export const GetAdoptionAdById = async (req, res) => {
 
 export const SubmitAdoptionApplication = async (req, res) => {
   try {
-    console.log("Received files:", req.files);
-    console.log("In SubmitAdoptionApplication");
 
     // Extract petId from URL parameters (e.g., /adoption-application/:petId)
     const petId = req.params.id;
-    console.log("petId:", petId);
     if (!petId) {
       return res.status(400).json({ success: false, message: "Pet ID is missing from URL." });
     }
@@ -542,5 +540,72 @@ export const GetMyApplications = async (req, res) => {
   } catch (error) {
     console.error("Error fetching applications:", error);
     return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const UpdateApplicationStatus = async (req, res) => {
+  try {
+    const { petId } = req.params;
+    const { status } = req.body;
+
+    if (!['Available', 'Pending', 'Adopted'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status. Use "Available", "Pending", or "Adopted"' });
+    }
+
+    // Attempt to update the pet ad directly
+    let updatedPetAd = await AdoptionAdModel.findByIdAndUpdate(
+      petId,
+      { status },
+      { new: true }
+    );
+
+    // If not found, try to find the adoption application and get the associated adoptionAd (via petId)
+    if (!updatedPetAd) {
+      const application = await AdoptionApplicationModel.findById(petId).populate('petId');
+      if (!application || !application.petId) {
+        return res.status(404).json({ message: 'Neither pet ad nor related application found' });
+      }
+
+      // Update the adoptionAd status from the application
+      updatedPetAd = await AdoptionAdModel.findByIdAndUpdate(
+        application.petId._id,
+        { status },
+        { new: true }
+      );
+
+      if (!updatedPetAd) {
+        return res.status(404).json({ message: 'Associated pet ad could not be updated' });
+      }
+    }
+
+    res.json({ message: `Pet ad status updated to ${status}`, petAd: updatedPetAd });
+  } catch (error) {
+    console.error('Error updating pet status:', error);
+    res.status(500).json({ message: 'Server error updating pet status' });
+  }
+};
+
+export const GetAdoptionAdStatusByApplicationId = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+
+    // Find the application and populate the related pet ad (petId)
+    const application = await AdoptionApplicationModel.findById(applicationId).populate('petId');
+
+    if (!application) {
+      return res.status(404).json({ message: 'Adoption application not found' });
+    }
+
+    if (!application.petId) {
+      return res.status(404).json({ message: 'Associated adoption ad not found' });
+    }
+
+    // The populated petId contains the full adoption ad document
+    const status = application.petId.status;
+
+    return res.json({ status });
+  } catch (error) {
+    console.error('Error fetching adoption ad status:', error);
+    return res.status(500).json({ message: 'Server error while fetching status' });
   }
 };

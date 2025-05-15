@@ -8,22 +8,14 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 const Groomers = () => {
-  const [groomers, setGroomers] = useState([]);
+const [groomers, setGroomers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { serviceType: routeServiceType } = useParams();
-  const [searchParams] = useSearchParams();
   const [sortOptions, setSortOptions] = useState([]);
   const [isNearMeActive, setIsNearMeActive] = useState(false);
-  
-  const initialServiceTypes = useMemo(() => {
-    const queryTypes = searchParams.getAll('serviceType');
-    return routeServiceType 
-      ? [...new Set([routeServiceType, ...queryTypes])]
-      : queryTypes;
-  }, [routeServiceType, searchParams]);
-  
-  const [selectedServiceTypes, setSelectedServiceTypes] = useState(initialServiceTypes);
-  const [city, setCity] = useState(searchParams.get('city') || '');
+  const [selectedFilters, setSelectedFilters] = useState([]);        // holds keys: 'experience','fee','availability','home-visit','salon-visit'
+  const [city, setCity] = useState('');
+
+  const [searchParams] = useSearchParams();
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,143 +25,100 @@ const Groomers = () => {
   const [modalClinicName, setModalClinicName] = useState('');
   const [modalClinicCity, setModalClinicCity] = useState('');
 
-  const navigate = useNavigate();
   const [groomerInfo, setGroomerInfo] = useState('');
+  const navigate = useNavigate();
 
-  // Load markdown info
+  // Read city from URL ?city= on mount / query-change
+  useEffect(() => {
+    const c = searchParams.get('city');
+    if (c) {
+      setCity(c);
+    }
+  }, [searchParams]);
+
+  // Load grooming info markdown
   useEffect(() => {
     fetch('/pet_groomer_info.md')
-      .then(res => res.text())
+      .then(r => r.text())
       .then(setGroomerInfo)
       .catch(console.error);
   }, []);
 
-  // Sync URL params with state
+  // Fetch groomers list
   useEffect(() => {
-    const types = searchParams.getAll('serviceType');
-    const init = routeServiceType
-      ? [...new Set([routeServiceType, ...types])]
-      : types;
-    setSelectedServiceTypes(init);
-    setCity(searchParams.get('city') || '');
-  }, [routeServiceType, searchParams]);
+    axios.get('http://localhost:5000/auth/groomers', { withCredentials: true })
+      .then(({ data }) => setGroomers(data.groomers || []))
+      .catch(err => {
+        console.error('Failed to load groomers:', err);
+        setGroomers([]);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
-  // Fetch groomers
- useEffect(() => {
-  const fetchGrooms = async () => {
+  // Toggle a sort option on/off
+  const toggleSort = (opt) =>
+    setSortOptions(s => s.includes(opt) ? s.filter(x => x !== opt) : [...s, opt]);
+
+  // Toggle a service filter on/off
+  const toggleFilter = (key) =>
+    setSelectedFilters(f => f.includes(key) ? f.filter(x => x !== key) : [...f, key]);
+
+  // Activate "Near Me"
+  const handleNearMe = async () => {
     try {
-      const { data } = await axios.get('http://localhost:5000/auth/groomers', {
-        withCredentials: true,
-      });
-      
-      // ✅ Validate response structure
-      if (!data?.groomers) {
-        throw new Error('Invalid API response format');
-      }
-      
-      setGroomers(data.groomers);
-      
-    } catch (err) {
-      console.error('Failed to load groomers:', err);
-      setGroomers([]); // ✅ Reset to empty array
-    } finally {
-      setLoading(false);
-    }
-  };
-  fetchGrooms();
-}, []);
-
-  const toggleSortOption = option => {
-    setSortOptions(prev =>
-      prev.includes(option) ? prev.filter(o => o !== option) : [...prev, option]
-    );
-  };
-
-  const getDeliveryMethod = type => {
-    switch (type) {
-      case 'In-Clinic':          return 'At Salon';
-      case 'Home Visit':        return 'Home Visit';
-      default:                  return '';
+      const detected = await detectCityByGeo();
+      setCity(detected);
+      setIsNearMeActive(true);
+    } catch {
+      alert('Could not determine your city');
     }
   };
 
-  const handleFilter = (type) => {
-    setSelectedServiceTypes(prev => {
-      const newTypes = prev.includes(type)
-        ? prev.filter(t => t !== type)
-        : [...prev, type];
-      navigate(`?${new URLSearchParams({
-        serviceType: newTypes,
-        ...(city && { city })
-      })}`);
-      return newTypes;
-    });
+  // Map our filter keys to the actual deliveryMethod strings
+  const mapFilterToMethod = {
+    'home-visit': 'Home Visit',
+    'salon-visit': 'In-Clinic',
   };
 
-  const isActive = (type) => selectedServiceTypes.includes(type);
+  // Filter + sort groomers
+  const filtered = useMemo(() => {
+    const cityKey = city.trim().toLowerCase();
 
-  const handleDoctorsNearMe = async () => {
-  try {
-    const detectedCity = await detectCityByGeo();
-    setCity(detectedCity);
-    setIsNearMeActive(true);
-    navigate(`?city=${encodeURIComponent(detectedCity)}`); // ✅ Add serviceType param
-  } catch (error) {
-    console.error('Error detecting location:', error);
-  }
-};
-
- const filteredGroomers = useMemo(() => {
-  const cityKey = city?.trim().toLowerCase();
-  const hasCityFilter    = cityKey !== '';
-  const hasServiceFilter = selectedServiceTypes.length > 0;
-
-  console.log('Filtering groomers for city:', cityKey);
-  groomers.forEach(g => {
-    console.log(
-      `→ ${g.name}: clinic city =`,
-      g.clinicId?.city?.toLowerCase()
-    );
-  });
-
-  return groomers
-    .filter(g => {
-      // 1) service filtering (only if you clicked at least one)
-      const serviceMatch = hasServiceFilter
-        ? selectedServiceTypes.some(t => {
-            const method = getDeliveryMethod(t);
-            return g.services?.some(s => s.deliveryMethod === method);
-          })
-        : true;
-
-      // 2) city filtering (only when ?city= is present)
-      const locationMatch = hasCityFilter
-        ? (g.clinicId?.city?.toLowerCase() === cityKey)
-        : true;
-
-      return serviceMatch && locationMatch;
-    })
-    // 3) then sort
-    .sort((a, b) => {
-      for (const opt of sortOptions) {
-        let diff = 0;
-        switch (opt) {
-          case 'experience':
-            diff = b.yearsOfExperience - a.yearsOfExperience; break;
-          case 'fee':
-            diff = a.fee - b.fee; break;
-          case 'rating':
-            diff = b.rating - a.rating; break;
-          case 'availability':
-            diff = (b.availableToday ? 1 : 0)
-                 - (a.availableToday ? 1 : 0);
-            break;
+    return groomers
+      .filter(g => {
+        // 1) Near-me
+        if (isNearMeActive && g.clinicId?.city?.toLowerCase() !== cityKey) {
+          return false;
         }
-        if (diff) return diff;
-      }
-      return 0;
-    });
-}, [groomers, selectedServiceTypes, city, sortOptions]);
+        // 2) service filters
+        if (selectedFilters.length) {
+          return selectedFilters.every(key =>
+            g.services.some(s => s.deliveryMethod === mapFilterToMethod[key])
+          );
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        for (let opt of sortOptions) {
+          let diff = 0;
+          switch (opt) {
+            case 'experience':
+              diff = (b.yearsOfExperience || 0) - (a.yearsOfExperience || 0);
+              break;
+            case 'fee':
+              const minA = Math.min(...(a.services||[]).map(s => s.price||Infinity));
+              const minB = Math.min(...(b.services||[]).map(s => s.price||Infinity));
+              diff = minA - minB;
+              break;
+            case 'availability':
+              diff = (b.availableToday ? 1 : 0) - (a.availableToday ? 1 : 0);
+              break;
+          }
+          if (diff) return diff;
+        }
+        return 0;
+      });
+  }, [groomers, isNearMeActive, city, selectedFilters, sortOptions]);
 
 
   const handleBookClick = groomer => {
@@ -193,11 +142,13 @@ const Groomers = () => {
     }
   };
 
+  const isActive = (type) => selectedFilters.includes(type);
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
       <h1 className="text-xl font-medium text-gray-800 mb-2">
-        {filteredGroomers.length} Groomer
-        {filteredGroomers.length !== 1 && 's'}{' '}
+        {filtered.length} Groomer
+        {filtered.length !== 1 && 's'}{' '}
          in {city}
       </h1>
       <p className="text-gray-700 mb-6 text-xs">
@@ -205,38 +156,32 @@ const Groomers = () => {
       </p>
 
       <div className="max-w-[58rem] flex gap-2 mb-6 text-xs font-medium text-lime-700 overflow-x-auto pb-2">
+        <p className='text-lg mr-4'>Apply Filters: </p>
         <button 
           className={`px-3 py-2 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
             ${isNearMeActive ? 'bg-lime-200' : 'bg-white'}`}
-          onClick={handleDoctorsNearMe}
+          onClick={handleNearMe}
         >
           Groomers Near Me
         </button>
         <button 
           className={`px-3 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
             ${sortOptions.includes('experience') ? 'bg-lime-200' : 'bg-white'}`}
-          onClick={() => toggleSortOption('experience')}
+          onClick={() => toggleSort('experience')}
         >
           Most Experienced
         </button>
         <button 
           className={`px-3 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
             ${sortOptions.includes('fee') ? 'bg-lime-200' : 'bg-white'}`}
-          onClick={() => toggleSortOption('fee')}
+          onClick={() => toggleSort('fee')}
         >
           Lowest Fee
         </button>
         <button 
           className={`px-3 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
-            ${sortOptions.includes('rating') ? 'bg-lime-200' : 'bg-white'}`}
-          onClick={() => toggleSortOption('rating')}
-        >
-          Highest Rated
-        </button>
-        <button 
-          className={`px-3 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
             ${sortOptions.includes('availability') ? 'bg-lime-200' : 'bg-white'}`}
-          onClick={() => toggleSortOption('availability')}
+          onClick={() => toggleSort('availability')}
         >
           Available Today
         </button>
@@ -244,9 +189,17 @@ const Groomers = () => {
         <button 
           className={`px-3 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
             ${isActive('home-visit') ? 'bg-lime-200' : 'bg-white'}`}
-          onClick={() => handleFilter('home-visit')}
+          onClick={() => toggleFilter('home-visit')}
         >
           Home Visit
+        </button>
+        <button
+          className={`px-3 border rounded-full text-lime-700 border-lime-700 whitespace-nowrap
+            ${isActive('salon-visit') ? 'bg-lime-200' : 'bg-white'
+          }`}
+          onClick={() => toggleFilter('salon-visit')}
+        >
+          Salon Visit
         </button>
       </div>
 
@@ -254,7 +207,7 @@ const Groomers = () => {
         <Spinner className="text-center py-4" />
       ) : (
         <div className="space-y-6">
-          {filteredGroomers.map(groomer => (
+          {filtered.map(groomer => (
             <div
               key={groomer._id}
               className="max-w-[58rem] bg-white border border-gray-200 rounded-lg p-6 shadow"
@@ -279,7 +232,7 @@ const Groomers = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex flex-col items-end space-y-2">
                   <button
                     onClick={() => handleBookClick(groomer)}
@@ -316,10 +269,12 @@ const Groomers = () => {
                         </div>
                         <span className="font-normal text-xs">Rs. {s.price}</span>
                       </div>
-                      {/* <div className="mt-1 text-xs text-green-600 flex items-center gap-1">
+                      <div className="mt-1 text-xs text-green-600 flex items-center gap-1">
                         <span className="w-2 h-2 bg-green-600 rounded-full" />
-                        {s.availableToday ? 'Available today' : `Next: ${s.nextAvailable}`}
-                      </div> */}
+                        {s.availableToday 
+                          ? 'Available today' 
+                          : 'Not Available today'}
+                      </div>
                     </Link>
                   );
                 })}
