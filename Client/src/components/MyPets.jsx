@@ -5,26 +5,9 @@ import axios from "axios";
 import Papa from "papaparse";
 import backgroundImage from "../assets/BgMemoryhd.jpg";
 
-const petColorsList = [
-  "Black",
-  "Brown / Chocolate",
-  "Blue",
-  "Cream / Fawn / Yellow",
-  "Gold / Apricot",
-  "Other",
-  "Mixed Colour",
-  "Red / Ginger",
-  "Silver / Grey",
-  "White",
-];
-
 const MyPets = () => {
-  const imageRef = useRef();
   const [pets, setPets] = useState([]);
-  const [showBreedModal, setShowBreedModal] = useState(false);
-  const [tempSelectedBreeds, setTempSelectedBreeds] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedColors, setSelectedColors] = useState([]);
   const [petData, setPetData] = useState({
     name: "",
     petType: "",
@@ -289,14 +272,6 @@ const MyPets = () => {
     }
   };
 
-
-  const relevantBreeds =
-    petData.petType && breeds[petData.petType] ? breeds[petData.petType] : [];
-  const filteredBreeds = relevantBreeds.filter((breedName) =>
-    breedName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-
   const renderContent = () => (
     <div className="relative flex justify-center items-start mt-2">
       <div className="w-full max-w-3xl sm:min-w-max p-2 border border-x-2 border-y-2 shadow-md shadow-gray-400 h-auto bg-white rounded-lg">
@@ -543,6 +518,8 @@ const MyPets = () => {
               <div className="flex flex-col-reverse md:flex-row md:justify-between items-center md:items-start">
                 {/* Form Fields */}
                 <div className="w-full md:w-4/5 md:mr-10">
+                  {/* Pet Name */}
+                  <label className="block text-gray-500 font-medium">Pet Name</label>
                   <input
                     type="text"
                     name="name"
@@ -552,6 +529,9 @@ const MyPets = () => {
                     className="w-full p-2.5 mb-4 border border-gray-300 rounded-lg"
                     required
                   />
+                  
+                  {/* Pet Type */}
+                  <label className="block text-gray-500 font-medium">Pet Type</label>
                   <select
                     name="petType"
                     value={petData.petType}
@@ -559,9 +539,7 @@ const MyPets = () => {
                     className="w-full p-2.5 mb-4 border border-gray-300 rounded-lg text-gray-600"
                     required
                   >
-                    <option value="" disabled>
-                      Select your pet
-                    </option>
+                    <option value="" disabled>Select your pet</option>
                     <option value="Dog">Dog</option>
                     <option value="Cat">Cat</option>
                     <option value="Rabbit">Rabbit</option>
@@ -569,101 +547,97 @@ const MyPets = () => {
                     <option value="Other">Other</option>
                   </select>
 
-                  {petData.petType === "Other" && (
+                  {/* Breed Selection */}
+                  {petData.petType && petData.petType !== "Other" && (
                     <>
-                      <input
-                      type="text"
-                      name="customPetType"
-                      value={petData.customPetType || ""}
-                      onChange={handleInputChange}
-                      placeholder="Specify your pet type"
-                      className="w-full p-2.5 mb-4 border border-gray-300 rounded-lg text-gray-600"
-                      required
-                    />
-                    <input
-                      type="text"
-                      name="breed"
-                      value={petData.breed}
-                      onChange={handleInputChange}
-                      placeholder="Enter Pet Breed"
-                      className="w-full p-2.5 mb-4 border border-gray-300 rounded-lg text-gray-600"
-                    />
+                      <label className="block text-gray-500 font-medium">Breed</label>
+                      <select
+                        name="breed"
+                        value={petData.breed}
+                        onChange={handleInputChange}
+                        className="w-full p-2.5 mb-4 border border-gray-300 rounded-lg text-gray-600"
+                        required
+                      >
+                        <option value="" disabled>Select breed</option>
+                        {breeds[petData.petType]?.map((breed, index) => (
+                          <option key={index} value={breed}>{breed}</option>
+                        ))}
+                      </select>
                     </>
                   )}
 
+                  {petData.petType === "Other" && (
+                    <>
+                      <label className="block text-gray-500 font-medium">Specify Pet Type</label>
+                      <input
+                        type="text"
+                        name="customPetType"
+                        value={petData.customPetType || ""}
+                        onChange={handleInputChange}
+                        placeholder="Specify your pet type"
+                        className="w-full p-2.5 mb-4 border border-gray-300 rounded-lg text-gray-600"
+                        required
+                      />
+                      <label className="block text-gray-500 font-medium">Breed</label>
+                      <input
+                        type="text"
+                        name="breed"
+                        value={petData.breed}
+                        onChange={handleInputChange}
+                        placeholder="Enter pet breed"
+                        className="w-full p-2.5 mb-4 border border-gray-300 rounded-lg text-gray-600"
+                      />
+                    </>
+                  )}
+
+                  {/* Pet Age */}
+                  <label className="block text-gray-500 font-medium">Pet Age</label>
                   <input
                     type="number"
                     name="age"
                     value={petData.age}
                     onChange={handleInputChange}
-                    placeholder="Pet age"
+                    placeholder="Enter pet age"
                     className="w-full p-2.5 mb-4 border border-gray-300 rounded-lg"
                     required
                   />
-      
-                  <p className="mb-2 text-gray-700 font-medium">Gender:</p>
-                  <div className="flex mb-4 text-gray-700">
-                    <label className="mr-4 flex items-center">
-                      <input
-                        type="radio"
-                        name="gender"
-                        value="Male"
-                        checked={petData.gender === "Male"}
-                        onChange={handleInputChange}
-                        className="mr-2"
-                        required
-                      />
-                      Male
-                    </label>
-                    <label className="mr-4 flex items-center">
-                      <input
-                        type="radio"
-                        name="gender"
-                        value="Female"
-                        checked={petData.gender === "Female"}
-                        onChange={handleInputChange}
-                        className="mr-2"
-                      />
-                      Female
-                    </label>
+
+                  {/* Gender */}
+                  <div className="flex items-center mb-4 text-gray-700">
+                    <p className="text-gray-500 font-medium mr-4">Gender:</p>
+                    {["Male", "Female"].map((gender) => (
+                      <label key={gender} className="mr-4 flex items-center">
+                        <input
+                          type="radio"
+                          name="gender"
+                          value={gender}
+                          checked={petData.gender === gender}
+                          onChange={handleInputChange}
+                          className="mr-2"
+                          required={gender === "Male"} // add required to only one
+                        />
+                        {gender}
+                      </label>
+                    ))}
                   </div>
 
-                  <p className="mb-2 text-gray-700 font-medium">Pet size:</p>
-                  <div className="flex mb-4 text-gray-700">
-                    <label className="mr-4 flex items-center">
-                      <input
-                        type="radio"
-                        name="size"
-                        value="Small"
-                        checked={petData.size === "Small"}
-                        onChange={handleInputChange}
-                        className="mr-2"
-                        required
-                      />
-                      Small
-                    </label>
-                    <label className="mr-4 flex items-center">
-                      <input
-                        type="radio"
-                        name="size"
-                        value="Medium"
-                        checked={petData.size === "Medium"}
-                        onChange={handleInputChange}
-                        className="mr-2"
-                      />
-                      Medium
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        name="size"
-                        value="Large"
-                        checked={petData.size === "Large"}
-                        onChange={handleInputChange}
-                        className="mr-2"
-                      />
-                      Large
-                    </label>
+                  {/* Pet Size */}
+                  <div className="flex items-center mb-4 text-gray-700">
+                    <p className="text-gray-500 font-medium mr-4">Pet size:</p>
+                    {["Small", "Medium", "Large"].map((size) => (
+                      <label key={size} className="mr-4 flex items-center">
+                        <input
+                          type="radio"
+                          name="size"
+                          value={size}
+                          checked={petData.size === size}
+                          onChange={handleInputChange}
+                          className="mr-2"
+                          required={size === "Small"} // only one input needs 'required'
+                        />
+                        {size}
+                      </label>
+                    ))}
                   </div>
                 </div>
 
@@ -707,14 +681,12 @@ const MyPets = () => {
               <div className="flex justify-center">
                 <button
                   type="submit"
-                  className="p-2 w-1/2 justify-center text-white font-medium bg-gradient-to-r from-teal-400 to-teal-700 hover:from-teal-300 hover:to-teal-600 rounded"
+                  className="p-2 my-2 w-1/2 justify-center text-white font-medium bg-gradient-to-r from-teal-400 to-teal-700 hover:from-teal-300 hover:to-teal-600 rounded"
                 >
                   Save Pet
                 </button>
               </div>
             </form>
-
-
           </>
         )}
       </div>
