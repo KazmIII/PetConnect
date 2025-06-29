@@ -120,52 +120,74 @@ const Sitters = () => {
 
   const isActive = type => selectedServiceTypes.includes(type);
 
-  const filteredSitters = useMemo(() => {
-    const cityKey = city.trim().toLowerCase();
-    return sitters
-      .filter(s => {
-        // service filter
-        if (selectedServiceTypes.length) {
-          return selectedServiceTypes.some(type => {
-            const methodMap = {
-              'home-visit': 'Home Visit',
-              'drop-off': 'In-Clinic', // drop-off = in-clinic on sitter
-            };
-            return s.services?.some(svc => svc.deliveryMethod === methodMap[type]);
-          });
-        }
-        return true;
-      })
-      .filter(s => {
-        // city / near-me filter
-        if (isNearMeActive) {
-          return s.city?.toLowerCase() === cityKey;
-        }
-        return true;
-      })
-      .sort((a, b) => {
-        for (let opt of sortOptions) {
-          let diff = 0;
-          switch (opt) {
-            case 'experience':
-              diff = (b.yearsOfExperience || 0) - (a.yearsOfExperience || 0);
-              break;
-            case 'fee':
-              const minA = Math.min(...(a.services||[]).map(x=>x.price||Infinity));
-              const minB = Math.min(...(b.services||[]).map(x=>x.price||Infinity));
-              diff = minA - minB;
-              break;
-            case 'availability':
-              diff =
-                (b.availableToday ? 1 : 0) -
-                (a.availableToday ? 1 : 0);
-              break;
+const filteredSitters = useMemo(() => {
+  // Normalize city (from param or geo)
+  const cityKey = (city ?? '').trim().toLowerCase();
+  const hasParamCity = Boolean(searchParams.get('city'));
+  const hasCityFilter = hasParamCity || isNearMeActive;
+
+  return sitters
+    // 1️⃣ Service filter (unchanged)
+    .filter(s => {
+      if (selectedServiceTypes.length) {
+        return selectedServiceTypes.some(type => {
+          const methodMap = {
+            'home-visit': 'Home Visit',
+            'drop-off': 'In-Clinic',
+          };
+          return s.services?.some(
+            svc => svc.deliveryMethod === methodMap[type]
+          );
+        });
+      }
+      return true;
+    })
+    // 2️⃣ City filter: param city wins; else near-me
+    .filter(s => {
+      if (hasCityFilter) {
+        return s.city?.toLowerCase() === cityKey;
+      }
+      return true;
+    })
+    // 3️⃣ Sorting (unchanged)
+    .sort((a, b) => {
+      for (let opt of sortOptions) {
+        let diff = 0;
+        switch (opt) {
+          case 'experience':
+            diff =
+              (b.yearsOfExperience || 0) -
+              (a.yearsOfExperience || 0);
+            break;
+          case 'fee': {
+            const minA = Math.min(
+              ...(a.services || []).map(x => x.price || Infinity)
+            );
+            const minB = Math.min(
+              ...(b.services || []).map(x => x.price || Infinity)
+            );
+            diff = minA - minB;
+            break;
           }
-          if (diff) return diff;
+          case 'availability':
+            diff =
+              (b.availableToday ? 1 : 0) -
+              (a.availableToday ? 1 : 0);
+            break;
         }
-        return 0;
-      });
-  }, [sitters, selectedServiceTypes, city, isNearMeActive, sortOptions]);
+        if (diff) return diff;
+      }
+      return 0;
+    });
+}, [
+  sitters,
+  selectedServiceTypes,
+  city,             // updates when geo-based city changes
+  isNearMeActive,   // toggles “near me” filter
+  sortOptions,
+  searchParams,     // re-run when ?city= param changes
+]);
+
 
 
   const handleBookClick = sitter => {
@@ -294,7 +316,7 @@ const Sitters = () => {
                   let Icon, label, borderColor;
                   switch (s.deliveryMethod) {
                     case 'In-Clinic':
-                      Icon = Scissors; label = `In ${sitter.city}`; borderColor = 'blue';
+                      Icon = Home; label = `In ${sitter.city}`; borderColor = 'blue';
                       break;
                     case 'Home Visit':
                       Icon = Home; label = 'Home Visit'; borderColor = 'purple';
@@ -373,10 +395,10 @@ const Sitters = () => {
                 let Icon, serviceName;
                 if (s.deliveryMethod === 'In-Clinic') {
                   Icon = MapPin;
-                  serviceName = 'in-clinic';
+                  serviceName = 'At Sitter Home';
                 } else if (s.deliveryMethod === 'Home Visit') {
                   Icon = Home;
-                  serviceName = 'home-visit';
+                  serviceName = 'Home Visit';
                 }
 
                 return (

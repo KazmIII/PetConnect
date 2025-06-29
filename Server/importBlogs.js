@@ -8,7 +8,7 @@ mongoose.connect("mongodb://localhost:27017/PetConnect", {
 const importData = async () => {
   try {
     // Read JSON file
-    const blogs = JSON.parse(fs.readFileSync("./PetConnect.blogs.cleaned.json", "utf-8"));
+    const blogs = JSON.parse(fs.readFileSync("./PetConnect.blogslatest.cleaned.json", "utf-8"));
  // Adjust path if needed
     
     // Insert data into MongoDB

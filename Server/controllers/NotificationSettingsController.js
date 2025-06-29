@@ -6,6 +6,7 @@ import NotificationSetting from '../models/NotificationSetting.js';
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // GET: Get current notification settings for the user
+// Modified getNotificationSettings controller
 export const getNotificationSettings = async (req, res) => {
   const token = req.cookies.pet_ownerToken;
   if (!token) return res.status(401).json({ message: "Unauthorized" });
@@ -13,13 +14,20 @@ export const getNotificationSettings = async (req, res) => {
   try {
     const { id: userId } = jwt.verify(token, JWT_SECRET);
 
-    // ⚠️ Query on "user", not "userId"
-    const settings = await NotificationSetting.findOne({ user: userId });
+    // Find or create default settings
+    let settings = await NotificationSetting.findOne({ user: userId });
+    
     if (!settings) {
-      return res.status(404).json({ message: "Notification settings not found" });
+      // Create default settings if none exist
+      settings = await NotificationSetting.create({
+        user: userId,
+        appointment: true,
+        memory: true
+      });
     }
 
-    res.json(settings);
+    // Return consistent response format
+    res.json({ settings });
   } catch (err) {
     console.error("Error in getNotificationSettings:", err);
     if (err.name === "JsonWebTokenError") {

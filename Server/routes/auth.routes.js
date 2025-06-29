@@ -88,7 +88,6 @@ AuthRoutes.post('/appointments/sitter/:appointmentId/checkout', CheckOutSitterAp
 AuthRoutes.post('/appointments/sitter/:appointmentId/start', StartSitterAppointment);
 
 
-
 //NotificationRoutes
 AuthRoutes.get('/notifications', GetNotifications);
 AuthRoutes.post('/notifications', CreateNotification);

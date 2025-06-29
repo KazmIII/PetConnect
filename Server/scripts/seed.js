@@ -290,6 +290,7 @@ const seedDatabase = async () => {
       idealNeeds: (randomElement(petTypes) === "cat" || randomElement(petTypes) === "dog")
         ? randomSubset(idealNeedsOptions)
         : ["ALLERGY_FRIENDLY"],
+        status:'available',
       idealSpecialNeedsReceptiveness: randomElement(specialNeedsReceptivenessOptions),
       idealBreed: randomElement(petTypes) === "dog" 
         ? [randomElement(dogBreedOptions)]
@@ -465,6 +466,7 @@ const seedDatabase = async () => {
         playDescription,
         dietDescription,
         phone: user.phone,
+        status: "Available",
       };
 
       const createdPet = await AdoptionAdModel.create(petObj);

@@ -541,7 +541,7 @@ function ReportPet() {
               {/* Image Upload */}
               <div>
                 <label className="block text-gray-700 font-medium mb-2">
-                  Upload Image of the Pet
+                  Upload Image of the Pet <span className="text-red-600">*</span>
                 </label>
                 <input
                   ref={fileInputRef}
@@ -555,7 +555,7 @@ function ReportPet() {
 
               {/* City Select */}
               <div>
-                <label className="block mb-1 font-medium">City</label>
+                <label className="block mb-1 font-medium">City <span className="text-red-600">*</span></label>
                 <select
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
@@ -573,7 +573,7 @@ function ReportPet() {
               {reportType === "found" && (
                 <>
                   <div>
-                    <label className="block text-gray-700 font-medium mb-2">Your Name</label>
+                    <label className="block text-gray-700 font-medium mb-2">Your Name <span className="text-red-600">*</span></label>
                     <input
                       type="text"
                       value={name}
@@ -584,7 +584,7 @@ function ReportPet() {
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-700 font-medium mb-2">Phone Number</label>
+                    <label className="block text-gray-700 font-medium mb-2">Phone Number <span className="text-red-600">*</span></label>
                     <input
                         type="tel"
                         value={phoneNumber}

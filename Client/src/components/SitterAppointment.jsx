@@ -388,7 +388,7 @@ if (display === 'Today') {
           {serviceType === 'in-clinic' && (
             <>
               <MapPin className="w-4 h-4 text-blue-600" />
-              <span>At-Salon Visit</span>
+              <span>At-Sitter Home</span>
             </>
           )}
           {serviceType === 'home-visit' && (

@@ -342,20 +342,28 @@ const EmotionPrediction = () => {
               </Box>
 
               <Button
-                type="submit"
-                variant="contained"
-                fullWidth
-                disabled={isLoading}
-                sx={{
-                  py: 1.5,
-                  background: "linear-gradient(45deg, #00897B, #00796B)",
-                  fontWeight: "bold",
-                  text: "white",
-                  "&:hover": { background: "linear-gradient(45deg, #00796B, #00695C)" },
-                }}
-              >
-                {isLoading ? "Processing..." : "Predict Emotion"}
-              </Button>
+              type="submit"
+              variant="contained"
+              fullWidth
+              disabled={isLoading}
+              sx={{
+                py: 1.5,
+                background: "linear-gradient(45deg, #00897B, #00796B)",
+                fontWeight: "bold",
+                color: "white", // <-- use `color` not `text`
+                "&:hover": {
+                  background: "linear-gradient(45deg, #00796B, #00695C)",
+                },
+                // Override the disabled styles:
+                "&.Mui-disabled": {
+                  color: "white",                // keep label white
+                  background: "linear-gradient(45deg, #00897B, #00796B)", // keep same bg
+                  opacity: 0.8,                  // or whatever opacity you like
+                },
+              }}
+            >
+              {isLoading ? "Processing..." : "Predict Emotion"}
+            </Button>
             </form>
 
             {imagePreview && (

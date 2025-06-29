@@ -328,7 +328,7 @@ const [groomers, setGroomers] = useState([]);
                 console.log("deilvery method: ", s.deliveryMethod);
                 if (s.deliveryMethod === 'In-Clinic') {
                   Icon = MapPin;
-                  serviceName = 'in-clinic';
+                  serviceName = 'In Clinic';
                   console.log("modal clinic name: ", serviceName);
                 } else if (s.deliveryMethod === 'Home Visit') {
                   Icon = Home;

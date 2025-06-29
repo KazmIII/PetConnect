@@ -4,6 +4,8 @@ import Papa from 'papaparse';
 import SuccessModal from "./SuccessModal";
 import { Eye, EyeOff } from 'lucide-react';
 import { useNavbar } from './NavbarContext';
+import isEqual from "lodash.isequal";
+
 
 // Mapping for Existing Pet options based on pet type
 const existingPetOptions = ['None', 'Cat', 'Dog', 'Rabbit', 'Mix of Above', 'Other'];
@@ -116,20 +118,84 @@ const UserProfile = () => {
     setShowPassword(!showPassword);
   };
 
-  const toggleDetailedProfileView = () => {
-    if (showDetailedProfile) {
-      const unsavedChanges = JSON.stringify(formData) !== JSON.stringify(initialDetailData);
-      if (unsavedChanges) {
-        setShowWarning(true);
-        return;
-      }
-    } else {
-      if (!initialDetailData) {
-        setInitialDetailData({ ...formData });
-      }
-    }
-    setShowDetailedProfile(!showDetailedProfile);
+useEffect(() => {
+  if (!userData) return;
+
+  // 1) Build the formData object based on userData
+  const initialForm = {
+    email:            userData.email            || '',
+    name:             userData.name             || '',
+    phone:            userData.phone            || '',
+    city:             userData.city             || '',
+    password:         '',      // always start blank
+    confirmPassword:  '',      // always start blank
+
+    // Detailed profile fields:
+    housingType:                       userData.housingType                       || '',
+    spaceAvailable:                    userData.spaceAvailable                    || '',
+    existingPet:                       userData.existingPet                       || '',
+    petFriendly:                       userData.petFriendly                       || false,
+    accessOutdoor:                     userData.accessOutdoor                     || false,
+    preferredPetType:                  userData.preferredPetType                  || '',
+    energyLevelPreference:             userData.energyLevelPreference             || '',
+    highMaintenance:                   userData.highMaintenance                   || false,
+    dailyActivityLevel:                userData.dailyActivityLevel                || '',
+    securityNeeds:                     userData.securityNeeds                     || false,
+    petOwner:                          userData.petOwner                          || 'SELF',
+    kidsAtHome:                        userData.kidsAtHome                        || 'NO',
+    kidsAge:                           userData.kidsAge                           || '',
+    petOwnershipType:                  userData.petOwnershipType                  || 'FIRST_TIME',
+    idealAgePreference:                userData.idealAgePreference                || 'NONE',
+    idealGenderPreference:             userData.idealGenderPreference             || 'NONE',
+    idealSizePreference:               userData.idealSizePreference               || 'NONE',
+    idealCoatLength:                   userData.idealCoatLength                   || 'NONE',
+    idealNeeds:                        userData.idealNeeds                        || [],
+    idealSpecialNeedsReceptiveness:    userData.idealSpecialNeedsReceptiveness    || 'YES',
+    idealBreed:                        userData.idealBreed                        || []
   };
+
+  // 2) Populate formData state
+  setFormData(initialForm);
+
+  // 3) Take a deep-cloned snapshot for change-comparison
+  setInitialDetailData(structuredClone(initialForm));
+}, [userData]);
+
+
+const toggleDetailedProfileView = () => {
+  // Debug logging (you can remove these once it behaves)
+  console.log(
+    "[toggleDetailedProfileView] showDetailed:", showDetailedProfile,
+    "initialSnapshot:", initialDetailData,
+    "currentForm:", formData
+  );
+
+  if (showDetailedProfile) {
+    // We're trying to hide it → check for unsaved changes
+    let unsaved = false;
+    if (initialDetailData) {
+      unsaved = !isEqual(formData, initialDetailData);
+    }
+    if (unsaved) {
+      setShowWarning(true);
+      return;               // stop here, user must confirm
+    }
+    // no unsaved changes → hide it
+    setShowWarning(false);
+    setShowDetailedProfile(false);
+  } else {
+    // We're opening it → take a fresh snapshot & clear warnings
+    setShowWarning(false);
+    // deep-copy formData into initialDetailData
+    setInitialDetailData(
+      typeof structuredClone === "function"
+        ? structuredClone(formData)
+        : JSON.parse(JSON.stringify(formData))
+    );
+    setShowDetailedProfile(true);
+  }
+};
+
 
   const confirmHideDetails = (confirm) => {
     if (confirm) {
@@ -247,49 +313,57 @@ const UserProfile = () => {
     }
   };
 
-  const handleSaveDetails = async () => {
-    try {
-      setIsLoading(true);
-      await axios.put(
-        'http://localhost:5000/auth/user/update-detail-profile',
-        formData,
-        { params: { userRole }, withCredentials: true }
-      );
-      setIsEditing(false);
-      setError('');
-      setUserData({
-        ...userData,
-        housingType: formData.housingType,
-        spaceAvailable: formData.spaceAvailable,
-        existingPet: formData.existingPet,
-        petFriendly: formData.petFriendly,
-        accessOutdoor: formData.accessOutdoor,
-        preferredPetType: formData.preferredPetType,
-        energyLevelPreference: formData.energyLevelPreference,
-        highMaintenance: formData.highMaintenance,
-        dailyActivityLevel: formData.dailyActivityLevel,
-        securityNeeds: formData.securityNeeds,
-        petOwner: formData.petOwner,
-        kidsAtHome: formData.kidsAtHome,
-        kidsAge: formData.kidsAge,
-        petOwnershipType: formData.petOwnershipType,
-        idealAgePreference: formData.idealAgePreference,
-        idealGenderPreference: formData.idealGenderPreference,
-        idealSizePreference: formData.idealSizePreference,
-        idealCoatLength: formData.idealCoatLength,
-        idealNeeds: formData.idealNeeds,
-        idealSpecialNeedsReceptiveness: formData.idealSpecialNeedsReceptiveness,
-        idealBreed: formData.idealBreed,
-      });
-      setSuccessMessage('Your detailed information has been updated successfully!');
+const handleSaveDetails = async () => {
+  try {
+    setIsLoading(true);
 
-    } catch (error) {
-      console.error('Error updating profile details:', error);
-      setError('Failed to update profile details. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    await axios.put(
+      'http://localhost:5000/auth/user/update-detail-profile',
+      formData,
+      { params: { userRole }, withCredentials: true }
+    );
+
+    // 1) Update your userData state
+    setUserData({
+      ...userData,
+      housingType: formData.housingType,
+      spaceAvailable: formData.spaceAvailable,
+      existingPet: formData.existingPet,
+      petFriendly: formData.petFriendly,
+      accessOutdoor: formData.accessOutdoor,
+      preferredPetType: formData.preferredPetType,
+      energyLevelPreference: formData.energyLevelPreference,
+      highMaintenance: formData.highMaintenance,
+      dailyActivityLevel: formData.dailyActivityLevel,
+      securityNeeds: formData.securityNeeds,
+      petOwner: formData.petOwner,
+      kidsAtHome: formData.kidsAtHome,
+      kidsAge: formData.kidsAge,
+      petOwnershipType: formData.petOwnershipType,
+      idealAgePreference: formData.idealAgePreference,
+      idealGenderPreference: formData.idealGenderPreference,
+      idealSizePreference: formData.idealSizePreference,
+      idealCoatLength: formData.idealCoatLength,
+      idealNeeds: formData.idealNeeds,
+      idealSpecialNeedsReceptiveness: formData.idealSpecialNeedsReceptiveness,
+      idealBreed: formData.idealBreed,
+    });
+
+    // 2) Reset your “initial” snapshot so no false unsaved warning
+    setInitialDetailData(structuredClone(formData));
+
+    // 3) Exit editing mode & show success
+    setIsEditing(false);
+    setError('');
+    setSuccessMessage('Your detailed information has been updated successfully!');
+  } catch (error) {
+    console.error('Error updating profile details:', error);
+    setError('Failed to update profile details. Please try again.');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing);

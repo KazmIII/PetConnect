@@ -10,18 +10,29 @@ const NotificationPage = () => {
     const [error, setError] = useState(null);
 
     // 1) Fetch notification settings
-    useEffect(() => {
-        axios
-            .get('http://localhost:5000/auth/notifications/settings', { withCredentials: true })
-            .then(res => {
-                const s = res.data.settings ?? res.data;
-                setSettings(s);
-            })
-            .catch(err => {
-                console.error('Settings fetch error:', err);
-                setError('Could not load settings');
-            });
-    }, []);
+    // Update the settings fetch useEffect
+useEffect(() => {
+  axios
+    .get('http://localhost:5000/auth/notifications/settings', { 
+      withCredentials: true 
+    })
+    .then(res => {
+      // Handle consistent response format
+      const s = res.data.settings || {
+        appointment: true,
+        memory: true
+      };
+      setSettings(s);
+    })
+    .catch(err => {
+      console.error('Settings fetch error:', err);
+      // Set default settings if error occurs
+      setSettings({
+        appointment: true,
+        memory: true
+      });
+    });
+}, []);
 
     // 2) Fetch notifications list
     useEffect(() => {
