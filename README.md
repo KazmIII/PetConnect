@@ -2,6 +2,8 @@
 
 **PetConnect** is a full-stack web application built using the **MERN stack (MongoDB, Express.js, React, Node.js)**, designed to unify and streamline every aspect of pet care. From virtual veterinary consultations and home-based services to AI-powered pet adoption and pet emotion detection, PetConnect centralizes the entire pet care experience in one user-friendly platform.
 
+<img width="1902" height="862" alt="image" src="https://github.com/user-attachments/assets/3ce6cb28-40dc-4654-893b-432a2f27ec68" />
+
 ---
 
 ## 🚀 Features
@@ -68,3 +70,4 @@ npm install
 
 # Run the application
 npm run dev
+
